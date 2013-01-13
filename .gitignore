@@ -1,0 +1,6 @@
+build/
+bin/
+*.azw2
+dist/*.zip
+dist/*/*.zip
+

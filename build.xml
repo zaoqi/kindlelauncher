@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="KindleLauncher" default="dist">
+
+	<property file="build.properties"/>
+	
+	<path id="classpath.jdk14">
+		<fileset dir="${build.classpath.jdk14}" includes="**/*.jar" />
+	</path>
+
+	<path id="classpath.lib">
+		<fileset dir="lib" includes="**/*.jar" />
+	</path>
+	
+	<target name="clean">
+		<delete dir="${build.dir}" />
+	</target>
+	
+	<target name="prepare">
+		<delete dir="${build.dir}" />
+		<mkdir dir="${build.dir}"/>
+	</target>
+	
+	<target name="compile" depends="prepare">
+		<javac source="1.4" target="1.4" includeantruntime="false" bootclasspathref="classpath.jdk14" classpathref="classpath.lib" srcdir="src" destdir="${build.dir}" >
+			<include name="**/*.java"/>
+   		</javac>
+	</target>
+	
+	<target name="build" depends="compile">
+		<antcall target="build-kdk">
+		        <param name="kdk-version" value="1.0"/>
+	    </antcall>
+		<antcall target="build-kdk">
+	        <param name="kdk-version" value="2.0"/>
+	    </antcall>
+	</target>
+	
+	<target name="build-kdk" depends="compile">
+		<property name="file" value="${product.filename}-${kdk-version}.${product.extension}"/>
+		<delete file="${file}" />
+		<jar destfile="${file}">
+			<manifest>
+				<attribute name="Implementation-Title" value="${product.name}"/>
+				<attribute name="Implementation-Version" value="${product.version}"/>
+				<attribute name="Implementation-Vendor" value="${product.vendor}"/>
+				<attribute name="Main-Class" value="${product.mainclass}"/>
+				<attribute name="Amazon-Cover-Image" value="${product.image}"/>
+				<attribute name="Extension-List" value="SDK"/>
+				<attribute name="SDK-Extension-Name" value="com.amazon.kindle.kindlet"/>
+				<attribute name="SDK-Specification-Version" value="${kdk-version}"/>
+
+				<attribute name="Toolbar-Mode" value="persistent"/>
+				<attribute name="Font-Size-Mode" value="point"/>
+
+			</manifest>
+			
+			<!-- actual program logic files --> 
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+			</fileset>
+			
+			<!-- jailbreak frontend, required -->
+			<zipfileset src="lib/jailbreak.jar">
+				<include name="**/*.class"/>
+			</zipfileset>
+			
+			<!-- "cover" icon -->
+			<fileset dir=".">
+				<include name="${product.image}"/>
+			</fileset>
+			
+		</jar>
+		<signjar jar="${file}" keystore="${sign.keystore.file}" storepass="${sign.keystore.password}" alias="dk${sign.aliases}"/>
+		<signjar jar="${file}" keystore="${sign.keystore.file}" storepass="${sign.keystore.password}" alias="di${sign.aliases}"/>
+		<signjar jar="${file}" keystore="${sign.keystore.file}" storepass="${sign.keystore.password}" alias="dn${sign.aliases}"/>
+	</target>
+	
+	<target name="dist" depends="build, clean" />
+</project>
