@@ -3,4 +3,4 @@ bin/
 *.azw2
 dist/*.zip
 dist/*/*.zip
-
+./build.properties

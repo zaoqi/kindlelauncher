@@ -63,6 +63,16 @@
 			<zipfileset src="lib/jailbreak.jar">
 				<include name="**/*.class"/>
 			</zipfileset>
+
+                        <!-- supporting libs???, required!!! -->
+                        <zipfileset src="lib/json-simple-1.1.1.jar">
+                                <include name="**/*.class"/>
+                        </zipfileset>
+
+                        <!-- For Yifan bits... required -->
+                        <zipfileset src="lib/org.apache.felix.bundlerepository-1.4.2.jar">
+                                <include name="**/*.class"/>
+                        </zipfileset>
 			
 			<!-- "cover" icon -->
 			<fileset dir=".">
