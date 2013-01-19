@@ -4,3 +4,5 @@ bin/
 dist/*.zip
 dist/*/*.zip
 ./build.properties
+Kindle.JPG
+lib/Kindlet-1.2.jar
