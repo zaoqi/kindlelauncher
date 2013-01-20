@@ -110,8 +110,7 @@ public class LauncherKindlet extends AbstractKindlet implements ActionListener {
 			
 	            BufferedReader input = new BufferedReader(new InputStreamReader(processer.getInputStream()));
 	            while((line=input.readLine()) != null){
-	                // System.out.println(line);
-	                
+	               
 	                String item[]=split2(line,"¬");  
 	                
 	            	Component looper = getUI().newButton(item[0], this);
@@ -131,7 +130,8 @@ public class LauncherKindlet extends AbstractKindlet implements ActionListener {
 	            printStream.close();
 
 	            
-	            tempFile.deleteOnExit();
+	      // This doesn't seem to fire when I would expect so... ->      tempFile.deleteOnExit();
+	            tempFile.delete();
 	            
             } catch(Exception e) {
             e.printStackTrace();
@@ -148,8 +148,7 @@ public class LauncherKindlet extends AbstractKindlet implements ActionListener {
 	}
 
 	public void stop() {
-		// TODO Auto-generated method stub
-	
+
 		super.stop();
 	}
 

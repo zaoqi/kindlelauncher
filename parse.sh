@@ -10,10 +10,10 @@ prettyseperator=":"
 
 ## If you get weird output from the next bit - like you are missing a label?? Run dos2unix on the config.xml 
 ## Komic's is broken dos format... Named and shamed... Took me 4 hours to find that bug... ;)
-if [ -e /mnt/us/extensions/komic/config.xml ]
-then
-dos2unix /mnt/us/extensions/komic/config.xml
-fi
+#if [ -e /mnt/us/extensions/komic/config.xml ]
+#then
+#dos2unix /mnt/us/extensions/komic/config.xml
+#fi
 
 for f in $FILES; do
 FILES2=$f/menu.json
