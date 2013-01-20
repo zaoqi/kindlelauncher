@@ -69,6 +69,11 @@
 				<include name="${product.image}"/>
 			</fileset>
 			
+			<!-- "parse" script -->
+			<fileset dir=".">
+				<include name="${product.script}"/>
+			</fileset>
+			
 		</jar>
 		<signjar jar="${file}" keystore="${sign.keystore.file}" storepass="${sign.keystore.password}" alias="dk${sign.aliases}"/>
 		<signjar jar="${file}" keystore="${sign.keystore.file}" storepass="${sign.keystore.password}" alias="di${sign.aliases}"/>

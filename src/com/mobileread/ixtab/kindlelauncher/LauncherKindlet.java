@@ -10,7 +10,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -43,11 +45,15 @@ public class LauncherKindlet extends AbstractKindlet implements ActionListener {
 		super.destroy();
 	}
 
-	
-	
 	public void start() {
 	
 		// just in case, it's probably not needed.
+	
+		
+		jailbreak.enable();
+		jailbreak.getContext().requestPermission(new AllPermission());
+		
+		
 		if (panel == null) {
 			panel = getUI().newPanel(new BorderLayout());
 		} else {
@@ -61,45 +67,56 @@ public class LauncherKindlet extends AbstractKindlet implements ActionListener {
 		
 		root.add(panel, BorderLayout.CENTER);
 		
+		
 		/* everything below here is experimental. */
-		root.add(getUI().newLabel("LIST OF APPLICATIONS: (click to run)"), BorderLayout.NORTH);
 
+	root.add(getUI().newLabel("APPLICATIONS: "), BorderLayout.NORTH);
+		
 		GridLayout grid = new GridLayout(0, 1);
 		Container buttonsPanel = getUI().newPanel(grid);
-		
-		jailbreak.enable();
-		jailbreak.getContext().requestPermission(new AllPermission());
 
+		String tempfilelocation ="";
 		
 		try {
 			
-			File file_location = new File("/mnt/us/documents");
+			// Internalise the script...
+			InputStream is = getClass().getResourceAsStream("/parse.sh");
+		
+			File tempFile = java.io.File.createTempFile("parse","sh");
 			
-			String cmd[] = new String[] {"/bin/sh", "parse.sh"}; 
+			tempfilelocation = tempFile.getAbsolutePath();
+			
+			OutputStream os = new FileOutputStream(tempFile);
+			
+			byte[] buffer = new byte[4096];
+			int bytesRead;
+			while ((bytesRead = is.read(buffer)) != -1)
+			{
+			    os.write(buffer, 0, bytesRead);
+			}
+			buffer = null; // Clear the buffer
+			
+			os.flush();
+			os.close();
+			
+			String cmd[] = new String[] {"/bin/sh", tempfilelocation}; 
 			
 			Runtime rtime = Runtime.getRuntime();
-			Process processer = rtime.exec(cmd,null,file_location);
+			Process processer = rtime.exec(cmd,null);//,file_location);
 			
 			processer.waitFor();
 
 		    String line;
-
-		    /* Meh we could do this... processer.getErrorStream() But we don't want the trash
-		     * */
-
+			
 	            BufferedReader input = new BufferedReader(new InputStreamReader(processer.getInputStream()));
 	            while((line=input.readLine()) != null){
+	                // System.out.println(line);
 	                
-	                /* No doubt there is a better way */
 	                String item[]=split2(line,"¬");  
 	                
-	                /* link the name to the button label */
 	            	Component looper = getUI().newButton(item[0], this);
 	                
-	            	/* Making a list */
 	            	tm.put(item[0], item[1]);
-	            	
-	            	/* a point of reference, meh, it'll do */
 	            	looper.setName(item[0]);
 	            	
 	                buttonsPanel.add(looper);
@@ -107,13 +124,14 @@ public class LauncherKindlet extends AbstractKindlet implements ActionListener {
 
 	            input.close();
 			
-	            /* Just in case... */
 	            OutputStream outputStream = processer.getOutputStream();
 	            PrintStream printStream = new PrintStream(outputStream);
 	            printStream.println();
 	            printStream.flush();
 	            printStream.close();
 
+	            
+	            tempFile.deleteOnExit();
 	            
             } catch(Exception e) {
             e.printStackTrace();
@@ -122,14 +140,16 @@ public class LauncherKindlet extends AbstractKindlet implements ActionListener {
 
 		root.add(buttonsPanel, BorderLayout.CENTER);
 		
-		status = getUI().newLabel("sample label: south");
+		status = getUI().newLabel(tempfilelocation);
 		root.add(status, BorderLayout.SOUTH);
-		
-		setStatus(String.valueOf(tm.size()));
+
+		setStatus(tempfilelocation +" "+ String.valueOf(tm.size()) + " options loaded" );
+
 	}
 
 	public void stop() {
 		// TODO Auto-generated method stub
+	
 		super.stop();
 	}
 
@@ -146,22 +166,20 @@ public class LauncherKindlet extends AbstractKindlet implements ActionListener {
 				
 	      Runtime.getRuntime().exec(runner);
 	      } catch (NullPointerException ex) {
-				String report = ex.getMessage();// .replaceAll("\\n", "");
+				String report = ex.getMessage();
 				setStatus(report);
 			} catch (SecurityException ex) {
-				String report = ex.getMessage();// .replaceAll("\\n", "");
+				String report = ex.getMessage();
 				setStatus(report);
 			} catch (IOException ex) {
-				String report = ex.getMessage();//.replaceAll("\\n", ""); setStatus(report); //
+				String report = ex.getMessage();
 			 setStatus(report);
 			 } 
 		catch (Throwable ex) {
-				String report = ex.getMessage();// .replaceAll("\\n", "");
+				String report = ex.getMessage();
 				setStatus(report);
 			}
 
-	     // one ride per customer... ???
-	     stop();
 	}
 	
 	private void setStatus(String text) {
@@ -172,7 +190,6 @@ public class LauncherKindlet extends AbstractKindlet implements ActionListener {
 	private static UIAdapter getUI() {
 		return UIAdapter.INSTANCE;
 	}
-	
 		
 	// Fixup the lack of handy split method.
 	
