@@ -49,7 +49,6 @@ public class LauncherKindlet extends AbstractKindlet implements ActionListener {
 	
 		// just in case, it's probably not needed.
 	
-		
 		jailbreak.enable();
 		jailbreak.getContext().requestPermission(new AllPermission());
 		
@@ -140,10 +139,9 @@ public class LauncherKindlet extends AbstractKindlet implements ActionListener {
 
 		root.add(buttonsPanel, BorderLayout.CENTER);
 		
-		status = getUI().newLabel(tempfilelocation);
+		status = getUI().newLabel(String.valueOf(tm.size()) + " options loaded");
 		root.add(status, BorderLayout.SOUTH);
 
-		setStatus(tempfilelocation +" "+ String.valueOf(tm.size()) + " options loaded" );
 
 	}
 
