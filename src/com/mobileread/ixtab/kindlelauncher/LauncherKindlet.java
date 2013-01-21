@@ -112,10 +112,17 @@ public class LauncherKindlet extends AbstractKindlet implements ActionListener {
 
 			os.flush();
 			os.close();
-
+			
 			String cmd[] = new String[] { "/bin/sh", tempfilelocation };
 
 			Runtime rtime = Runtime.getRuntime();
+			
+			// Let's tidy up some known offenders...
+			rtime.exec("/usr/bin/killall -9 matchbox-keyboard", null);
+			rtime.exec("/usr/bin/killall -9 kterm", null);
+			rtime.exec("/usr/bin/killall -9 skipstone", null);
+			
+			// Okay now now our script.
 			Process processer = rtime.exec(cmd, null);// ,file_location);
 
 			processer.waitFor();
