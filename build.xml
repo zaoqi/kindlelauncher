@@ -72,7 +72,7 @@
 			<!-- "parse" script -->
 			<fileset dir=".">
 				<include name="${product.script}"/>
-			</fileset>
+			</fileset>	
 			
 		</jar>
 		<signjar jar="${file}" keystore="${sign.keystore.file}" storepass="${sign.keystore.password}" alias="dk${sign.aliases}"/>
