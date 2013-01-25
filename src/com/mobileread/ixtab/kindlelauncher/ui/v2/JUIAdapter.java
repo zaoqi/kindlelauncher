@@ -9,6 +9,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import com.amazon.kindle.kindlet.KindletContext;
 import com.mobileread.ixtab.kindlelauncher.ui.UIAdapter;
 
 public class JUIAdapter extends UIAdapter {
@@ -23,6 +24,7 @@ public class JUIAdapter extends UIAdapter {
 
 	public Component newButton(String text, ActionListener listener) {
 		JButton button = new JButton(text);
+		button.setName(text);
 		button.addActionListener(listener);
 		return button;
 	}
@@ -30,6 +32,15 @@ public class JUIAdapter extends UIAdapter {
 	public void setText(Component component, String text) {
 		if (component instanceof JLabel) {
 			((JLabel) component).setText(text);
+		}
+	}
+
+	public void suicide(KindletContext context) {
+		try {
+			// Until something better turns up...
+			Runtime.getRuntime()
+					.exec("lipc-set-prop com.lab126.appmgrd stop app://com.lab126.booklet.kindlet");
+		} catch (Throwable ex) {
 		}
 	}
 

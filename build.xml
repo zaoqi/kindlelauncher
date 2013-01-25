@@ -64,6 +64,11 @@
 				<include name="**/*.class"/>
 			</zipfileset>
 
+			<!-- resources -->
+			<fileset dir="src/">
+				<include name="**/resources/*"/>
+				<exclude name="**/resources/*.java"/>
+			</fileset>
 			<!-- "cover" icon -->
 			<fileset dir=".">
 				<include name="${product.image}"/>

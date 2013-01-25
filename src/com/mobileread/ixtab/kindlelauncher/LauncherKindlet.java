@@ -1,86 +1,97 @@
 package com.mobileread.ixtab.kindlelauncher;
 
+import ixtab.jailbreak.Jailbreak;
+import ixtab.jailbreak.SuicidalKindlet;
+
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import ixtab.jailbreak.Jailbreak;
-
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintStream;
-import java.security.AllPermission;
-import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import com.amazon.kindle.kindlet.AbstractKindlet;
 import com.amazon.kindle.kindlet.KindletContext;
+import com.mobileread.ixtab.kindlelauncher.resources.ResourceLoader;
 import com.mobileread.ixtab.kindlelauncher.ui.UIAdapter;
 
-public class LauncherKindlet extends AbstractKindlet implements ActionListener {
+public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
+
+	public static final String RESOURCE_PARSER_SCRIPT = "parse.sh";
+	private static final String EXEC_PREFIX_PARSE = "klauncher_parse-";
+	private static final String EXEC_PREFIX_BACKGROUND = "klauncher_background-";
+	private static final String EXEC_EXTENSION_SH = ".sh";
 	private static final long serialVersionUID = 1L;
 
-	private final Jailbreak jailbreak = new Jailbreak();
-	private KindletContext context;
-	private Container panel;
-	private TreeMap tm = new TreeMap();
+	private final TreeMap executablesMap = new TreeMap();
 
 	// temporary, for testing.
+	private KindletContext context;
+	private Container panel;
 	private Component status;
 
-	public void create(KindletContext context) {
+	protected Jailbreak instantiateJailbreak() {
+		return new LauncherKindletJailbreak();
+	}
+	
+	public void onCreate(KindletContext context) {
+		super.onCreate(context);
 		this.context = context;
 	}
 
-	public void destroy() {
-		// TODO Auto-generated method stub
-		super.destroy();
+	public void onStart() {
+		super.onStart();
+
+		String error = getJailbreakError();
+		if (error != null) {
+			displayErrorMessage(error);
+			return;
+		}
+		
+		try {
+			initializeState();
+			initializeUI();
+		} catch (Throwable t) {
+			throw new RuntimeException(t);
+		}
+		
 	}
 
-	public void start() {
+	private void setStatus(String text) {
+		getUI().setText(status, text);
+	}
 
+	private static UIAdapter getUI() {
+		return UIAdapter.INSTANCE;
+	}
 
-		jailbreak.enable();
-		jailbreak.getContext().requestPermission(new AllPermission());
+	private void initializeUI() {
+		Container root = context.getRootContainer();
+		root.removeAll();
+		
+		root.setLayout(new BorderLayout());
 
-		// Tidy up...
-
-		File tmpDir = new File("/tmp");
-		String target_file;
-
-		File[] listOfFiles = tmpDir.listFiles();
-
-		for (int i = 0; i < listOfFiles.length; i++) {
-			if (listOfFiles[i].isFile()) {
-				target_file = listOfFiles[i].getName();
-				if (target_file.startsWith("background")) {
-					listOfFiles[i].delete();
-				}
-			}
-		}
-
-		// just in case, it's probably not needed.
+		// probably over-cautious
 		if (panel == null) {
 			panel = getUI().newPanel(new BorderLayout());
-		} else {
-			panel.removeAll();
 		}
-
-		Container root = context.getRootContainer();
-		root.setLayout(new BorderLayout());
-		// again, just in case
-		root.removeAll();
-
+		panel.removeAll();
 		root.add(panel, BorderLayout.CENTER);
 
 		/* everything below here is experimental. */
@@ -90,173 +101,131 @@ public class LauncherKindlet extends AbstractKindlet implements ActionListener {
 		GridLayout grid = new GridLayout(0, 1);
 		Container buttonsPanel = getUI().newPanel(grid);
 
-		String tempfilelocation = "";
-
-		try {
-
-			// Internalise the script...
-			InputStream is = getClass().getResourceAsStream("/parse.sh");
-
-			File tempFile = java.io.File.createTempFile("parse", "sh");
-
-			tempfilelocation = tempFile.getAbsolutePath();
-
-			OutputStream os = new FileOutputStream(tempFile);
-
-			byte[] buffer = new byte[4096];
-			int bytesRead;
-			while ((bytesRead = is.read(buffer)) != -1) {
-				os.write(buffer, 0, bytesRead);
-			}
-			buffer = null; // Clear the buffer
-
-			os.flush();
-			os.close();
-			
-			String cmd[] = new String[] { "/bin/sh", tempfilelocation };
-
-			Runtime rtime = Runtime.getRuntime();
-			
-			// Let's tidy up some known offenders...
-			rtime.exec("/usr/bin/killall -9 matchbox-keyboard", null);
-			rtime.exec("/usr/bin/killall -9 kterm", null);
-			rtime.exec("/usr/bin/killall -9 skipstone", null);
-			
-			// Okay now now our script.
-			Process processer = rtime.exec(cmd, null);// ,file_location);
-
-			processer.waitFor();
-
-			String line;
-
-			BufferedReader input = new BufferedReader(new InputStreamReader(
-					processer.getInputStream()));
-			while ((line = input.readLine()) != null) {
-
-				String item[] = split2(line, "¬");
-
-				Component looper = getUI().newButton(item[0], this);
-
-				tm.put(item[0], item[1]);
-				looper.setName(item[0]);
-
-				buttonsPanel.add(looper);
-			}
-
-			input.close();
-
-			OutputStream outputStream = processer.getOutputStream();
-			PrintStream printStream = new PrintStream(outputStream);
-			printStream.println();
-			printStream.flush();
-			printStream.close();
-
-			// This doesn't seem to fire when I would expect so... ->
-			// tempFile.deleteOnExit();
-			tempFile.delete();
-
-		} catch (Exception e) {
-			e.printStackTrace();
+		//FIXME
+		executablesMap.put("AAA", "touch /tmp/AAA.tmp");
+		executablesMap.put("ZZZ", "touch /tmp/ZZZ.tmp");
+		Iterator execIt = executablesMap.entrySet().iterator();
+		while (execIt.hasNext()) {
+			Map.Entry exec = (Entry) execIt.next();
+			String name = (String) exec.getKey();
+			buttonsPanel.add(getUI().newButton(name, this));
 		}
 
 		root.add(buttonsPanel, BorderLayout.CENTER);
 
-		status = getUI().newLabel(String.valueOf(tm.size()) + " options loaded");
+		status = getUI().newLabel(String.valueOf(executablesMap.size()) + " options loaded");
 		root.add(status, BorderLayout.SOUTH);
-
+		
 	}
 
-	public void stop() {
+	private void initializeState() throws IOException, FileNotFoundException,
+			InterruptedException {
+		cleanupTemporaryDirectory();
+		killKnownOffenders(Runtime.getRuntime());
+		
+		File parseFile = extractParseFile();
+		BufferedReader reader = Util.execute(parseFile.getAbsolutePath());
 
-		super.stop();
-		super.destroy();
+		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+			String item[] = Util.splitLine(line, "¬");
+			executablesMap.put(item[0], item[1]);
+		}
+		
+		reader.close();
+		parseFile.delete();
+	}
+
+	private File extractParseFile() throws IOException, FileNotFoundException {
+		InputStream script = ResourceLoader.load(RESOURCE_PARSER_SCRIPT);
+		File parseInput = File.createTempFile(EXEC_PREFIX_PARSE, EXEC_EXTENSION_SH);
+		
+		OutputStream cmd = new FileOutputStream(parseInput);
+		Util.copy(script, cmd);
+		return parseInput;
+	}
+
+	private void displayErrorMessage(String error) {
+		Container root = context.getRootContainer();
+		root.removeAll();
+		
+		Component message = getUI().newLabel(error);
+		message.setFont(new Font(message.getFont().getName(), Font.BOLD, message.getFont().getSize() + 6));
+		root.setLayout(new GridBagLayout());
+		
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.gridx = 0;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.fill |= GridBagConstraints.VERTICAL;
+		gbc.weightx  = 1.0;
+		gbc.weighty  = 1.0;
+		
+		root.add(message, gbc);
+	}
+
+	private void killKnownOffenders(Runtime rtime) throws IOException {
+		// Let's tidy up some known offenders...
+		rtime.exec("/usr/bin/killall -9 matchbox-keyboard", null);
+		rtime.exec("/usr/bin/killall -9 kterm", null);
+		rtime.exec("/usr/bin/killall -9 skipstone", null);
+	}
+
+	
+
+	private void cleanupTemporaryDirectory() {
+		File tmpDir = new File("/tmp");
+
+		File[] files = tmpDir.listFiles();
+
+		for (int i = 0; i < files.length; i++) {
+			if (files[i].isFile()) {
+				String file = files[i].getName();
+				if (file.startsWith(EXEC_PREFIX_BACKGROUND)) {
+					files[i].delete();
+				}
+			}
+		}
+	}
+
+	private String getJailbreakError() {
+		if (!jailbreak.isAvailable()) {
+			return "Kindlet Jailbreak not installed";
+		}
+		if (!jailbreak.isEnabled()) {
+			return "Kindlet Jailbreak could not be enabled";
+		}
+		return null;
 	}
 
 	public void actionPerformed(ActionEvent e) {
-		Component src = (Component) e.getSource();
+		Component button = (Component) e.getSource();
 
-		String namer = src.getName();
+		String cmd = (String) executablesMap.get(button.getName());
 
-		String runner = (String) tm.get(namer);
-
-		File tempFile = null;
 		try {
 			// Make our own background process runner...
 			// These get left lying around...
 			Runtime rtime = Runtime.getRuntime();
-			tempFile = java.io.File.createTempFile("background", "sh");
+			File tempFile = java.io.File.createTempFile(EXEC_PREFIX_BACKGROUND, EXEC_EXTENSION_SH);
 
 			BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile));
 
 			bw.write("#!/bin/sh");
 			bw.newLine();
 			// Here we add our parsed runtime...
-			bw.write(runner + " &");
+			bw.write(cmd + " &");
 			bw.newLine();
 			bw.close();
 
 			String chmodder[] = { "/bin/sh", tempFile.getAbsolutePath() };
 			Process slowtime = rtime.exec(chmodder, null);
 			slowtime.waitFor();
-
-			setStatus(runner);
-
-		} catch (NullPointerException ex) {
-			String report = ex.getMessage();
-			setStatus(report);
-		} catch (SecurityException ex) {
-			String report = ex.getMessage();
-			setStatus(report);
-		} catch (IOException ex) {
-			String report = ex.getMessage();
-			setStatus(report);
+			setStatus(cmd);
+			
+			getUI().suicide(context);
 		} catch (Throwable ex) {
 			String report = ex.getMessage();
 			setStatus(report);
 		}
-
-		try {
-
-			// Until something better turns up...
-
-			Runtime.getRuntime()
-					.exec("lipc-set-prop com.lab126.appmgrd stop app://com.lab126.booklet.kindlet");
-		} catch (Throwable ex) {
-		}
-
+		
 	}
-
-	private void setStatus(String text) {
-		getUI().setText(status, text);
-	}
-
-	// pure convenience method.
-	private static UIAdapter getUI() {
-		return UIAdapter.INSTANCE;
-	}
-
-	// Fixup the lack of handy split method.
-
-	public static String[] split2(String input, String separator) {
-
-		int separatorlen = separator.length();
-
-		ArrayList arrAux = new ArrayList();
-		String sAux = "" + input;
-		int pos = sAux.indexOf(separator);
-		while (pos >= 0) {
-			String token = sAux.substring(0, pos);
-			arrAux.add(token);
-			sAux = sAux.substring(pos + separatorlen);
-			pos = sAux.indexOf(separator);
-		}
-		if (sAux.length() > 0)
-			arrAux.add(sAux);
-		String[] res = new String[arrAux.size()];
-		for (int i = 0; i < res.length; i++) {
-			res[i] = (String) arrAux.get(i);
-		}
-		return res;
-	}
-
 }

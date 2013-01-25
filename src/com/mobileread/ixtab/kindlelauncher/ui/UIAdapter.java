@@ -5,6 +5,7 @@ import java.awt.Container;
 import java.awt.LayoutManager;
 import java.awt.event.ActionListener;
 
+import com.amazon.kindle.kindlet.KindletContext;
 import com.mobileread.ixtab.kindlelauncher.ui.v1.KUIAdapter;
 import com.mobileread.ixtab.kindlelauncher.ui.v2.JUIAdapter;
 
@@ -50,4 +51,6 @@ public abstract class UIAdapter {
 	public abstract Component newButton(String text, ActionListener listener);
 
 	public abstract void setText(Component component, String text);
+	
+	public abstract void suicide(KindletContext context);
 }
