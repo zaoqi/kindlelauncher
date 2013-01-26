@@ -96,12 +96,17 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		root.add(prevPageButton, BorderLayout.WEST);
 		root.add(nextPageButton, BorderLayout.EAST);
 		status = getUI().newLabel("Status");
-//		root.add(status, BorderLayout.SOUTH);
+		root.add(status, BorderLayout.SOUTH);
 		
 		GridLayout grid = new GridLayout(getPageSize(), 1);
 		entriesPanel = getUI().newPanel(grid);
 		
 		root.add(entriesPanel, BorderLayout.CENTER);
+		
+//		for (int i=0; i < 16; ++i) {
+//			executablesMap.put("TEST-"+i, "touch /tmp/test-"+i+".tmp");
+//		}
+		
 		updateDisplayedLaunchers();
 
 
@@ -217,17 +222,23 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			}
 		}
 		entriesPanel.removeAll();
+		int end = offset;
 		for (int i=getPageSize(); i > 0; --i) {
 			Component button = getUI().newButton("", null);
 			button.setEnabled(false);
 			if (it.hasNext()) {
 				Map.Entry entry = (Entry) it.next();
 				button = getUI().newButton((String) entry.getKey(), this);
+				++end;
 			}
 			entriesPanel.add(button);
 		}
+		// weird shit: it's actually the setStatus() which prevents the Kindle Touch from simply showing an empty list. WTF?!
+		setStatus("Items "+ (offset+1)+" - " + end +" of "+ executablesMap.size());
 		prevPageButton.setEnabled(offset > 0);
 		nextPageButton.setEnabled(offset + getPageSize() < executablesMap.size());
+		entriesPanel.invalidate();
+		entriesPanel.repaint();
 		context.getRootContainer().invalidate();
 		context.getRootContainer().repaint();
 	}
