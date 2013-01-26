@@ -73,8 +73,6 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		
 		try {
 			initializeState();
-			// FIXME
-			populateExecutables();
 			initializeUI();
 		} catch (Throwable t) {
 			throw new RuntimeException(t);
@@ -104,23 +102,9 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		entriesPanel = getUI().newPanel(grid);
 		
 		root.add(entriesPanel, BorderLayout.CENTER);
-		
-
-//		Iterator execIt = executablesMap.entrySet().iterator();
-//		while (execIt.hasNext()) {
-//			Map.Entry exec = (Entry) execIt.next();
-//			String name = (String) exec.getKey();
-//			entriesPanel.add(getUI().newButton(name, this));
-//		}
 		updateDisplayedLaunchers();
 
 
-	}
-
-	private void populateExecutables() {
-		for (int i=1; i < 23; ++i) {
-			executablesMap.put("TEST"+i, "touch /tmp/ex"+i+".tmp");
-		}
 	}
 
 	private void initializeState() throws IOException, FileNotFoundException,
@@ -216,8 +200,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		// direction is supposed to be -1 (backward) or +1 (forward),
 		int newOffset = offset + getPageSize() * direction;
 		newOffset = Math.max(newOffset, 0);
-		newOffset = Math.min(newOffset, getEntriesCount());
-		setStatus("offset now: "+newOffset);
+		newOffset = Math.min(newOffset, getEntriesCount()-1);
 		if (newOffset == offset) {
 			return;
 		}
