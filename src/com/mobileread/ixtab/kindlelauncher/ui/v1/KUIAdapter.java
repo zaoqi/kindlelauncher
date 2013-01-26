@@ -25,8 +25,10 @@ public class KUIAdapter extends UIAdapter {
 
 	public Component newButton(String text, ActionListener listener) {
 		KButton button = new KButton(text);
-		button.setName(text);
-		button.addActionListener(listener);
+		if (listener != null) {
+			button.setName(text);
+			button.addActionListener(listener);
+		}
 		return button;
 	}
 
@@ -42,6 +44,11 @@ public class KUIAdapter extends UIAdapter {
 		//code = 61442;
 		KeyEvent k = new KeyEvent(context.getRootContainer(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), 0, code, (char)0);
 		context.getRootContainer().dispatchEvent(k);
+	}
+
+	public int getDefaultPageSize() {
+		// these are non-touch models, so it's tedious to scroll.
+		return 5;
 	}
 	
 }

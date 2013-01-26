@@ -39,12 +39,17 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private static final String EXEC_EXTENSION_SH = ".sh";
 	private static final long serialVersionUID = 1L;
 
+	private static final int PAGING_PREVIOUS = -1 ;
+	private static final int PAGING_NEXT = 1 ;
 	private final TreeMap executablesMap = new TreeMap();
 
-	// temporary, for testing.
 	private KindletContext context;
-	private Container panel;
+	private Container entriesPanel;
 	private Component status;
+	private Component nextPageButton = getUI().newButton("  >  ", this);
+	private Component prevPageButton = getUI().newButton("  <  ", this);
+	
+	private int offset = 0;
 
 	protected Jailbreak instantiateJailbreak() {
 		return new LauncherKindletJailbreak();
@@ -64,8 +69,12 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			return;
 		}
 		
+		offset = 0;
+		
 		try {
 			initializeState();
+			// FIXME
+			populateExecutables();
 			initializeUI();
 		} catch (Throwable t) {
 			throw new RuntimeException(t);
@@ -84,38 +93,34 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private void initializeUI() {
 		Container root = context.getRootContainer();
 		root.removeAll();
-		
 		root.setLayout(new BorderLayout());
-
-		// probably over-cautious
-		if (panel == null) {
-			panel = getUI().newPanel(new BorderLayout());
-		}
-		panel.removeAll();
-		root.add(panel, BorderLayout.CENTER);
-
-		/* everything below here is experimental. */
-
-		root.add(getUI().newLabel("APPLICATIONS: "), BorderLayout.NORTH);
-
-		GridLayout grid = new GridLayout(0, 1);
-		Container buttonsPanel = getUI().newPanel(grid);
-
-		//FIXME
-		executablesMap.put("AAA", "touch /tmp/AAA.tmp");
-		executablesMap.put("ZZZ", "touch /tmp/ZZZ.tmp");
-		Iterator execIt = executablesMap.entrySet().iterator();
-		while (execIt.hasNext()) {
-			Map.Entry exec = (Entry) execIt.next();
-			String name = (String) exec.getKey();
-			buttonsPanel.add(getUI().newButton(name, this));
-		}
-
-		root.add(buttonsPanel, BorderLayout.CENTER);
-
-		status = getUI().newLabel(String.valueOf(executablesMap.size()) + " options loaded");
-		root.add(status, BorderLayout.SOUTH);
 		
+		root.add(prevPageButton, BorderLayout.WEST);
+		root.add(nextPageButton, BorderLayout.EAST);
+		status = getUI().newLabel("Status");
+//		root.add(status, BorderLayout.SOUTH);
+		
+		GridLayout grid = new GridLayout(getPageSize(), 1);
+		entriesPanel = getUI().newPanel(grid);
+		
+		root.add(entriesPanel, BorderLayout.CENTER);
+		
+
+//		Iterator execIt = executablesMap.entrySet().iterator();
+//		while (execIt.hasNext()) {
+//			Map.Entry exec = (Entry) execIt.next();
+//			String name = (String) exec.getKey();
+//			entriesPanel.add(getUI().newButton(name, this));
+//		}
+		updateDisplayedLaunchers();
+
+
+	}
+
+	private void populateExecutables() {
+		for (int i=1; i < 23; ++i) {
+			executablesMap.put("TEST"+i, "touch /tmp/ex"+i+".tmp");
+		}
 	}
 
 	private void initializeState() throws IOException, FileNotFoundException,
@@ -198,7 +203,62 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
 	public void actionPerformed(ActionEvent e) {
 		Component button = (Component) e.getSource();
+		if (button == prevPageButton) {
+			handlePaging(PAGING_PREVIOUS);
+		} else if (button == nextPageButton) {
+			handlePaging(PAGING_NEXT);
+		} else {
+			handleLauncherButton(button);
+		}
+	}
 
+	private void handlePaging(int direction) {
+		// direction is supposed to be -1 (backward) or +1 (forward),
+		int newOffset = offset + getPageSize() * direction;
+		newOffset = Math.max(newOffset, 0);
+		newOffset = Math.min(newOffset, getEntriesCount());
+		setStatus("offset now: "+newOffset);
+		if (newOffset == offset) {
+			return;
+		}
+		offset = newOffset;
+		updateDisplayedLaunchers();
+	}
+
+	private void updateDisplayedLaunchers() {
+		Iterator it = executablesMap.entrySet().iterator();
+		// skip entries up to offset
+		for (int i=0; i < offset; ++i) {
+			if (it.hasNext()) {
+				it.next();
+			}
+		}
+		entriesPanel.removeAll();
+		for (int i=getPageSize(); i > 0; --i) {
+			Component button = getUI().newButton("", null);
+			button.setEnabled(false);
+			if (it.hasNext()) {
+				Map.Entry entry = (Entry) it.next();
+				button = getUI().newButton((String) entry.getKey(), this);
+			}
+			entriesPanel.add(button);
+		}
+		prevPageButton.setEnabled(offset > 0);
+		nextPageButton.setEnabled(offset + getPageSize() < executablesMap.size());
+		context.getRootContainer().invalidate();
+		context.getRootContainer().repaint();
+	}
+
+	private int getEntriesCount() {
+		return executablesMap.size();
+	}
+
+	private int getPageSize() {
+		// this could be extended in the future to account for user-modifiable settings.
+		return getUI().getDefaultPageSize();
+	}
+
+	private void handleLauncherButton(Component button) {
 		String cmd = (String) executablesMap.get(button.getName());
 
 		try {
@@ -226,6 +286,5 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			String report = ex.getMessage();
 			setStatus(report);
 		}
-		
 	}
 }

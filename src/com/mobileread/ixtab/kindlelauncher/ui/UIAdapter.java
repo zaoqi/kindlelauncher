@@ -53,4 +53,6 @@ public abstract class UIAdapter {
 	public abstract void setText(Component component, String text);
 	
 	public abstract void suicide(KindletContext context);
+
+	public abstract int getDefaultPageSize();
 }

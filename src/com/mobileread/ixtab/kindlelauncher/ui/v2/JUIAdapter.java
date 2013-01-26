@@ -24,8 +24,10 @@ public class JUIAdapter extends UIAdapter {
 
 	public Component newButton(String text, ActionListener listener) {
 		JButton button = new JButton(text);
-		button.setName(text);
-		button.addActionListener(listener);
+		if (listener != null) {
+			button.setName(text);
+			button.addActionListener(listener);
+		}
 		return button;
 	}
 
@@ -42,6 +44,11 @@ public class JUIAdapter extends UIAdapter {
 					.exec("lipc-set-prop com.lab126.appmgrd stop app://com.lab126.booklet.kindlet");
 		} catch (Throwable ex) {
 		}
+	}
+
+	public int getDefaultPageSize() {
+		// these are Touch models, so having more information on one page seems reasonable.
+		return 15;
 	}
 
 }
