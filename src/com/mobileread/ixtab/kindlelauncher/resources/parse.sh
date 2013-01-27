@@ -13,10 +13,8 @@ FILES2=$f/menu.json
 for j in $FILES2; do
 
 ## Parse the JSON best we can using a shell. Ditch various bit we aren't concerned with. Only return the action nodes' values
-for z in $(cat $j | sed -e 's/[{}]/''/g' \
-| awk -v k="text" '{n=split($0,a,","); for (i=1; i<=n; i++) print a[i]}' \
-| sed 's/\"\:\"/\|/g;s/[\,]/ /g;s/\"//g'| grep "action" | grep -w " action") 
-do 
+
+for z in $(sed -ne 's/^.*"\(action\)"\(\s*:\s*\)"\([^"]\+\)".*$/\1\2\3/p' < $j); do
 
 ## reinverted logic required, less horrific. skip ACTION: label headers.
 if [ $z  == "action:"  ]
@@ -71,3 +69,4 @@ paramholder=""
 done
 done
 done
+

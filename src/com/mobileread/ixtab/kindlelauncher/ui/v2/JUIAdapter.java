@@ -48,7 +48,7 @@ public class JUIAdapter extends UIAdapter {
 
 	public int getDefaultPageSize() {
 		// these are Touch models, so having more information on one page seems reasonable.
-		return 15;
+		return 10;
 	}
 
 }
