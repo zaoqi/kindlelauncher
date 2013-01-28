@@ -121,7 +121,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		BufferedReader reader = Util.execute(parseFile.getAbsolutePath());
 
 		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-			String item[] = Util.splitLine(line, "¬");
+			String item[] = Util.splitLine(line, "\u0001");
 			executablesMap.put(item[0], item[1]);
 		}
 		
@@ -161,6 +161,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		rtime.exec("/usr/bin/killall -9 matchbox-keyboard", null);
 		rtime.exec("/usr/bin/killall -9 kterm", null);
 		rtime.exec("/usr/bin/killall -9 skipstone", null);
+		rtime.exec("/usr/bin/killall -9 cr3", null);
 	}
 
 	
