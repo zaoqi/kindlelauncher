@@ -2,6 +2,8 @@
 <project name="KindleLauncher" default="dist">
 
 	<property file="build.properties"/>
+	<!-- local properties which are not committed to git. See build.properties for the keys which are expected to be found in there. -->
+	<property file="build-local.properties"/>
 	
 	<path id="classpath.jdk14">
 		<fileset dir="${build.classpath.jdk14}" includes="**/*.jar" />
