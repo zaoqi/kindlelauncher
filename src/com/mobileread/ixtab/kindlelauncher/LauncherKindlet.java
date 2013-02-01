@@ -115,10 +115,10 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
 		root.add(entriesPanel, BorderLayout.CENTER);
 
-		 //FOR TESTING ONLY, if some specific number of additional entries is needed.
-//		 for (int i=0; i < 23; ++i) {
-//		 executablesMap.put("TEST-"+i, "touch /tmp/test-"+i+".tmp");
-//		 }
+		// FOR TESTING ONLY, if a specific number of entries is needed.
+		// for (int i = 0; i < 25; ++i) {
+		// executablesMap.put("TEST-" + i, "touch /tmp/test-" + i + ".tmp");
+		// }
 
 		updateDisplayedLaunchers();
 
@@ -223,6 +223,10 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			// the largest possible multiple of the page size.
 			newOffset = getEntriesCount();
 			newOffset -= newOffset % getPageSize();
+			// boundary case
+			if (newOffset == getEntriesCount()) {
+				newOffset -= getPageSize();
+			}
 		} else if (newOffset >= getEntriesCount()) {
 			newOffset = 0;
 		}
