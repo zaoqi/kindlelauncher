@@ -266,12 +266,25 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
 			bw.write("#!/bin/sh");
 			bw.newLine();
+			bw.write("sleep 1");
+			bw.newLine();
 			// Here we add our parsed runtime...
 			bw.write(cmd + " &");
 			bw.newLine();
 			bw.close();
 
-			String chmodder[] = { "/bin/sh", tempFile.getAbsolutePath() };
+			File tempFile2 = java.io.File.createTempFile(EXEC_PREFIX_BACKGROUND, EXEC_EXTENSION_SH);
+
+			bw = new BufferedWriter(new FileWriter(tempFile2));
+
+			bw.write("#!/bin/sh");
+			bw.newLine();
+			// Here we add our other runtime...
+			bw.write("/bin/sh "+tempFile.getAbsolutePath()+" &");
+			bw.newLine();
+			bw.close();
+			
+			String chmodder[] = { "/bin/sh", tempFile2.getAbsolutePath() };
 			Process slowtime = rtime.exec(chmodder, null);
 			slowtime.waitFor();
 			setStatus(cmd);
@@ -283,3 +296,4 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		}
 	}
 }
+
