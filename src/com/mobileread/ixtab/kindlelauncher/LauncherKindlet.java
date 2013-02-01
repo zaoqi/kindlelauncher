@@ -32,52 +32,64 @@ import com.mobileread.ixtab.kindlelauncher.ui.UIAdapter;
 
 public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
-
 	public static final String RESOURCE_PARSER_SCRIPT = "parse.sh";
 	private static final String EXEC_PREFIX_PARSE = "klauncher_parse-";
 	private static final String EXEC_PREFIX_BACKGROUND = "klauncher_background-";
 	private static final String EXEC_EXTENSION_SH = ".sh";
 	private static final long serialVersionUID = 1L;
 
-	private static final int PAGING_PREVIOUS = -1 ;
-	private static final int PAGING_NEXT = 1 ;
+	private static final int PAGING_PREVIOUS = -1;
+	private static final int PAGING_NEXT = 1;
 	private final TreeMap executablesMap = new TreeMap();
 
 	private KindletContext context;
+	private boolean started = false;
+	private String commandToRunOnExit = null;
+
 	private Container entriesPanel;
 	private Component status;
 	private Component nextPageButton = getUI().newButton("  >  ", this);
 	private Component prevPageButton = getUI().newButton("  <  ", this);
-	
+
 	private int offset = 0;
 
 	protected Jailbreak instantiateJailbreak() {
 		return new LauncherKindletJailbreak();
 	}
-	
+
 	public void onCreate(KindletContext context) {
 		super.onCreate(context);
 		this.context = context;
 	}
 
 	public void onStart() {
+		/*
+		 * This method might be called multiple times, but we only need to
+		 * initialize once. See Kindlet lifecycle diagram:
+		 */
+		// https://kdk-javadocs.s3.amazonaws.com/2.0/com/amazon/kindle/kindlet/Kindlet.html
+
+		if (started) {
+			return;
+		}
 		super.onStart();
+		started = true;
 
 		String error = getJailbreakError();
 		if (error != null) {
 			displayErrorMessage(error);
 			return;
 		}
-		
+
 		offset = 0;
-		
+
 		try {
 			initializeState();
 			initializeUI();
 		} catch (Throwable t) {
 			throw new RuntimeException(t);
 		}
-		
+
 	}
 
 	private void setStatus(String text) {
@@ -92,23 +104,23 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		Container root = context.getRootContainer();
 		root.removeAll();
 		root.setLayout(new BorderLayout());
-		
+
 		root.add(prevPageButton, BorderLayout.WEST);
 		root.add(nextPageButton, BorderLayout.EAST);
 		status = getUI().newLabel("Status");
 		root.add(status, BorderLayout.SOUTH);
-		
+
 		GridLayout grid = new GridLayout(getPageSize(), 1);
 		entriesPanel = getUI().newPanel(grid);
-		
-		root.add(entriesPanel, BorderLayout.CENTER);
-		
-//		for (int i=0; i < 16; ++i) {
-//			executablesMap.put("TEST-"+i, "touch /tmp/test-"+i+".tmp");
-//		}
-		
-		updateDisplayedLaunchers();
 
+		root.add(entriesPanel, BorderLayout.CENTER);
+
+		 //FOR TESTING ONLY, if some specific number of additional entries is needed.
+//		 for (int i=0; i < 23; ++i) {
+//		 executablesMap.put("TEST-"+i, "touch /tmp/test-"+i+".tmp");
+//		 }
+
+		updateDisplayedLaunchers();
 
 	}
 
@@ -116,23 +128,25 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			InterruptedException {
 		cleanupTemporaryDirectory();
 		killKnownOffenders(Runtime.getRuntime());
-		
+
 		File parseFile = extractParseFile();
 		BufferedReader reader = Util.execute(parseFile.getAbsolutePath());
 
-		for (String line = reader.readLine(); line != null; line = reader.readLine()) {
+		for (String line = reader.readLine(); line != null; line = reader
+				.readLine()) {
 			String item[] = Util.splitLine(line, "\u0001");
 			executablesMap.put(item[0], item[1]);
 		}
-		
+
 		reader.close();
 		parseFile.delete();
 	}
 
 	private File extractParseFile() throws IOException, FileNotFoundException {
 		InputStream script = ResourceLoader.load(RESOURCE_PARSER_SCRIPT);
-		File parseInput = File.createTempFile(EXEC_PREFIX_PARSE, EXEC_EXTENSION_SH);
-		
+		File parseInput = File.createTempFile(EXEC_PREFIX_PARSE,
+				EXEC_EXTENSION_SH);
+
 		OutputStream cmd = new FileOutputStream(parseInput);
 		Util.copy(script, cmd);
 		return parseInput;
@@ -141,30 +155,30 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private void displayErrorMessage(String error) {
 		Container root = context.getRootContainer();
 		root.removeAll();
-		
+
 		Component message = getUI().newLabel(error);
-		message.setFont(new Font(message.getFont().getName(), Font.BOLD, message.getFont().getSize() + 6));
+		message.setFont(new Font(message.getFont().getName(), Font.BOLD,
+				message.getFont().getSize() + 6));
 		root.setLayout(new GridBagLayout());
-		
+
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.gridx = 0;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		gbc.fill |= GridBagConstraints.VERTICAL;
-		gbc.weightx  = 1.0;
-		gbc.weighty  = 1.0;
-		
+		gbc.weightx = 1.0;
+		gbc.weighty = 1.0;
+
 		root.add(message, gbc);
 	}
 
 	private void killKnownOffenders(Runtime rtime) throws IOException {
 		// Let's tidy up some known offenders...
+		// FIXME: this should be refactored to at least go into its own class.
 		rtime.exec("/usr/bin/killall -9 matchbox-keyboard", null);
 		rtime.exec("/usr/bin/killall -9 kterm", null);
 		rtime.exec("/usr/bin/killall -9 skipstone", null);
 		rtime.exec("/usr/bin/killall -9 cr3", null);
 	}
-
-	
 
 	private void cleanupTemporaryDirectory() {
 		File tmpDir = new File("/tmp");
@@ -205,8 +219,13 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private void handlePaging(int direction) {
 		// direction is supposed to be -1 (backward) or +1 (forward),
 		int newOffset = offset + getPageSize() * direction;
-		newOffset = Math.max(newOffset, 0);
-		newOffset = Math.min(newOffset, getEntriesCount()-1);
+		if (newOffset < 0) {
+			// the largest possible multiple of the page size.
+			newOffset = getEntriesCount();
+			newOffset -= newOffset % getPageSize();
+		} else if (newOffset >= getEntriesCount()) {
+			newOffset = 0;
+		}
 		if (newOffset == offset) {
 			return;
 		}
@@ -217,14 +236,14 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private void updateDisplayedLaunchers() {
 		Iterator it = executablesMap.entrySet().iterator();
 		// skip entries up to offset
-		for (int i=0; i < offset; ++i) {
+		for (int i = 0; i < offset; ++i) {
 			if (it.hasNext()) {
 				it.next();
 			}
 		}
 		entriesPanel.removeAll();
 		int end = offset;
-		for (int i=getPageSize(); i > 0; --i) {
+		for (int i = getPageSize(); i > 0; --i) {
 			Component button = getUI().newButton("", null);
 			button.setEnabled(false);
 			if (it.hasNext()) {
@@ -234,10 +253,15 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			}
 			entriesPanel.add(button);
 		}
-		// weird shit: it's actually the setStatus() which prevents the Kindle Touch from simply showing an empty list. WTF?!
-		setStatus("Items "+ (offset+1)+" - " + end +" of "+ executablesMap.size());
-		prevPageButton.setEnabled(offset > 0);
-		nextPageButton.setEnabled(offset + getPageSize() < executablesMap.size());
+		// weird shit: it's actually the setStatus() which prevents the Kindle
+		// Touch from simply showing an empty list. WTF?!
+		setStatus("Items " + (offset + 1) + " - " + end + " of "
+				+ executablesMap.size());
+		boolean enableButtons = getPageSize() < executablesMap.size();
+		prevPageButton.setEnabled(enableButtons);
+		nextPageButton.setEnabled(enableButtons);
+
+		// just to be on the safe side
 		entriesPanel.invalidate();
 		entriesPanel.repaint();
 		context.getRootContainer().invalidate();
@@ -249,7 +273,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	}
 
 	private int getPageSize() {
-		// this could be extended in the future to account for user-modifiable settings.
+		// this could be extended in the future to account for user-modifiable
+		// settings.
 		return getUI().getDefaultPageSize();
 	}
 
@@ -257,43 +282,61 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		String cmd = (String) executablesMap.get(button.getName());
 
 		try {
-			// Make our own background process runner...
-			// These get left lying around...
-			Runtime rtime = Runtime.getRuntime();
-			File tempFile = java.io.File.createTempFile(EXEC_PREFIX_BACKGROUND, EXEC_EXTENSION_SH);
-
-			BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile));
-
-			bw.write("#!/bin/sh");
-			bw.newLine();
-			bw.write("usleep 500000");
-			bw.newLine();
-			// Here we add our parsed runtime...
-			bw.write(cmd + " &");
-			bw.newLine();
-			bw.close();
-
-			File tempFile2 = java.io.File.createTempFile(EXEC_PREFIX_BACKGROUND, EXEC_EXTENSION_SH);
-
-			bw = new BufferedWriter(new FileWriter(tempFile2));
-
-			bw.write("#!/bin/sh");
-			bw.newLine();
-			// Here we add our other runtime...
-			bw.write("/bin/sh "+tempFile.getAbsolutePath()+" &");
-			bw.newLine();
-			bw.close();
-			
-			String chmodder[] = { "/bin/sh", tempFile2.getAbsolutePath() };
-			Process slowtime = rtime.exec(chmodder, null);
-			slowtime.waitFor();
 			setStatus(cmd);
-			
+
+			commandToRunOnExit = cmd;
+
 			getUI().suicide(context);
 		} catch (Throwable ex) {
 			String report = ex.getMessage();
 			setStatus(report);
 		}
 	}
-}
 
+	private Process execute(String cmd, boolean background) throws IOException,
+			InterruptedException {
+
+		File launcher = createLauncherScript(cmd, background);
+		return Runtime.getRuntime().exec(
+				new String[] { "/bin/sh", launcher.getAbsolutePath() }, null);
+	}
+
+	protected void onStop() {
+		/*
+		 * This should really be run on the onDestroy() method, because onStop()
+		 * might be invoked multiple times. But in the onDestroy() method, it
+		 * just won't work. Might be related with what the life cycle
+		 * documentation says about not holding files open etc. after stop() was
+		 * called. Anyway: seems to work.
+		 */
+		if (commandToRunOnExit != null) {
+			try {
+				execute(commandToRunOnExit, true);
+			} catch (Exception e) {
+				// can't do much, really. Too late for that :-)
+			}
+			commandToRunOnExit = null;
+		}
+		super.onStop();
+	}
+
+	private File createLauncherScript(String cmd, boolean background)
+			throws IOException {
+		File tempFile = java.io.File.createTempFile(EXEC_PREFIX_BACKGROUND,
+				EXEC_EXTENSION_SH);
+
+		BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile));
+		bw.write("#!/bin/sh");
+		bw.newLine();
+
+		if (background) {
+			bw.write(cmd + " &");
+		} else {
+			bw.write(cmd);
+		}
+
+		bw.newLine();
+		bw.close();
+		return tempFile;
+	}
+}
