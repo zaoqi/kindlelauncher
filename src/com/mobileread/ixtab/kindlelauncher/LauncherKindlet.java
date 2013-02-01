@@ -266,7 +266,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
 			bw.write("#!/bin/sh");
 			bw.newLine();
-			bw.write("sleep 1");
+			bw.write("usleep 500000");
 			bw.newLine();
 			// Here we add our parsed runtime...
 			bw.write(cmd + " &");

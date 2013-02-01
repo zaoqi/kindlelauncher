@@ -1,5 +1,5 @@
 #!/bin/ash -
-# aloop.sh - last update 20130127,a,stepk
+# aloop.sh - version 20130130,a,stepk
 # Tested on KT 5.1.2 /bin/busybox ash (it's ash not (ba)sh!), version banner:
 #   BusyBox v1.17.1 (2012-07-17 16:29:54 PDT) multi-call binary
 # and on K3 /bin/busybox sh running on KT 5.1.2, version banner:
@@ -8,27 +8,26 @@
 
 usage () {
 echo "Usage: ${0##*/} [options]
-  parse menu files in $EXTENSIONDIR
-  system: `uname -rsnm`"
+  parse menu files in $EXTENSIONDIR"
 cat << 'EOT'
 
 Options:
  -h | --help
- -c=MAX | --colors=MAX   : max cyclical index when -f=twolevel (default 0=off)
- -f=NAME | -format=NAME   : select output format, NAME is one of:
+ -c=MAX | --colors=MAX   add cyclical color index in [0..MAX] when -f=twolevel
+ -f=NAME | -format=NAME  select output format, NAME is one of:
    default     default format, also when -f isn't specified, sortable
    debuginfo   dump xml_* and json_* variables
    touchrunner compatible with TouchRunner launcher, sortable
-   twolevel    default + group name and color index, sortable, see also -c
- -l | --log    : enable logging to stderr
- -s | --sort   : sort output by label
+   twolevel    default + group name, sortable, see also -c
+ -l | --log    enable logging to stderr
+ -s | --sort   sort output by label
  
 Limitations:
 . Supports json menus only
 . Supports one- or two-level menus only
 . A menu entry must not extend across multiple lines. Example of a valid entry:
   {"name": "a label", "priority": 3, "action" : "foo.sh", "params": "p1,p2"}
-  with or without a traling comma
+  with or without a trailing comma
 
 EOT
 }
@@ -39,7 +38,7 @@ set -f # prevent pathname expansion
 PRODUCTNAME="Unified Kindle Launcher"
 EXTENSIONDIR=/mnt/us/extensions
 SEPARATOR=`printf "\x01"`
-COLORMAX=0 # for two_level() when --colors
+COLORMAX=0 # for --format=twolevel --colors=
 
 case " $* " in
   *" -l "* | *" --log "*)
@@ -66,152 +65,106 @@ SPACE=' '
 LT='<'
 GT='>'
 
-# usage: script_full_path [-p]
-script_full_path () {
-  # no need to worry about symlinks are they aren't allowed in /mnt/us
-  local pth=$(2>/dev/null cd "${0%/*}" >&2; pwd -P)
-  [[ "-p" = "$1" ]] || pth=$pth/${0##*/}
-  echo -n "$pth" 
-}
+alias sort='/bin/busybox sort' # GNU sort needs setting LC_ALL to work the same
+alias find='/bin/busybox find' # why not
+alias sed='/bin/busybox sed'   #
 
-# usage: result=`str_replacechars SRC CHARS CHR`
+# usage: result=`str_repl_chars "SRC" "CHARS" CHR`
 # replace all occurrences of characters of CHARS in SRC with character CHR
-str_replacechars () {
+str_repl_chars () {
   local - IFS src=$1 chars=$2 chr=$3
   set -f
-  IFS="$chars"
+  IFS=$chars
   set -- $src
-  IFS="$chr"
+  IFS=$chr
   echo -n "$*"
 }
 
-#BBVER=`busybox_version`
-#[[ 0 = $? ]] || exit 1
-#log running K$BBVER busybox binary
-alias sort='/bin/busybox sort' # GNU sort needs setting LC_ALL to work the same
-alias find='/bin/busybox find' # why not
-
-# source model-specific compatibility layer. Caveat: ash forgets function
-# definitions sourced from within functions, so don't
-#load=`script_full_path -p`/compat-K$BBVER.sh
-#. "$load"
-# NOW SOURCED INLINE...########################################################
-#
-# compat-K3.sh - SOURCED INLINE - last update 20130127,a,stepk
-# Compatibility layer for busybox ash version
-#   BusyBox v1.7.2 (2012-09-01 14:15:22 PDT) multi-call binary.
-#
-# json_var creates sh variable json_NAME from $1
-json_var () {
-  local IFS=${NO_WSP} x=$*
-#echo "json_var_1($#)($x)"
-  x=json_${x#?}
-  x=`echo -n "$x" | sed "s/${QUOTE}//; s/[${WSP}]\+:/:/; s/:[${WSP}]\+/:/; s/:/=/;"`
-#echo "json_var_2 x($x)"
-  eval $x
-}
-#
-#
-# sanitize and shorten labels, improve readability
-sanitize() {
-  local r=$*
-  r=`echo -n "$r" | sed "s/[\|${SEPARATOR}]//g; s/[:;]/ /g; s/[${WSP}]+/ /;"`
-  echo -n "$r"
-}
-###################################################################################
-
-
-
-# json_oline parses $1, a json object consisting of key/value pairs on a single
-# line, like {"id":"value",...} 
-json_oline () {
-  local IFS implode prev s x v line=$1
-    unset implode prev s
-    line=${line#[\{\[]} # ltrim { and [ - [ isn't valid json but I've seen this typo in helper/menu.json
-    until [[ "$s" = "$line" ]]; do
-      s=$line
-      line=${s%%[${WSP}\}\],]} # rtrim
-    done
-    # process comma-separated list of key/value pairs
-    IFS=,
-    for x in $line; do
-      x=${x## } # cases '"id":"v"' / '"id":"v1' / 'v2"' (last 2 for "id":"v1,v2")
-#echo "X($x)"
-      case "$x" in
-      ${QUOTE}*)
-        [[ "$implode" ]] && json_var $implode && unset implode
-        [[ "$prev" ]] && json_var $prev
-        prev=$x
-#echo "PREV($x)"
-      ;;
-      *)
-        implode=${implode}${implode:+,}$x
-#echo "IMP($implode)"
-      ;;
-      esac
-    done
-    if [[ "$prev" -a "$implode" ]]; then
-#echo "FINPREVIMP($prev,$implode)"
-      json_var $prev,$implode
-    elif [[ "$implode" ]]; then
-#echo "FINIMP($implode)"
-      json_var $implode
-    elif [[ "$prev" ]]; then
-#echo "FINPREV($prev)"
-      json_var $prev
-    fi
-}
-
-# usage: json_parse /path/to/menu.json [PROC]
-# stdout: PROC's formatted menu items
-# return: # of successful PROC calls
-# Note: unset variables json_* before calling json_parse
-# For each input line that matches "action" this function creates a set of
-# sh variables named json_N1, json_N2, ... where N1, N2, etc. are json key
-# names.
-# And for input line that matches "name" but not "action" it creates sh
-# variable json_name_ (mind the dangling underscore), which is the top level
-# menu name.
-# Finally it calls function PROC, which outputs a formatted combination of
-# of json_* (and previously-defined) xml_* variables to stdout.
+# Usage: json_parse /path/to/menu.json [PROC]
+# Stdout: PROC's formatted menu items
+# Return: # of successful PROC calls
+# Note: json_parse unsets+sets global variables json_*.
+# For each input line that matches "action" this function creates a set of sh
+# variables named json_N1, json_N2, ... where N1, N2, etc. are json key names.
+# And for the input line that matches "name" but not "action" json_parse sets
+# variable json_name0, which is the top level menu name, a.k.a. the group.
+# Finally json_parse calls function PROC, which outputs a formatted combination
+# for json_* (and previously-defined) xml_* variables.
 json_parse () {
   local IFS=${WSP_IFS} line menu=$1 proc=$2 count=0
-  shift 2     
-  while read line; do
-    line=${line##[${SPC}]}
-    line=${line%%[${SPC}]}
-    case $line in
-    *"action"*)
-      IFS=${NO_WSP}
-      json_oline $line
-      IFS=${WSP_IFS}
-      # at this point any nice json file has already entered "name" below, so
-      # we can call $proc with all variables defined
-      $proc $* && count=$((++count))
-    ;;
-    # "name" must follow "action", it's the top menu name
-    *"name"*)
-      IFS=${NO_WSP}
-      json_oline "{${line%,}}"
-      IFS=${WSP_IFS}
-      json_name_=$json_name
-    ;;          
-    esac
-done < $menu
-return $count
+  shift 2
+  local _w='[0-9a-zA-Z_]' _s=`printf "[\x20\x09]"`
+  local dquot=`printf "\x22"` x01=`printf "\x01"` lf="`printf '\x0D'`"
+  local json_name0 json_name json_action json_params json_priority
+  unset vars json_name0
+  log $menu
+  sed -ne "
+	# dispatch
+	/\"action\"/b magic # includes key 'name'
+	/\"name\"/b magic0  # top-level key 'name'
+	b
+: magic0
+	s/name/name0/ # rename it
+	# assert: name0 comes before all other sub-keys
+: magic
+	# trim opening {[, and closing ]},
+	s/^${_s}*[[{,]*${_s}*//
+	s/${_s}*[]},]*${_s}*\$//
+#p;b
+	# mark id:value pairs
+	s/\(.*\)/${x01}\1${x01}/
+	s/,${_s}*${dquot}/${x01}${x01}${dquot}/g
+#p;b
+	# split them onto separate lines (multiline pattern space)
+	s/${x01}\([^${x01}]\+\)${x01}/\n\1/g
+#p;b
+	# morph each line into ash variable syntax
+	s/${dquot}${_s}*:${_s}*/=/g
+	s/\n${dquot}/\njson_/g
+#p;b
+	# escape interior double quotes
+	s/${dquot}/${x01}/ ; s/${dquot}\$/${x01}/
+	s/${dquot}/\\\\${x01}/g
+	s/${x01}/${dquot}/g
+#p;b
+	p # done
+	a EVAL
+  " < $menu \
+  | sed -ne "
+	# sanitize names (labels)
+	/json_name.\?=/{s/[|${SEPARATOR}]//g; s/[:;]/ /g; s/[${WSP}]\+/ /g}
+	p # done
+#p;b
+  " \
+  | {
+    while read line; do
+#echo $line; continue
+      if [[ EVAL = "$line" ]]; then
+        unset json_name json_action json_params json_priority
+        eval $vars
+        unset vars
+        [[ -z "$json_action" ]] && continue
+        $proc $* && count=$((++count))
+      else
+        vars="$vars${lf}$line"
+      fi
+    done
+   return $count
+  }
 }
 
-# usage: xml_var /path/to/config.xml NAME [NAME ...]
+# Usage: xml_var /path/to/config.xml NAME [NAME ...]
+# Note: xml_var unsets+sets all requested global variables xml_NAME...
 # xml_var creates one or more variables xml_NAME from an extension's config.xml
 # file - the file must include tag "<extension>". Example:
 #  xml_var config.xml author menu => xml_author(Mad Hatter) xml_menu(menu.json)
-# Note: unset variables xml_NAME before calling xml_var
 # Limitations:
 # . opening and closing XML tags must be on the same line
-# . XML value must not include double quotes
+# . XML values with embedded double quotes not supported
 xml_var () {
-  local line xml=$1 valid=0
+  local v line xml=$1 valid=0
   shift
+  for v in $*; do eval "unset xml_$v"; done
   while read line; do
     case $line in
     *"<extension>"*) valid=1 ;; # it's an extension's xml file
@@ -243,7 +196,7 @@ debug_info () {
 #ash: variable names are hardwired
 #The following variables are available; $1 is the extension's dir fullpath
  echo -n "path($1)"
- echo -n " xml_name($xml_name) json_name_($json_name_)"
+ echo -n " xml_name($xml_name) json_name0($json_name0)"
  echo -n " json_name($json_name) json_action($json_action) json_params($json_params) json_priority($json_priority)"
  echo
 }
@@ -251,22 +204,25 @@ debug_info () {
 # default_output displays json_name,action' 'json_params
 default_output () {
   local label=$json_name apath=$json_action group
+  # top level menu name
+  [[ "${json_name0}" ]] && group=${json_name0} || group=${xml_name}
   # fully qualify action path
   [[ -e "$1/$json_action" ]] && apath=$1/$json_action
-  # top level menu name
-  label=`sanitize $label`
   
-  echo "$xml_name · $label$SEPARATOR$apath $json_params"
+  echo "$group · $label$SEPARATOR$apath $json_params"
+# 20130130,a,stepk:
+# Prepended "$group · " to conform to twobob's interim script. Consider instead
+# using # -f=twolevel to provide the kindlet with group + label as separate
+# tokens, which would make sense to build a nested menu GUI, if ever.
 }
 
 # touch_runner displays action,json_params,group'.'json_name (separator ';')
 touch_runner () {
   local label=$json_name apath=$json_action group
   # top level menu name
-  [[ "${json_name_}" ]] && group=${json_name_} || group=${xml_name}
+  [[ "${json_name0}" ]] && group=${json_name0} || group=${xml_name}
   # qualify label
-  label=`str_replacechars "$group" '.' '_'` # was ${group//.}.$label
-  label=`sanitize $label`
+  label=`str_repl_chars "$group" . _`.$label
   
   echo "$1$SEPARATOR$apath$SEPARATOR${json_params:-NULL}$SEPARATOR$label"
 }
@@ -275,11 +231,9 @@ touch_runner () {
 two_level () {
   local label=$json_name apath=$json_action group
   # top level menu name
-  [[ "${json_name_}" ]] && group=${json_name_} || group=${xml_name}
+  [[ "${json_name0}" ]] && group=${json_name0} || group=${xml_name}
   # fully qualify action path
   [[ -e "$1/$json_action" ]] && apath=$1/$json_action
-  label=`sanitize $label`
-  group=`sanitize $group`
  
   echo "$group$SEPARATOR$label$SEPARATOR$apath $json_params"
 }
@@ -298,7 +252,7 @@ colorize () {
   done
 }
 
-# usage loop [ignorecount]
+# usage: loop [ignorecount]
 # find and process all config.xml files and their corresponding json menu files
 loop () {
 local f px pj nj count=0 ignorecount=0 t
@@ -306,7 +260,7 @@ case $1 in
   ignorecount) ignorecount=1 ;;
 esac
 for f in $(find $EXTENSIONDIR -name config.xml); do
-  unset xml_name xml_menu
+  log $f
   xml_var $f name menu
 #echo "xml_name($xml_name) xml_menu($xml_menu)"
   [[ "$xml_menu" ]] || continue # not an extension's config.xml file
@@ -326,7 +280,6 @@ for f in $(find $EXTENSIONDIR -name config.xml); do
   esac
   nj=${xml_menu##*/} # nj json menu filename
   if [[ -f $pj/$nj ]]; then
-    unset json_name json_name_ json_action json_params json_priority
     json_parse $pj/$nj $proc $pj
     count=$(( $? + $count ))
   fi
@@ -336,12 +289,12 @@ done
 return 0
 }
 
-# usage" test_applet install|uninstall
+# usage: test_applet install|uninstall
 # adds/removes a simple test applet in $EXTENSIONDIR
 # Installing clears and recreates an existing installation of the test applet
 # return: non-zero on creation error
 test_applet () {
-  local prnm=`str_replacechars "$PRODUCTNAME" "${WSP}" '_'`
+  local prnm=`str_repl_chars "$PRODUCTNAME" "${WSP}" _`
   local dir=$EXTENSIONDIR/$prnm
   local sh="$dir/test.sh" xml="$dir/config.xml" json="$dir/menu.json"
   [[ -d "$dir" ]] && rm -f "$sh" "$xml" "$json" && rmdir "$dir"
@@ -356,7 +309,7 @@ test_applet () {
   install)
     mkdir -p "$dir"
     if ! { [[ -d "$dir" ]] \
-    && echo "<?xml version="1.0" encoding="UTF-8"?>
+    && echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <extension>
 	<information>
 		<name>$PRODUCTNAME</name>
@@ -403,7 +356,7 @@ for opt in $*; do
   case $opt in
     -c=*|--colors=*) opt=${opt#*=}
        case $opt in [0-9]|[0-9][0-9]|[0-9][0-9][0-9]) COLORMAX=$(($opt)) ;; esac ;;
-  	-f=*|--format=*) opt_format=${opt#*=} ;;
+    -f=*|--format=*) opt_format=${opt#*=} ;;
     -h|--help) usage; exit ;;
     -l|--log) ;; # pre-parsed near top of file
     -s|--sort) opt_sort=label ;;
