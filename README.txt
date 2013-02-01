@@ -3,22 +3,27 @@
 #################################
 http://www.mobileread.com/forums/showthread.php?p=2389078
 
-Currently supporting the Kindle 3 Keyboard, Kindle 4 Range, Kindle Touch's and P/W (beta test let's call it)
-With Alpha DX support
+Currently supporting the Kindle 3 Keyboard, Kindle 4 Range, Kindle Touch's and P/W 
+(beta test let's call it) With Alpha DX, k2, k2i support
 
 SUPPORT: READ THIS >>>
 
 BitRot, No Magic, Voodoo (or Unicorns)  (what will work, what won't work)
-SOME OF THE OLDER PROGRAMS NO LONGER WORK ON THE NEWER KINDLES (nothing to do with this launcher they just dont work properly anymore) SUCH AS MANY IN THIS OLD LIST: http://wiki.mobileread.com/wiki/Kindle_Touch_Hacking#Extensions_for_the_GUI_Launcher SOME OF THESE DONT WORK 
-AS A COURTESY THESE BROKEN APPLICATIONS ARE LISTED BELOW UNDER KNOWN ISSUES IN AN EFFORT TO SAVE YOU GRIEF AND WASTED TIME
+SOME OF THE OLDER PROGRAMS NO LONGER WORK ON THE NEWER KINDLES 
+(nothing to do with this launcher they just dont work properly anymore) 
+SUCH AS MANY IN THIS OLD LIST: 
+http://wiki.mobileread.com/wiki/Kindle_Touch_Hacking#Extensions_for_the_GUI_Launcher 
+SOME OF THESE DONT WORK, SOME WORK ON CERTAIN FIRMWARES ONLY. 
+AS A COURTESY THESE BROKEN APPLICATIONS ARE LISTED ON THE MAIN THREAD UNDER KNOWN ISSUES.
 
 ALSO: SOME EXTENSION SUCH AS Kterm ARE DEVICE SPECIFIC.
-THIS LAUNCHER WON'T MAGICALLY MAKE CODE THAT IS DEVICE SPECIFIC WORK ON OTHER DEVICES. If it doesn't normally work on that type of device? It won't work via this either.
+THIS LAUNCHER WON'T MAGICALLY MAKE CODE THAT IS DEVICE SPECIFIC WORK ON OTHER DEVICES. 
+If it doesn't normally work on that type of device? It won't work via this either.
 
-Enough shouting.
-It's a launcher of "other things" not an exciting thing in itself...
+Enough shouting. It's a launcher of "other things" not an exciting thing in itself...
 
-We have now included a few helper scripts to get you going called "Helper" (attached - unzip to FAT-ROOT/extensions/helper)
+We have now included a few helper scripts to get you going called "Helper" 
+(attached on main thread - unzip to [FAT-ROOT]/extensions/helper)
 
 #####################################
 # Requirements, Installation & Use: #
@@ -26,6 +31,7 @@ We have now included a few helper scripts to get you going called "Helper" (atta
 
 Jailbreak:
 Go find the relevant Jailbreak for your device. 
+Links are provided on the main thread.
 
 Kindlet Jailbreak, Shared Developer Keys:
 
@@ -44,9 +50,11 @@ Put KindleLauncher-2.0.azw2 in documents folder.
 Run it by clicking icon.
 
 Expected output:
-It should read thru the /mnt/us/extensions folder and build a list of your extensions. Which you can just click the relevant button of to run. 
+It should read thru the /mnt/us/extensions folder and build a list of your extensions. 
+You then select a button to run the relevant command. Paginated results are provided.
 
-NOTE: /mnt/us/extensions is simply called extensions folder when you connect via normal USB. Usbnetworking is not "required" to access this folder.
+NOTE: /mnt/us/extensions is simply called extensions folder when you connect via normal USB. 
+Usbnetworking is not "required" to access this folder.
 
 TO EXIT:
 Generally the kindlet will exit when you click a choice
@@ -60,4 +68,3 @@ Thanks to KNC1 for download authentication support.
 Yifan was the original chap whoms configs we parse. 
 All the unsung demo authors whose work we draw from on a daily basis.
 And everyone else along the way.
-
