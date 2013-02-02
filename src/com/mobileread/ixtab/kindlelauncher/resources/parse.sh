@@ -1,5 +1,5 @@
 #!/bin/ash -
-# aloop.sh - version 20130130,a,stepk
+# aloop.sh - version 20130201,a,stepk
 # Tested on KT 5.1.2 /bin/busybox ash (it's ash not (ba)sh!), version banner:
 #   BusyBox v1.17.1 (2012-07-17 16:29:54 PDT) multi-call binary
 # and on K3 /bin/busybox sh running on KT 5.1.2, version banner:
@@ -27,7 +27,7 @@ Limitations:
 . Supports one- or two-level menus only
 . A menu entry must not extend across multiple lines. Example of a valid entry:
   {"name": "a label", "priority": 3, "action" : "foo.sh", "params": "p1,p2"}
-  with or without a trailing comma
+  with or without a traling comma
 
 EOT
 }
@@ -35,7 +35,7 @@ EOT
 set -f # prevent pathname expansion
 
 # dev can adjust these four variables:
-PRODUCTNAME="Unified Kindle Launcher"
+PRODUCTNAME="Kindle Unified Launcher"
 EXTENSIONDIR=/mnt/us/extensions
 SEPARATOR=`printf "\x01"`
 COLORMAX=0 # for --format=twolevel --colors=
@@ -315,7 +315,7 @@ test_applet () {
 		<name>$PRODUCTNAME</name>
 		<version>1.0</version>
 		<author>stepk</author>
-		<id>Test $PRODUCTNAME</id>
+		<id>Test</id>
 	</information>
 	<menus>
 		<menu type=\"json\">menu.json</menu>

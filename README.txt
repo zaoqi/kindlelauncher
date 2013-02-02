@@ -3,8 +3,12 @@
 #################################
 http://www.mobileread.com/forums/showthread.php?p=2389078
 
-Currently supporting the Kindle 3 Keyboard, Kindle 4 Range, Kindle Touch's and P/W 
-(beta test let's call it) With Alpha DX, k2, k2i support
+Supporting the DX, k2, k2i, K3 Keyboard, Kindle 4 Range, Kindle Touch's and P/W 
+
+NOTE: Flashed 3.2.1 Dx's may not show up kindlets There is a workaround 
+tested by wakawakawaka (thanks to him for the DX testing)
+http://www.mobileread.com/forums/showpost.php?p=1747631&postcount=354 
+Workaround 3.2.1 DX Link is above.
 
 SUPPORT: READ THIS >>>
 
@@ -14,7 +18,7 @@ SOME OF THE OLDER PROGRAMS NO LONGER WORK ON THE NEWER KINDLES
 SUCH AS MANY IN THIS OLD LIST: 
 http://wiki.mobileread.com/wiki/Kindle_Touch_Hacking#Extensions_for_the_GUI_Launcher 
 SOME OF THESE DONT WORK, SOME WORK ON CERTAIN FIRMWARES ONLY. 
-AS A COURTESY THESE BROKEN APPLICATIONS ARE LISTED ON THE MAIN THREAD UNDER KNOWN ISSUES.
+AS A COURTESY THESE APPLICATIONS ARE LISTED ON THE MAIN THREAD UNDER KNOWN ISSUES.
 
 ALSO: SOME EXTENSION SUCH AS Kterm ARE DEVICE SPECIFIC.
 THIS LAUNCHER WON'T MAGICALLY MAKE CODE THAT IS DEVICE SPECIFIC WORK ON OTHER DEVICES. 
@@ -35,8 +39,8 @@ Links are provided on the main thread.
 
 Kindlet Jailbreak, Shared Developer Keys:
 
-Apply the right pair from the prerequisites.zip 
-(on the thread http://www.mobileread.com/forums/attachment.php?attachmentid=100138&d=1359291514)
+Apply the right pair from the prerequisites.zip (Link to the thread) 
+http://www.mobileread.com/forums/attachment.php?attachmentid=100138&d=1359291514)
 
 Running the kindlet:
 Depending on your device:
@@ -53,7 +57,8 @@ Expected output:
 It should read thru the /mnt/us/extensions folder and build a list of your extensions. 
 You then select a button to run the relevant command. Paginated results are provided.
 
-NOTE: /mnt/us/extensions is simply called extensions folder when you connect via normal USB. 
+NOTE: /mnt/us/extensions is simply a folder called "extensions" 
+a normal folder you can access when you connect via normal USB. 
 Usbnetworking is not "required" to access this folder.
 
 TO EXIT:
@@ -61,10 +66,10 @@ Generally the kindlet will exit when you click a choice
 Currently just press the HOME key if you have one or the < icon.
 Or select an item, the menu is now self-terminating.
 
-
 Credits.
 Twobob Ixtab Stepk 
 Thanks to KNC1 for download authentication support.
+wakawakawaka for testing the DX prerequsites.
 Yifan was the original chap whoms configs we parse. 
 All the unsung demo authors whose work we draw from on a daily basis.
 And everyone else along the way.
