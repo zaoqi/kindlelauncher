@@ -27,7 +27,7 @@ Limitations:
 . Supports one- or two-level menus only
 . A menu entry must not extend across multiple lines. Example of a valid entry:
   {"name": "a label", "priority": 3, "action" : "foo.sh", "params": "p1,p2"}
-  with or without a traling comma
+  with or without a trailing comma
 
 EOT
 }

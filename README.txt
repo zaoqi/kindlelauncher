@@ -69,7 +69,7 @@ Or select an item, the menu is now self-terminating.
 Credits.
 Twobob Ixtab Stepk 
 Thanks to KNC1 for download authentication support.
-wakawakawaka for testing the DX prerequsites.
+wakawakawaka for testing the DX prerequisites.
 Yifan was the original chap whoms configs we parse. 
 All the unsung demo authors whose work we draw from on a daily basis.
 And everyone else along the way.
