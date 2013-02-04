@@ -22,9 +22,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 
 import com.amazon.kindle.kindlet.KindletContext;
 import com.mobileread.ixtab.kindlelauncher.resources.ResourceLoader;
@@ -40,7 +40,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
 	private static final int PAGING_PREVIOUS = -1;
 	private static final int PAGING_NEXT = 1;
-	private final TreeMap executablesMap = new TreeMap();
+	private final LinkedHashMap executablesMap = new LinkedHashMap();
 
 	private KindletContext context;
 	private boolean started = false;
@@ -135,7 +135,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		for (String line = reader.readLine(); line != null; line = reader
 				.readLine()) {
 			String item[] = Util.splitLine(line, "\u0001");
-			executablesMap.put(item[0], item[1]);
+			executablesMap.put(item[0]+" · "+item[1],item[2]);
+		//	executablesMap.put(item[0], item[1]);		
 		}
 
 		reader.close();
@@ -330,7 +331,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 				EXEC_EXTENSION_SH);
 
 		BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile));
-		bw.write("#!/bin/sh");
+		bw.write("#!/bin/ash");
 		bw.newLine();
 
 		if (background) {
