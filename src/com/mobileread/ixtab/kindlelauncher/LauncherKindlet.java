@@ -135,11 +135,12 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		for (String line = reader.readLine(); line != null; line = reader
 				.readLine()) {
 			String item[] = Util.splitLine(line, "\u0001");
-			executablesMap.put(item[0]+" · "+item[1],item[2]);
-		
-			// Single sorting would receive a singular argument. 
-			// perhaps make this more robust in the future to account for user sorting preferences
-			//	executablesMap.put(item[0], item[1]);		
+			executablesMap.put(item[0] + " · " + item[1], item[2]);
+
+			// Single sorting would receive a singular argument.
+			// perhaps make this more robust in the future to account for user
+			// sorting preferences
+			// executablesMap.put(item[0], item[1]);
 		}
 
 		reader.close();

@@ -1,5 +1,6 @@
 #!/bin/ash -
-# aloop.sh - version 20130201,a,stepk
+# aloop.sh - version 20130208,a,stepk
+# a.k.a. parse.sh in KUAL git
 # Tested on KT 5.1.2 /bin/busybox ash (it's ash not (ba)sh!), version banner:
 #   BusyBox v1.17.1 (2012-07-17 16:29:54 PDT) multi-call binary
 # and on K3 /bin/busybox sh running on KT 5.1.2, version banner:
@@ -39,7 +40,6 @@ PRODUCTNAME="Kindle Unified Launcher"
 EXTENSIONDIR=/mnt/us/extensions
 SEPARATOR=`printf "\x01"`
 COLORMAX=0 # for --format=twolevel --colors=
-
 case " $* " in
   *" -l "* | *" --log "*)
      opt_log=1; 
@@ -90,15 +90,19 @@ str_repl_chars () {
 # variable json_name0, which is the top level menu name, a.k.a. the group.
 # Finally json_parse calls function PROC, which outputs a formatted combination
 # for json_* (and previously-defined) xml_* variables.
+# Note: json_parse() modifies the values of json_name and json_name0 by
+# removing $SEPARATOR and squeezing spaces in preparation for making labels.
+# Unmodified values are saved in jsonU_name and jsonU_name0 (-f=debuginfo).
 json_parse () {
-  local IFS=${WSP_IFS} line menu=$1 proc=$2 count=0
+  local - IFS=${WSP_IFS} line menu=$1 proc=$2 count=0
+  local CountNulls=0 # $proc may increment it
   shift 2
   local _w='[0-9a-zA-Z_]' _s=`printf "[\x20\x09]"`
-  local dquot=`printf "\x22"` x01=`printf "\x01"` lf="`printf '\x0D'`"
-  local json_name0 json_name json_action json_params json_priority
-  unset vars json_name0
+  local dquot=`printf "\x22"` x01=`printf "\x01"` lf="`printf '\x0D'`" esc='\\\\\\'
+  local json_name0 jsonU_name0 json_name jsonU_name json_action json_params json_priority
+  unset vars json_name0 jsonU_name0
   log $menu
-  sed -ne "
+  sed -ne "# convert json key:value to shell var=value
 	# dispatch
 	/\"action\"/b magic # includes key 'name'
 	/\"name\"/b magic0  # top-level key 'name'
@@ -122,17 +126,26 @@ json_parse () {
 	s/${dquot}${_s}*:${_s}*/=/g
 	s/\n${dquot}/\njson_/g
 #p;b
-	# escape interior double quotes
-	s/${dquot}/${x01}/ ; s/${dquot}\$/${x01}/
-	s/${dquot}/\\\\${x01}/g
-	s/${x01}/${dquot}/g
-#p;b
 	p # done
 	a EVAL
   " < $menu \
-  | sed -ne "
-	# sanitize names (labels)
-	/json_name.\?=/{s/[|${SEPARATOR}]//g; s/[:;]/ /g; s/[${WSP}]\+/ /g}
+  | sed -ne "# apply escapes and cleanups
+	{
+		# translate json-escaped interior double quotes
+		s/${dquot}/${x01}/ ; s/${dquot}\$/${x01}/
+		s/${dquot}/\\\\${x01}/g
+		s/${x01}/${dquot}/g
+	#p;b
+	}
+	/json_name.\?=/{ # for each json_name? variable
+		# save copy as jsonU_name?
+		h; s/^\(.*json\)_\([^=]\+\)=\(.*\)$/\1U_\2=\3/g; p;x
+		# clean up original to prepare for making labels
+		s/[${SEPARATOR}]//g; s/[${WSP}]\+/ /g}
+	}
+	# shell-escape special characters that affect doublequoted strings
+	s/\([$]\)/${esc}\1/g
+#p;b
 	p # done
 #p;b
   " \
@@ -140,7 +153,7 @@ json_parse () {
     while read line; do
 #echo $line; continue
       if [[ EVAL = "$line" ]]; then
-        unset json_name json_action json_params json_priority
+        unset json_name jsonU_name json_action json_params json_priority
         eval $vars
         unset vars
         [[ -z "$json_action" ]] && continue
@@ -149,7 +162,7 @@ json_parse () {
         vars="$vars${lf}$line"
       fi
     done
-   return $count
+    return $count
   }
 }
 
@@ -186,26 +199,32 @@ xml_var () {
 
 # dump xml_* and json_* variables
 debug_info () {
-#available in genuine bash only, prints all xml_* and json_* variables
-#      local v
+  local - v c=0 vars jsonpath=$1 jsonfile=$2
+  echo $jsonpath/$jsonfile
+#bash only: supports varname expansion and varname reference
 #      echo -n "${0##*/} parsed:"
-#      for v in ${!xml_*};  do echo -n " $v(${!v})"; done
-#      for v in ${!json_*}; do echo -n " $v(${!v})"; done
-#      echo
+#      for v in ${!xml_*};  do echo -n " $v='${!v}'"; done
+#      for v in ${!json_*}; do echo -n " $v='${!v}'"; done
+#      for v in ${!jsonU_*}; do echo -n " $v='${!v}'"; done
   
-#ash: variable names are hardwired
-#The following variables are available; $1 is the extension's dir fullpath
- echo -n "path($1)"
- echo -n " xml_name($xml_name) json_name0($json_name0)"
- echo -n " json_name($json_name) json_action($json_action) json_params($json_params) json_priority($json_priority)"
- echo
+#ash: hardwired variable names
+ vars="xml_name json_name0 jsonU_name0
+ json_name jsonU_name
+ json_action json_params
+ json_priority"
+ for v in $vars; do
+   eval "[[ \"\$$v\" ]] && printf \"%4d $v='%s'\\n\" \$((++c)) \"\$$v\""
+ done
 }
 
 # default_output displays json_name,action' 'json_params
 default_output () {
-  local label=$json_name apath=$json_action group
+  local - label=${json_name} apath=$json_action group
   # top level menu name
   [[ "${json_name0}" ]] && group=${json_name0} || group=${xml_name}
+  # prevent null labels
+  [[ -z "$group" ]] && group=${1##*/}
+  [[ -z "$label" ]] && label=$((++CountNulls))
   # fully qualify action path
   [[ -e "$1/$json_action" ]] && apath=$1/$json_action
   
@@ -221,6 +240,9 @@ touch_runner () {
   local label=$json_name apath=$json_action group
   # top level menu name
   [[ "${json_name0}" ]] && group=${json_name0} || group=${xml_name}
+  # prevent null labels
+  [[ -z "$group" ]] && group=${1##*/}
+  [[ -z "$label" ]] && label=$((++CountNulls))
   # qualify label
   label=`str_repl_chars "$group" . _`.$label
   
@@ -232,6 +254,9 @@ two_level () {
   local label=$json_name apath=$json_action group
   # top level menu name
   [[ "${json_name0}" ]] && group=${json_name0} || group=${xml_name}
+  # prevent null labels
+  [[ -z "$group" ]] && group=${1##*/}
+  [[ -z "$label" ]] && label=$((++CountNulls))
   # fully qualify action path
   [[ -e "$1/$json_action" ]] && apath=$1/$json_action
  
@@ -255,7 +280,7 @@ colorize () {
 # usage: loop [ignorecount]
 # find and process all config.xml files and their corresponding json menu files
 loop () {
-local f px pj nj count=0 ignorecount=0 t
+local - IFS=${NO_WSP} f px pj nj count=0 ignorecount=0 t
 case $1 in
   ignorecount) ignorecount=1 ;;
 esac
@@ -280,10 +305,10 @@ for f in $(find $EXTENSIONDIR -name config.xml); do
   esac
   nj=${xml_menu##*/} # nj json menu filename
   if [[ -f $pj/$nj ]]; then
-    json_parse $pj/$nj $proc $pj
-    count=$(( $? + $count ))
+    json_parse $pj/$nj $proc $pj $nj || count=$(($? + $count)) # allow -e by || 
   fi
 done
+log loop counted $count entries
 # when extensions dir is empty
 [[ 00 = $count$ignorecount ]] && test_applet install && loop ignorecount
 return 0
@@ -400,3 +425,4 @@ log "exit($?)"
 }
 
 main $*
+
