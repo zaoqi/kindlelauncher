@@ -125,7 +125,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	}
 
 	private void initializeState() throws IOException, FileNotFoundException,
-			InterruptedException {
+			InterruptedException, NumberFormatException {
 		cleanupTemporaryDirectory();
 		killKnownOffenders(Runtime.getRuntime());
 
@@ -135,16 +135,20 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		for (String line = reader.readLine(); line != null; line = reader
 				.readLine()) {
 			String item[] = Util.splitLine(line, "\u0001");
-			executablesMap.put(item[0] + " · " + item[1], item[2]);
-
-			// Single sorting would receive a singular argument.
-			// perhaps make this more robust in the future to account for user
-			// sorting preferences
-			// executablesMap.put(item[0], item[1]);
+			switch (Integer.parseInt(item[0])) {
+				case 2: executablesMap.put(item[1], item[2]);
+					break;
+				case 3: executablesMap.put(item[1] + " · " + item[2], item[3]);
+					break;
+				case 4: executablesMap.put(item[2] + " · " + item[3], item[4]); // item[1] <= parse.sh -c not used
+					break;
+				default: executablesMap.put("err bad meta", "false");
+			}
 		}
 
 		reader.close();
-		parseFile.delete();
+		//parseFile.delete(); //stepk: leave script in place to provide for backdoor option -e
+		parseFile.deleteOnExit(); //stepk: kindlet deletes on clean exit & parse.sh deletes leftovers
 	}
 
 	private File extractParseFile() throws IOException, FileNotFoundException {
@@ -339,7 +343,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		bw.newLine();
 
 		if (background) {
-			bw.write(cmd + " &");
+			bw.write("{ " + cmd + " ; } &"); // wrap inside {} to support backgrounding multiple commands, e.g., x=1; use.sh $x ...
 		} else {
 			bw.write(cmd);
 		}
