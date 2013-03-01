@@ -1,5 +1,5 @@
 #!/bin/ash -
-# aloop.sh - version 20130226,a,stepk
+# aloop.sh - version 20130226,b,stepk
 # a.k.a. parse.sh in KUAL git
 # Tested on KT 5.1.2 /bin/busybox ash (it's ash not (ba)sh!), version banner:
 #   BusyBox v1.17.1 (2012-07-17 16:29:54 PDT) multi-call binary
@@ -54,7 +54,8 @@ set -f # prevent pathname expansion
 # dev can adjust these four variables:
 CONFIGFILE="KUAL.cfg" # first found in $EXTENSIONDIR
 PRODUCTNAME="KUAL"
-EXTENSIONDIR="/mnt/us/extensions:./extensions" # colon-separated list
+#EXTENSIONDIR="/mnt/us/extensions:./extensions" # colon-separated list
+EXTENSIONDIR="/mnt/us/extensions" # colon-separated list
 SEPARATOR=`printf "\x01"`
 
 # --- --- --- #

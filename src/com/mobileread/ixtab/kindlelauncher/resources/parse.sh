@@ -1,12 +1,12 @@
 #!/bin/ash -
-# aloop.sh - version 20130226,a,stepk
+# aloop.sh - version 20130226,b,stepk
 usage () {
 local -
 }
 set -f 
 CONFIGFILE="KUAL.cfg" 
 PRODUCTNAME="KUAL"
-EXTENSIONDIR="/mnt/us/extensions:./extensions" 
+EXTENSIONDIR="/mnt/us/extensions" 
 SEPARATOR=`printf "\x01"`
 COLORMAX=0 
 EXITSTATUS=0
