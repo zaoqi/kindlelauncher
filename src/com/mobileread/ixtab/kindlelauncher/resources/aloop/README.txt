@@ -10,25 +10,32 @@ Using
 PLEASE NOTE USAGE, IT'S: /bin/ash /path/to/aloop.sh [options]
 
 # /bin/ash aloop.sh -h 
-Usage: aloop.sh [options]
+Usage: aloopx.sh [options]
   parse menu files in /mnt/us/extensions:./extensions
   options may also be set in {/mnt/us/extensions:./extensions}/KUAL.cfg as
     KUAL_options="-f=twolevel -s" # (default options)
   when both KUAL_options and command-line options are present they are combined
   in this order, and if conflicts arise the last option wins.
 
-Options: *=active when no options or just --log found in command-line or KUAL.cfg
+Options: *=active when no options or just -l found in command-line or KUAL.cfg
  -h | --help
- -c=MAX | --colors=MAX   add cyclical color index in [0..MAX] when -f=twolevel
- -e=N[,ARGS] | --execmenu=N[,ARGS] exec backdoor entry N with ,-separated ARGS
-*-f=NAME | -format=NAME  select output format, NAME is one of:
-   default     default format, also when -f isn't specified, sortable
+ -c=MAX   add modular color index in [0..MAX] when -f=twolevel
+ -e=N[,ARGS]   exec backdoor entry N with ,-separated ARGS
+*-f=NAME   select output function, NAME is one of:
+   onelevel    action name, sortable
    debuginfo   dump xml_* and json_* variables
    touchrunner compatible with TouchRunner launcher, sortable
-*  twolevel    default + group name, sortable, see also -c
- -l | --log    enable logging to stderr (ignored in $CONFIGFILE)
-*-s | --sort   sort output lexicographically (ABC)
- -S | --nsort  sort output by priority (123)
+*  twolevel    group name + action name, sortable, see also -c
+ -l   enable logging to stderr (ignored in $CONFIGFILE)
+ -p=FMT    output format specifier (a debugging aid), FMT is one of:
+   tbl     tabular
+   tab     tab-separated
+   "..."   a printf format specification string
+   =       passthrough
+*-s=ORDER   sort output, ORDER is one of:
+*  abc  lexicographic by group, names within each group do not move
+   ABC  lexicographic by group and by action name, same name groups coalesce
+   123  by priority, group's first then action's (json)
  
 Limitations:
 . Supports json menus only
@@ -37,27 +44,6 @@ Limitations:
   {"name": "a label", "priority": 3, "action" : "foo.sh", "params": "p1,p2"}
   with or without a trailing comma
 . Character codes > 127 can lead to unparsable menu entries
-.........
-Usage: aloop.sh [options]
-  parse menu files in /mnt/us/extensions
-
-Options:
- -h | --help
- -c=MAX | --colors=MAX   add cyclical color index in [0..MAX] when -f=twolevel
- -f=NAME | -format=NAME  select output format, NAME is one of:
-   default     default format, also when -f isn't specified, sortable
-   debuginfo   dump xml_* and json_* variables
-   touchrunner compatible with TouchRunner launcher, sortable
-   twolevel    default + group name, sortable, see also -c
- -l | --log    enable logging to stderr
- -s | --sort   sort output by label
- 
-Limitations:
-. Supports json menus only
-. Supports one- or two-level menus only
-. A menu entry must not extend across multiple lines. Example of a valid entry:
-  {"name": "a label", "priority": 3, "action" : "foo.sh", "params": "p1,p2"}
-  with or without a trailing comma
 
 Examples
 --------
@@ -91,14 +77,44 @@ Release history
 ---------------
 
 --- KT/PW/K3/DX monolithic versions below
+20130226,a,stepk
+# Changed the test applet from 411.sh to printing exit message "Add extensions."
+  Test applet (un)install error messages redirected to tier 1 button.
++ Added 'screen reporting area' function for other scripts to call.
+  For developers, see README-dev.txt for more info
+  (required changing Kindlet java code).
+
+20130225,a,stepk
+# changed/renamed command-line options as follows:
+  . removed long options: --format --sort --colors --execmenu --log;
+    use the short form equivalents: -f -s -c -e -l
+  . removed short option -S
+    -S becomes -s=123 and -s becomes -s=abc (default)
+  . -f=default becomes -f=onelevel (-f=twolevel is the default)
++ added lexicographic sort option to sort by action name in addition to
+  sorting by group name; applies to -f=twolevel only. Summary of sort options
+  . abc  lexicographic by group, names within each group do not move
+  . ABC  lexicographic by group and by action name, same name groups coalesce
+  . 123  by priority, group priority first then action priority within group 
+         (and lexicographic by group name within each priority tier)
++ added KUAL menu to apply all three sort options
++ added visual aid debugging option -p=FMT to output by columns, etc.
+# internal changes:
+  . tier placement
+  . improved error handling and visualization
+  . now emit each record as multiple lines
+    (required changing the Kindlet's java code - read logic)
+- fixed an issue with identical labels in the Kindlet's java code
+- minor tweaks and fixes
++ more developer's documentation
 
 20130221,a,stepk
 + read script options from KUAL.cfg, type aloop.sh -h for rules
-  (upon config errors the script bails out sensibly)
+  (upon config errors the script carries on with default options)
 + option -S or --nsort sorts menu by priority (json)
 + (tada!) enter the ***KUAL menu***
   with three new spanking functions:
-  . Change sort order: lexicographic (ABC), by priority (123)
+  . Change sort order: lexicographic (abc), by priority (123)
   . 'Replace/Restore Store Button' (*)
     K5/PW only, tested on 5.3.2 should work on 5.1.2 also
   . Quit KUAL menu

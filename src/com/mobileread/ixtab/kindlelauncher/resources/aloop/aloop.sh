@@ -1,5 +1,5 @@
 #!/bin/ash -
-# aloop.sh - version 20130221,a,stepk
+# aloop.sh - version 20130226,a,stepk
 # a.k.a. parse.sh in KUAL git
 # Tested on KT 5.1.2 /bin/busybox ash (it's ash not (ba)sh!), version banner:
 #   BusyBox v1.17.1 (2012-07-17 16:29:54 PDT) multi-call binary
@@ -8,6 +8,8 @@
 # UTF-8 support untested.
 
 usage () {
+local -
+: BSTR
 echo "Usage: ${0##*/} [options]
   parse menu files in $EXTENSIONDIR
   options may also be set in {$EXTENSIONDIR}/$CONFIGFILE as
@@ -15,19 +17,26 @@ echo "Usage: ${0##*/} [options]
   when both KUAL_options and command-line options are present they are combined
   in this order, and if conflicts arise the last option wins.
 
-Options: *=active when no options or just --log found in command-line or $CONFIGFILE"
+Options: *=active when no options or just -l found in command-line or $CONFIGFILE"
 cat << 'EOT'
  -h | --help
- -c=MAX | --colors=MAX   add cyclical color index in [0..MAX] when -f=twolevel
- -e=N[,ARGS] | --execmenu=N[,ARGS] exec backdoor entry N with ,-separated ARGS
-*-f=NAME | -format=NAME  select output format, NAME is one of:
-   default     default format, also when -f isn't specified, sortable
+ -c=MAX   add modular color index in [0..MAX] when -f=twolevel
+ -e=N[,ARGS]   exec backdoor entry N with ,-separated ARGS
+*-f=NAME   select output format, NAME is one of:
+   onelevel    action name, sortable
    debuginfo   dump xml_* and json_* variables
    touchrunner compatible with TouchRunner launcher, sortable
-*  twolevel    default + group name, sortable, see also -c
- -l | --log    enable logging to stderr (ignored in $CONFIGFILE)
-*-s | --sort   sort output lexicographically (ABC)
- -S | --nsort  sort output by priority (123)
+*  twolevel    group name + action name, sortable, see also -c
+ -l   enable logging to stderr (ignored in $CONFIGFILE)
+ -p=FMT    output format specifier (a debugging aid), FMT is one of:
+   tbl     tabular
+   tab     tab-separated
+   "..."   a printf format specification string
+   =       passthrough
+*-s=ORDER   sort output, ORDER is one of:
+*  abc  lexicographic by group, names within each group do not move
+   ABC  lexicographic by group and by action name, same name groups coalesce
+   123  by priority, group's first then action's (json)
  
 Limitations:
 . Supports json menus only
@@ -37,6 +46,7 @@ Limitations:
   with or without a trailing comma
 . Character codes > 127 can lead to unparsable menu entries
 EOT
+: ESTR
 }
 
 set -f # prevent pathname expansion
@@ -46,10 +56,14 @@ CONFIGFILE="KUAL.cfg" # first found in $EXTENSIONDIR
 PRODUCTNAME="KUAL"
 EXTENSIONDIR="/mnt/us/extensions:./extensions" # colon-separated list
 SEPARATOR=`printf "\x01"`
-COLORMAX=0 # for --format=twolevel --colors=
+
+# --- --- --- #
+COLORMAX=0 # for -f=twolevel -c=
+EXITSTATUS=0
+FORMATTER="formatter" # $1:''(\n,default) 'tbl'(table) 'tab'(\t)
 
 case " $* " in
-  *" -l "* | *" --log "*)
+  *" -l "*)
      opt_log=1; 
      alias log='echo >&2'" ${0##*/}: " # enabled
   ;;
@@ -77,11 +91,17 @@ GT='>'
 NBSP0='&nbsp;' ; NBSP1=`printf "\xC2\xA0"` # 2-byte UTF-8 encoded
 
 alias sort='/bin/busybox sort' # GNU sort needs setting LC_ALL to work like BB
+alias SORT="/bin/busybox sort -t '$SEPARATOR'"
 alias find='/bin/busybox find'
 alias sed='/bin/busybox sed'
 alias grep='/bin/busybox grep'
+alias CUT="/bin/busybox cut -d '$SEPARATOR'"
 
-# Kindle Screen messages
+# Kindle Screen messages - see screen_msg()
+: SSTR
+enTestApplet="              WELCOME TO $PRODUCTNAME
+
+$PRODUCTNAME IS INSTALLED. PLEASE ADD SOME EXTENSIONS"
 enStoreButtonReplaced="
 STORE BUTTON REPLACED
 PLEASE RESTART YOUR KINDLE
@@ -93,15 +113,59 @@ FOR CHANGES TO TAKE EFFECT"
 enStoreButtonUnchanged="
 STORE BUTTON UNCHANGED
 ANOTHER APP ALREADY HOLDS IT"
+: RSTR
 
-enErrConfig="
-ERROR LOADING CONFIGURATION FILE"
-enErrUsage="
-USAGE ERROR OF ${0##*/}"
+# eips messages - these must fit in a screen line (48 chars)
+XenErrNotInstalled="$PRODUCTNAME incomplete install." 
 
-# Kindlet button messages - see bail_out()
-XenErrConfig="err config"
-XenErrUsage="err usage"
+# Kindlet button messages - these must fit in a button label - see emit_error()
+XenErrConfig="config"
+XenErrUsage="usage"
+XenErrNoTestApplet="can't install the test applet"
+XenErrTestAppletStuck="can't uninstall the test applet"
+
+# display up to four lines on the kindle screen
+# usage (note where the quotes go): screen_msg [-lm=COL] [-wo] "$line1
+#line2
+#line3
+#line4"
+# Default left margin is column 5. Insert -lm=N, with N=0..48, to change
+# Add -wo (after -lm, if any) to write OVER a previous screen_msg (skips blanking the reporting area)
+screen_msg () {
+  local - IFS=${WSP_IFS} msg caps col row=8 line i wo=0
+  case "$1" in -lm=[0-9]|-lm=[0-9][0-9]) col=${1#-lm=} ; shift ;; esac
+  case "$1" in -wo) wo=1 ; shift ;; esac
+  msg="$@"
+  caps=`eips -i 2>/dev/null` || return # not a Kindle or a Kindle w/o eips
+  set -- ${caps#*Variable framebuffer info}
+#local i=0; while [[ $((++i)) -le $# ]]; do printf "%2d " $i; eval echo "\${$i}"; done
+  if [[ 0 = $wo ]]; then
+    local xres=$2 # yres=$4
+    eips -d l=00,w=$xres,h=104 -x 0 -y 148 2>/dev/null 1>&2
+    eips -d l=ff,w=$xres,h=100 -x 0 -y 150 2>/dev/null 1>&2
+  fi
+  IFS=${NO_WSP}
+  i=0
+  printf "%s\n" "$msg" | while read line; do
+    [[ $((++i)) -le 4 ]] || break
+    case "$line" in
+      -*) line=${line##-} ;; # delete leading dash(es), eips goes crazy
+    esac
+    eips ${col:-5} $((row++)) "${line}" 2>/dev/null 1>&2
+  done
+}
+
+# let other scripts execute some of my functions
+unset XSECT
+case " $* " in
+*" -x "*) while [[ "$1" != -x ]]; do shift; done; shift;
+case "$1" in
+0) shift; #XSECT=`env`
+;;
+1) shift; screen_msg "$@"; exit
+;;
+esac
+esac
 
 # usage: script_full_path [-p]
 script_full_path () {
@@ -136,7 +200,7 @@ clean_up_previous_runs () {
   case "$pth/" in */tmp/*|*/temp/*) true ;; *) return ;; esac
   local x me=$1 name=${1##*/} suf glob
   suf="${name##*.}"; [[ -n "$suf" ]] && suf=".$suf"
-  glob="$pth/${name%-*}-*${suf}" # -* matches for "-PIDs"
+  glob="$pth/${name%-*}-*${suf}" # -* matches for -PIDs
   log "clean-up glob($glob)=\"`echo ${glob}`\""
   IFS=${NO_WSP}
   for x in `printf "%s\n" ${glob}`; do [[ "$x" = "$me" ]] || rm "$x"; done
@@ -177,6 +241,7 @@ json_parse () {
   local json_name0 jsonU_name0 json_name jsonU_name json_action json_params json_priority json_priority0
   unset vars json_name0 jsonU_name0 json_priority0
   log $menu
+: SSTR
   sed -ne "# convert json key:value to shell var=value
 	# dispatch
 	/\"action\"/b magic # includes keys 'name' and 'priority'
@@ -194,7 +259,7 @@ json_parse () {
 	s/\([^${x01}]\+\)/${x01}\1${x01}/
 	s/,${_s}*${dquot}/${x01}${x01}${dquot}/g
 #p;b
-	# split them onto separate lines (multiline pattern space)
+	# split them onto separate lines (formatter pattern space)
 	s/${x01}\([^${x01}]\+\)${x01}/\n\1/g
 #p;b
 	# morph each line into ash variable syntax
@@ -228,6 +293,7 @@ json_parse () {
   " \
   | {
     while read line; do
+: RSTR
 #(before 2nd sed above)  | { while read line; do echo >&2 ">$line<"; echo "$line"; done; }
 #echo >&2 ">>$line<<"; continue
       if [[ EVAL = "$line" ]]; then
@@ -258,7 +324,7 @@ xml_var () {
   for v in $*; do eval "unset xml_$v"; done
   while read line; do
     case $line in
-    *"<extension>"*) valid=1 ;; # it's an extension's xml file
+    *"<extension>"*) valid=1 ;; # extension xml file
     *) for v in $*; do
          case $line in
          *${LT}$v${GT}* | *${LT}$v${SPACE}*)
@@ -296,7 +362,7 @@ debug_info () {
  done
 }
 
-# usage by default_output() et al.: shift; set_backdoor_args "$@"
+# usage by one_level() et al.: shift; set_backdoor_args "$@"
 set_backdoor_args() {
   json_name0=$3
   json_priority0=$4
@@ -306,10 +372,10 @@ set_backdoor_args() {
   json_params=$8
 }
 
-# default_output emits 2,json_name,action' 'json_params
+# one_level emits 2,json_name,action' 'json_params
 # args when backdoor==$1: 'backdoor',action_path,json_filename,json_name0,json_priority0,json_priority,json_name,json_action,json_params
 # args otherwise: action_path,json_filename
-default_output () {
+one_level () {
   case $1 in backdoor) shift; set_backdoor_args "$@";; esac
   local - label=${json_name} apath=$json_action group action_path=$1 priority=''
   # top level menu name
@@ -320,17 +386,13 @@ default_output () {
   # fully qualify action path
   [[ -e "$action_path/$json_action" ]] && apath=\"$action_path/$json_action\"
   # sort by priority?
-  [[ priority = "$opt_sort" ]] && priority="${json_priority0:-0}$SEPARATOR${json_priority:-0}$SEPARATOR"
+  [[ 123 = "$opt_sort" ]] && priority="${json_priority0:-0}$SEPARATOR${json_priority:-0}$SEPARATOR"
   
-  echo "${priority}2$SEPARATOR$group · $label$SEPARATOR$apath $json_params"
-# 20130130,a,stepk:
-# Prepended "$group · " to conform to twobob's interim script. Consider instead
-# using # -f=twolevel to provide the kindlet with group + label as separate
-# tokens, which would make sense to build a nested menu GUI, if ever.
+  echo "$TIER$SEPARATOR${priority}2$SEPARATOR$group · $label$SEPARATOR$apath $json_params"
 }
 
-# touch_runner emits action,json_params,group'.'json_name (separator ';')
-# see also default_output() for args
+# touch_runner emits action_path,action,json_params,group'.'json_name (separator ';')
+# see also one_level() for args
 touch_runner () {
   case $1 in backdoor) shift; set_backdoor_args "$@";; esac
   local label=$json_name action=$json_action group action_path=$1 priority=''
@@ -342,13 +404,13 @@ touch_runner () {
   # qualify label
   label=`str_repl_chars "$group" . _`.$label
   # sort by priority?
-  [[ priority = "$opt_sort" ]] && priority="${json_priority0:-0}$SEPARATOR${json_priority:-0}$SEPARATOR"
+  [[ 123 = "$opt_sort" ]] && priority="${json_priority0:-0}$SEPARATOR${json_priority:-0}$SEPARATOR"
   
-  echo "$priority$action_path$SEPARATOR$action$SEPARATOR${json_params:-NULL}$SEPARATOR$label"
+  echo "$TIER$SEPARATOR$priority$action_path$SEPARATOR$action$SEPARATOR${json_params:-NULL}$SEPARATOR$label"
 }
 
 # two_level emits 3,group,json_name,action' 'json_params
-# see also default_output() for args
+# see also one_level() for args
 two_level () {
   case $1 in backdoor) shift; set_backdoor_args "$@";; esac
   local label=$json_name apath=$json_action group action_path=$1 priority=''
@@ -360,18 +422,20 @@ two_level () {
   # fully qualify action path
   [[ -e "$action_path/$json_action" ]] && apath=\"$action_path/$json_action\"
   # sort by priority?
-  [[ priority = "$opt_sort" ]] && priority="${json_priority0:-0}$SEPARATOR${json_priority:-0}$SEPARATOR"
+  [[ 123 = "$opt_sort" ]] && priority="${json_priority0:-0}$SEPARATOR${json_priority:-0}$SEPARATOR"
+#group="$group,${json_priority0:-0}" # DEBUG
+#label="$label,${json_priority:-0}" # DEBUG
  
-  echo "${priority}3$SEPARATOR$group$SEPARATOR$label$SEPARATOR$apath $json_params"
+  echo "$TIER$SEPARATOR${priority}3$SEPARATOR$group$SEPARATOR$label$SEPARATOR$apath $json_params"
 }
 
-# prepend cyclical color index - applied when -f=twolevel and -c>0
+# prepend modular color index - applied when -f=twolevel and -c>0
 # emits one more field
 colorize () {
   # global COLORMAX SEPARATOR
   local IFS=${NO_WSP} cindex=-1 cstate='' line meta group
   while read line; do
-    IFS=${SEPARATOR} ; set $line ; meta=$1 group=$2 ; IFS=${NO_WSP}
+    IFS=${SEPARATOR} ; set -- $line ; meta=$1 group=$2 ; IFS=${NO_WSP}
     shift 1 # $* = $line w/o $meta
     if [[ "$cstate" != "$group" ]]; then
       cstate=$group
@@ -384,7 +448,7 @@ colorize () {
 # usage: loop [ignorecount]
 # find and process all config.xml files and their corresponding json menu files
 loop () {
-local - IFS=:${NO_WSP} f px pj nj count=0 ignorecount=0 t list 
+local - IFS=:${NO_WSP} TIER=2 f px pj nj count=0 ignorecount=0 t list 
 case $1 in
   ignorecount) ignorecount=1 ;;
 esac
@@ -392,10 +456,10 @@ for f in $(find $EXTENSIONDIR -name config.xml 2>&-); do
   log $f
   xml_var $f name menu
 #echo "xml_name($xml_name) xml_menu($xml_menu)"
-  [[ "$xml_menu" ]] || continue # not an extension's config.xml file
+  [[ "$xml_menu" ]] || continue # not extension config.xml file
   case "${xml_menu##*.}" in
     json) ;; # ok
-    *) continue ;; # don't know how to handle this menu type
+    *) continue ;; # do not know how to handle this menu type
   esac
   px=${f%/*} # px path to config.xml
   # pj path to json menu
@@ -422,33 +486,41 @@ return 0
 
 # output KUAL's own menu entries, see also exec_self_menu()
 emit_self_menu() {
-  local - IFS=${WSP_IFS} c0=$count
+  local - IFS=${WSP_IFS} TIER=3 c0=$count
   # menu entry #1, replace/restore Store button with KUAL
   local verb=Replace btnpath=`store_button_filepath`
   if [[ -e "$btnpath" ]]; then
     [[ -e "$btnpath.KUAL_bak" ]] && verb=Restore
     $proc backdoor \
     "${SCRIPTPATH%/*}" '(backdoor)' \
-    "$NBSP1$PRODUCTNAME" 1000 0 "$NBSP1$verb Store Button" \
+    "$PRODUCTNAME" 1000 0 "$verb Store Button" \
     "/bin/ash" "\"$SCRIPTPATH\" \"-e=1,$verb\"" \
     && count=$((++count))
   fi
   # menu entry #2, change KUAL sort order
   local order0 order1 opt
   case "$opt_sort" in
-    lexicographic) order0=ABC; order1=123; opt=-S ;;
-    priority)      order0=123; order1=ABC; opt=-s ;;
-    *)             order0='';  order1=ABC; opt=-s ;; # shouldn't happen
+    abc)   menu1=123; opt1=-s=123 ; menu2=ABC; opt2=-s=ABC ;;
+    123)   menu1=abc; opt1=-s=abc ; menu2=ABC; opt2=-s=ABC ;;
+    ABC|*) menu1=123; opt1=-s=123 ; menu2=abc; opt2=-s=abc ;;
   esac
   $proc backdoor \
   "${SCRIPTPATH%/*}" '(backdoor)' \
-  "$NBSP1$PRODUCTNAME" 1000 0 "${NBSP1}Sort Menu \"$order1\"" \
-  "/bin/ash" "\"$SCRIPTPATH\" \"-e=2,$opt\"" \
+  "$PRODUCTNAME" 1000 0 "Sort Menu \"$menu1\"" \
+  "/bin/ash" "\"$SCRIPTPATH\" \"-e=2,$opt1\"" \
   && count=$((++count))
+  $proc backdoor \
+  "${SCRIPTPATH%/*}" '(backdoor)' \
+  "$PRODUCTNAME" 1000 0 "Sort Menu \"$menu2\"" \
+  "/bin/ash" "\"$SCRIPTPATH\" \"-e=2,$opt2\"" \
+  && count=$((++count))
+
+  # other button above this line #
+  TIER=3.99
   # menu entry #99, quit KUAL
   $proc backdoor \
   "/dev/null/sic" '(backdoor)' \
-  "$NBSP1$NBSP1$PRODUCTNAME" 1000 99 "$NBSP1${NBSP1}Quit" \
+  "$PRODUCTNAME" 1000 99 "Quit" \
   "true" "" \
   && count=$((++count))
   #
@@ -492,18 +564,19 @@ exec_self_menu() {
     local _s=`printf "[\x20\x09]"` dquot=`printf "\x22"`
     IFS=${NO_WSP}
     newtext=$( #
+: SSTR
       sed -e "
 /^${_s}*KUAL_options=/ {
 	# delete existing sort option(s)
-	s/${_s}-[sS]\>//g
-	s/-[sS]\>${_s}//g
-	s/-[sS]${dquot}/${dquot}/
-	s/${_s}--[n]\?sort\>//g
-	s/--[n]\?sort\>${_s}//g
-	s/--[n]\?sort\>${dquot}/${dquot}/
+	s/${_s}-s=.*\>//g
+	s/-s=.*\>${_s}//g
+	s/-s=.*${dquot}/${dquot}/
 }
       " "$config" \
-    | { while read line; do # add new sort option
+    | {
+: RSTR
+    # add new sort option
+    while read line; do
 #echo >&2 ">$line<"
         case $line in #(
           *KUAL_options=\"\") echo "KUAL_options=\"$opt\"" ; found=1
@@ -515,7 +588,8 @@ exec_self_menu() {
           *) echo "$line"
         ;;
         esac
-      done; [[ 0 = $found ]] && echo KUAL_options=\"$opt\"
+      done
+      [[ 0 = $found ]] && echo KUAL_options=\"$opt\"
       }
     ) #
     [[ 0 != ${#newtext} ]] && echo "$newtext" > "$config"
@@ -537,22 +611,6 @@ KUAL_filepath() {
   [[ -e "$1" ]] && echo -n "$1"
 }
 
-# display up to four lines on the kindle screen
-# usage (note where the quotes go): screen_msg "$line1
-#line2
-#line3
-#line4"
-screen_msg() {
-  local - IFS=${WSP_IFS} msg="$*" caps row=8 line
-  caps=`eips -i 2>/dev/null` || return # not a Kindle or a Kindle w/o eips
-  set -- ${caps#*Variable framebuffer info}
-#local i=0; while [[ $((++i)) -le $# ]]; do printf "%2d " $i; eval echo "\${$i}"; done
-  local xres=$2 # yres=$4
-  eips -d l=00,w=$xres,h=104 -x 0 -y 148
-  eips -d l=ff,w=$xres,h=100 -x 0 -y 150
-  echo "$msg" | while read line; do eips 5 $((row++)) "$line"; done
-}
-
 # usage: test_applet install|uninstall
 # adds/removes a simple test applet in First($EXTENSIONDIR)
 # Installing clears and recreates an existing installation of the test applet
@@ -565,12 +623,14 @@ test_applet () {
   case "$1" in
   uninstall)
     if [[ -d "$dir" ]]; then
-      echo >&2 "${0##*/}: can't uninstall test applet"
+      echo >&2 "${0##*/}: XenErrTestAppletStuck"
+      emit_error 1 XenErrTestAppletStuck
       return 1
     fi
     log "test applet uninstalled"
   ;;
   install)
+: SSTR
     mkdir -p "$dir"
     if ! { [[ -d "$dir" ]] \
     && echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
@@ -586,6 +646,7 @@ test_applet () {
 	</menus>
 </extension>" > "$xml" \
     && echo "{
+      emit_error 1 XenErrNoTestApplet
 \"items\": [
 	{
 		\"name\": \"$NBSP0$PRODUCTNAME\",
@@ -596,80 +657,174 @@ test_applet () {
 	}
 ]
 }" > "$json" \
-    && echo "#/bin/sh -
-exec /usr/bin/lipc-set-prop com.lab126.appmgrd start app://com.lab126.booklet.settings?diagnosticMode=\;411
+    && echo "#/bin/ash -
+[[ \"\$KUAL\" ]] && exec \$KUAL 1 -lm=3 \"$enTestApplet\" || eips 2 38 \"$XenErrNotInstalled\"
 " > "$sh" \
     && chmod +x "$sh" && log "test applet installed"
     }
     then
-      echo >&2 "${0##*/}: can't install test applet"
+      echo >&2 "${0##*/}: $XenErrNoTestApplet"
+      emit_error 1 XenErrNoTestApplet
       return 1
     fi
   ;;
   esac
   return 0
+: RSTR
 }
 
-# drop the first two fields
-drop2 () {
-  local - IFS=${NO_WSP} line
+## drop the first three fields
+#drop3 () {
+#  local - IFS=${NO_WSP} line
+#  while read line; do
+#    line=${line#*$SEPARATOR}
+#    line=${line#*$SEPARATOR}
+#    line=${line#*$SEPARATOR}
+#    echo "$line"
+#  done
+#}
+
+# formatter emits a formatted record; $1=FORMAT_SPEC (default multiline)
+formatter () {
+  local - IFS=$SEPARATOR fmt nl line
+  case $1 in
+    =) fmt="%s" ;; # passthrough
+    tbl) fmt="%-2.2s|%-20.20s|%-25.25s|%-25.25s" ;;
+    tab) fmt="%s\t" ;;
+    *) [[ -n "$1" ]] && fmt=$1 || fmt='%s\n' ;;
+  esac
+  nl="${fmt%\\n}" ; [[ "$nl" = "$fmt" ]] && nl='\n' || unset nl
   while read line; do
-#echo "$line";continue
-    line=${line#*$SEPARATOR}
-    line=${line#*$SEPARATOR}
-    echo "$line"
+    printf "$fmt" $line
+    printf "$nl"
   done
 }
 
-# usage: bail_out ERROR_MESSAGE_NAME [MESSAGE]
-bail_out () {
-  local name=$1; shift
-  eval screen_msg "\$$1
-$*" # to user
-  eval echo \"2$SEPARATOR\${X$1} $*$SEPARATOR\" # to Kindlet
-  exit 1
+# usage: emit_error TIER ERROR_MESSAGE_NAME [MESSAGE]
+# Emit error message as a button label; TIER defines button placement: 
+# . TIER=1 put button at the beginning of the button list
+# . TIER=2 put button according to sort criteria of loop()
+# . TIER=3 put button at the end of the button list
+# Reminder: calling screen_msg() from emit_error() is pointless, since
+# the Kindlet overwrites the screen with the button list.
+emit_error () {
+  local TIER=$1 name=$2 msg
+  shift 2
+  eval "msg=\"\${$name} $*\"" # this must fit in a button label
+  $proc backdoor /dev/null/sic '(backdoor)' '!err!' 0 0 "$msg" true ''
+  EXITSTATUS=1
 }
 
-# main
-main () {
-# global opt_format opt_sort opt_log opt_execmenu
-local opt proc pipe t
+# parse script options
+# Note: short options require '=' to set option values
+get_options () {
+local - opt status=0 x
+# global opt_*
+unset opt_execmenu opt_format opt_sort
+for opt in "$@"; do
+  case "$opt" in
+    -c=*) x=${opt#*=}
+       case "$x" in [0-9]|[0-9][0-9]|[0-9][0-9][0-9]) COLORMAX=$(($x)) ;; esac ;;
+    -e=*) opt_execmenu=${opt#*=} ;;
+    -f=*) x=${opt#*=}
+      case "$x" in
+        onelevel|twolevel|touchrunner|debuginfo) opt_format=$x ;;
+        *)
+          echo >&2 "${0##*/}: invalid option '-f=$x': using default options"
+          echo "emit_error 1 XenErrUsage \"-f=$x invalid, defaults used\""
+        ;;
+      esac
+    ;;
+    -h|--help) usage >&2; exit ;;
+    -l) ;; # pre-parsed near top of file
+    -p=*) FORMATTER="formatter \"${opt#*=}\"" ;;
+    -s=*)  x=${opt#*=}
+      case "$x" in
+        123|abc|ABC) opt_sort=$x ;;
+        *)
+          echo >&2 "${0##*/}: invalid option '-s=$x': using default options"
+          echo "emit_error 1 XenErrUsage \"-s=$x invalid, defaults used\""
+        ;;
+      esac
+    ;;
+    *)
+      echo >&2 "${0##*/}: invalid option '$opt': using default options"
+      echo "emit_error 1 XenErrUsage \"$opt invalid, defaults used\""
+      status=1
+    ;;
+  esac
+done
+return $status
+}
+
+# echo sort step
+sortx () {
+local - t byname=''
+case "$opt_sort" in
+  abc|ABC)
+    case $proc in
+      one_level) echo "| SORT -f -k 1,1n -k 3,3 -s | CUT -f 2-" ;;
+      touch_runner) echo "| SORT -f -k 1,1n -k 5,5 -s | CUT -f 2-" ;;
+      two_level) [[ 0 -lt $COLORMAX ]] && t=' | colorize' || t=''
+        [[ ABC = $opt_sort ]] && byname="-k 4,4" # w/ byname we also sort action names within each group, and same name groups coalesce
+        echo "| SORT -f -k 1,1n -k 3,3 $byname -s | CUT -f 2-$t"
+      ;;
+    esac
+  ;;
+  123)
+    case $proc in
+      one_level) echo "| SORT -f -k 1,1n -k 2,2n -s | CUT -f 4-" ;; # by group name only; adding by action name -k 3,3n yields questionable order because it seemingly mixes different groups together (though one_level really does not support groups)
+      touch_runner) echo "| SORT -f -k 1,1n -k 2,2n -s | CUT -f 4-" ;;   # ditto
+      two_level) [[ 0 -lt $COLORMAX ]] && t=' | colorize' || t=''
+        echo "| SORT -f -k 1,1n -k 2,2n -k 5,5 -k 3,3n -s | CUT -f 4-$t" # while here prepending by group name -k 5,5 to by action name priority -k 3,3n yields a useful improvement: each priority tier is also lexicographic by group name.
+      ;;
+    esac
+  ;;
+  *)
+    case $proc in
+      two_level) [[ 0 -lt $COLORMAX ]] && t='| colorize' || t=''
+      echo "|CUT -f 2-$t"
+    ;;
+      *) echo "|CUT -f 2-"
+    esac
+  ;;
+esac
+}
+
+init () {
+local TIER=1 gotOptions=false KUAL_options='' x
 
 CONFIGPATH=`config_full_path`
 SCRIPTPATH=`script_full_path`
 
 # load optional config file and KUAL_options=
 if [[ -e "$CONFIGPATH" ]]; then
-  source "$CONFIGPATH" || bail_out enErrConfig "$CONFIGPATH"
-fi
-if [[ \( 0 = $# -a -z "$KUAL_options" \) -o \( 1 = $# -a -n "$opt_log" -a -z "$KUAL_options" \) ]]; then
-  set -- -f=twolevel -s
-else
-  set -- $KUAL_options "$@"
+  if ! source "$CONFIGPATH"; then
+    echo "emit_error 1 XenErrConfig \"$CONFIGPATH\""
+    echo "emit_error 3 XenErrConfig \"$CONFIGPATH\""
+    KUAL_options='' # carry on with default options
+  fi
 fi
 
-# parse script options
-# Note: both long AND short options require '=' to set option values
-unset opt_execmenu opt_format opt_sort
-for opt in "$@"; do
-  case $opt in
-    -c=*|--colors=*) opt=${opt#*=}
-       case $opt in [0-9]|[0-9][0-9]|[0-9][0-9][0-9]) COLORMAX=$(($opt)) ;; esac ;;
-    -e=*|--execmenu=*) opt_execmenu=${opt#*=} ;;
-    -f=*|--format=*) opt_format=${opt#*=} ;;
-    -h|--help) usage; exit ;;
-    -l|--log) ;; # pre-parsed near top of file
-    -s|--sort)  opt_sort=lexicographic ;;
-    -S|--nsort) opt_sort=priority ;;
-    *)
-      echo >&2 "${0##*/}: unknown option $opt"
-      bail_out enErrUsage "$opt"
-    ;;
-  esac
+until [[ true = "$gotOptions" ]]; do
+  if [[ \( 0 = $# -a -z "$KUAL_options" \) -o \( 1 = $# -a -n "$opt_log" -a -z "$KUAL_options" \) ]]; then
+    set -- -f=twolevel -s=abc # default
+  else
+    set -- $KUAL_options "$@"
+  fi
+  if get_options "$@"; then
+    gotOptions=true
+  else
+    KUAL_options=''
+    set -- ${opt_log+-l}
+  fi
 done
-[[ -e "$CONFIGPATH" -a -n "$opt_log" ]] && log "found $CONFIGPATH $(printf '{\n%s\n\t}\n' `cat $CONFIGPATH`)"
-log "system `uname -rsnm`
-run options: $*"
+[[ -z "$opt_format" ]] && opt_format=twolevel # default
+
+[[ -e "$CONFIGPATH" -a -n "$opt_log" ]] && log "found $CONFIGPATH
+`cat $CONFIGPATH`"
+log "system `uname -rsnm`"
+log "run options: $opt_format $opt_sort ($*)"
 clean_up_previous_runs "$SCRIPTPATH"
 
 if [[ "$opt_execmenu" ]]; then
@@ -678,48 +833,54 @@ if [[ "$opt_execmenu" ]]; then
 fi
 
 case "$opt_format" in
-  touchrunner) proc=touch_runner; SEPARATOR=';' ;;
   twolevel) proc=two_level; COLORIDX=-1 ; COLORSTATE="" ;;
+  onelevel) proc=one_level ;;
+  touchrunner) proc=touch_runner; SEPARATOR=';' ;;
   debuginfo) proc=debug_info ;;
-  default|'') proc=default_output ;;
-  *) echo 2>&1 ${0##*/}: unknown format \"$opt_format\"; usage; exit 1 ;;
-esac
-
-pipe=loop
-
-case "$opt_sort" in
-  lexicographic)
-    case $proc in
-      default_output) pipe="$pipe | sort -f -s" ;;
-      touch_runner) pipe="$pipe | sort -f -t \"\$SEPARATOR\" -k 4,4 -s" ;;
-      two_level) [[ 0 -lt $COLORMAX ]] && t=' | colorize' || t=''
-        pipe="$pipe | sort -f -t \"\$SEPARATOR\" -k 1,1 -s$t"
-        ;;
-    esac
-  ;;
-  priority)
-    case $proc in
-      default_output) pipe="$pipe | sort -f -t \"\$SEPARATOR\" -k 1,1n -s | drop2" ;; # adding -k 2,2n yields 'surprise order'
-      touch_runner) pipe="$pipe | sort -f -t \"\$SEPARATOR\" -k 1,1n -s | drop2" ;;   # ditto
-      two_level) [[ 0 -lt $COLORMAX ]] && t=' | colorize' || t=''
-        pipe="$pipe | sort -f -t \"\$SEPARATOR\" -k 1,1n -k 3,3 -k 2,2n -s | drop2$t" # here -k 3,3 keeps -k 2,2n cool
-        ;;
-    esac
-  ;;
-  *)
-    case $proc in
-      two_level) [[ 0 -lt $COLORMAX ]] && t=' | colorize' || t=''
-        pipe="$pipe$t"
-         ;;
-    esac
-  ;;
+#  *) echo 2>&1 ${0##*/}: unknown format \"$opt_format\"; usage; exit 1 ;;
 esac
 
 test_applet uninstall
-log "$pipe"
-eval $pipe
-log "exit($?)"
+
+# CONFIGPATH and SCRIPTPATH changed in init()
+# all others changed in get_options()
+echo "
+CONFIGPATH='$CONFIGPATH'
+SCRIPTPATH='$SCRIPTPATH'
+opt_format='$opt_format'
+opt_sort='$opt_sort'
+opt_log='$opt_log'
+opt_execmenu='$opt_execmenu'
+proc='$proc'
+COLORMAX='$COLORMAX'
+FORMATTER='$FORMATTER'
+"
 }
 
-main "$@"
+# MAIN #
+
+# IMPORTANT: *anything* that the user should see, including error messages,
+# must be piped through $to_user, which sends to the Kindlet. Setting up
+# $to_user requires calling init().
+# Catch-22: init() could need to output early error messages through $to_user
+# Solution: Capture init's output until $to_user is fully set up.
+# By design we prefer capturing output in memory (without temp files). We run
+# init through backticks, that is in a subshell[6] that can't change MAIN's
+# environment. $starter is the captured output, and because of catch-22 it is 
+# dynamic code that will be evaluated when $to_user is fully set up.
+
+log "start pid($$)"
+starter=`init "$@"` # required setup for all further steps
+log "starter($starter)"
+proc=':' # NOP evaluation of very early error messages
+eval "$starter" >/dev/null # no stdout until $to_user is set up
+log "proc($proc)"
+to_user="`sortx` | $FORMATTER"
+log "to_user($to_user)"
+eval "{ $starter; loop; } $to_user"
+t=$?
+#[[ x = "${XSECT:+x}" ]] && echo 0 && echo "$XSECT"
+[[ -z "$EXITSTATUS" ]] && EXITSTATUS=$t
+log "exit status($EXITSTATUS)"
+exit $EXITSTATUS
 

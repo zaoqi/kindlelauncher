@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -41,6 +42,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private static final int PAGING_PREVIOUS = -1;
 	private static final int PAGING_NEXT = 1;
 	private final LinkedHashMap executablesMap = new LinkedHashMap();
+	private final HashMap trackerMap = new HashMap();
+	private File parseFile;
 
 	private KindletContext context;
 	private boolean started = false;
@@ -129,20 +132,31 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		cleanupTemporaryDirectory();
 		killKnownOffenders(Runtime.getRuntime());
 
-		File parseFile = extractParseFile();
+		//File parseFile = extractParseFile();
+		parseFile = extractParseFile();
 		BufferedReader reader = Util.execute(parseFile.getAbsolutePath());
 
+		String spaces = new String(new char[16]).replace('\0', ' ');
+		TheReading:
 		for (String line = reader.readLine(); line != null; line = reader
 				.readLine()) {
-			String item[] = Util.splitLine(line, "\u0001");
-			switch (Integer.parseInt(item[0])) {
-				case 2: executablesMap.put(item[1], item[2]);
+			String label = ""; String action = "";
+			switch (Integer.parseInt(line)) {
+				case 4: reader.readLine(); // cindex <= parse.sh -c not used
+				case 3: label = reader.readLine() + " · "; // group
+				case 2: label = label + reader.readLine();
+					if (trackerMap.containsKey(label)) { // make unique key for executablesMap
+						int n = Integer.parseInt((String) trackerMap.get(label));
+						trackerMap.put(label, Integer.toString(++n));
+						label = label + spaces.substring(0,n);
+					} else {
+						trackerMap.put(label, "0");
+					}
+				        action = reader.readLine();
+				        executablesMap.put(label, action);
 					break;
-				case 3: executablesMap.put(item[1] + " · " + item[2], item[3]);
-					break;
-				case 4: executablesMap.put(item[2] + " · " + item[3], item[4]); // item[1] <= parse.sh -c not used
-					break;
-				default: executablesMap.put("err bad meta", "false");
+				default: executablesMap.put("err bad meta", "true");
+					break TheReading; // can't trust input format
 			}
 		}
 
@@ -309,7 +323,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private Process execute(String cmd, boolean background) throws IOException,
 			InterruptedException {
 
-		File launcher = createLauncherScript(cmd, background);
+		File launcher = createLauncherScript(cmd, background,
+				"export KUAL='/bin/ash " + parseFile.getAbsolutePath() + " -x '; ");
 		return Runtime.getRuntime().exec(
 				new String[] { "/bin/sh", launcher.getAbsolutePath() }, null);
 	}
@@ -333,7 +348,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		super.onStop();
 	}
 
-	private File createLauncherScript(String cmd, boolean background)
+	private File createLauncherScript(String cmd, boolean background, String init)
 			throws IOException {
 		File tempFile = java.io.File.createTempFile(EXEC_PREFIX_BACKGROUND,
 				EXEC_EXTENSION_SH);
@@ -343,7 +358,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		bw.newLine();
 
 		if (background) {
-			bw.write("{ " + cmd + " ; } &"); // wrap inside {} to support backgrounding multiple commands, e.g., x=1; use.sh $x ...
+			bw.write("{ " + init + cmd + " ; } &"); // wrap inside {} to support backgrounding multiple commands, e.g., x=1; use.sh $x ...
 		} else {
 			bw.write(cmd);
 		}

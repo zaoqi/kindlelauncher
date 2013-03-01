@@ -1,28 +1,43 @@
 Introduction
 ------------
 
-Aloop.sh a.k.a. share.sh is a parser front-end for the KUAL kindlet. Originally,
+Aloop.sh a.k.a. parse.sh is a parser front-end for the KUAL kindlet. Originally,
 the kindlet unpacked parse.sh in a temporary folder and ran it to find and parse
 the xml/json files that implement KUAL buttons. As development has progressed,
-additional functions have shifted from the kindlet to aloop.sh, in particular:
+additional functions have moved from the kindlet to aloop.sh, in particular:
 . sorting
 . cleaning up temporary files (some)
 . generating KUAL's own menus
+and new functions have been added, notably:
+. screen reporting area
+
+Parse.sh is the slimmed version of aloop.sh; dev/debug code and comments are
+removed to increase performance and reduce size. Parse.sh is packed into
+the KUAL laucher kindlet.
 
 The rest of this note describes aloop.sh and its internal workings.
+Please note that aloop.sh runs under the busybox ash variant.[0]
 
 Logging and Debugging
 ---------------------
 
 Aloop.sh can log debugging/tracing messages to stderr. By default logging is
-disabled. Option --log or -l enables log output. With logging on the kindlet
+disabled. Option -l enables log output. With logging on the kindlet
 should redirect aloop's stderr. To add log messages to the source code use:
   log "some message"
 
 Option -f=debuginfo dumps all parsed json variables to stdout.
 
-If the default separator character prints garbage on your terminal pipe:
+If the default separator character prints garbage on your terminal, pipe:
   aloop.sh | tr `printf "\x01"` " "
+Or set the internal variable FORMATTER for table output,i.e.,
+  FORMATTER="formatter tbl" # default FORMATTER="formatter"
+Don't forget to reset FORMATTER to its default value or you will surprise
+the Kindlet! You can also change FORMATTER with command-line option -p:
+  -p==    passthrough
+  -p=tbl  table
+  -p=tab  tabs
+  -p="%10.10s"   columns, width 10 (any printf format string should work)
 
 While debugging aloop.sh you may take advantage of shell flags -x and -e:
   # /bin/ash -x -e aloop.sh -l
@@ -41,40 +56,70 @@ operations should input data include shell metacharacters.
 Then it sets global variables:
 
 # dev can change
+CONFIGFILE="KUAL.cfg"
 PRODUCTNAME="KUAL"
 EXTENSIONDIR=/mnt/us/extensions
+
+# notable internal globals
 SEPARATOR=$'\x01' # character code 1, UTF-8 encoded
-COLORMAX=0
-# internal
+COLORMAX=0 # don't 'colorize'
+FORMATTER="formatter" # $1:''(\n,default) 'tbl'(table) 'tab'(\t)
 CONFIGPATH=... # null if no config file
 SCRIPTPATH=...
+TIER=... # output placement
 
 and determines Kindle busybox version to load model-specific support (code was
 removed after version 20130127,a).
 
-Function main() sources the optional configuration file KUAL.cfg, parses
-command-line options (and line 'KUAL_options=...' in KUAL.cfg) then it
-generates a list of config.xml files then calls loop() in $pipe
-for each XML file. loop() calls xml_var() and json_parse() to parse values in
-config.xml and its associated json menu file. The parsers store values in
-global variables xml_<name> and json_<name> where each <name>s correspond to
-XML tags and json keys.
+Then the script calls init() which sources the optional configuration file
+KUAL.cfg, parses command-line options (and line 'KUAL_options=...' in KUAL.cfg)
+and sets global variables for all other functions.  The script captures early
+error messages until a channel (pipe) $to_user is fully set up. Once the
+channel is open, the script evaluates early error messages and sends them
+$to_user followed by the button records that loop() generates. Loop() goes
+through all config.xml files and for each file it calls xml_var() and
+json_parse() to get values in config.xml and its associated json menu file.
+Json_parse() stores values in global variables xml_<name> and json_<name> where
+each <name>s correspond to XML tags and json keys.
 Run aloop.sh -f=debuginfo to see an actual list of <name>s / values.
 
 Then json_parse() calls a processing function $proc to emit the output label
 and executable action for each set of xml_ / json_ variables. Several processing
 functions are available, and can be selected with option -f.
-For instance, function default_output() generates simple labels suitable for
+For instance, function one_level() generates simple labels suitable for
 a flat (non-nested) menu. Processing function two_level() is more advanced and
 produces labels suitable for a two-level (nested) menu.
-Before exiting loop() checks to see if at least one valid menu item is found.
-If not, loop() installs a test applet and outputs its menu item. So the GUI
-can safely assume that there is at least one item to display.
-Note that the test applet is automatically uninstalled each time aloop starts.
+Before exiting, loop() checks to see if at least one valid menu item is found.
+If not, loop() installs a test applet and emits its menu item. So the GUI
+can safely assume that there is at least one item to display and that the
+standard /mnt/us/extensions file tree exists.
+Note that the test applet is automatically uninstalled upon starting the script.
 Since version 20130221,a loop() also emits KUAL's own menus.
 
-Finally main() in $pipe applies predefined options to optionally sort and
+Channel $to_user applies predefined options to optionally sort and
 'colorize' the output list.
+
+The Output List
+---------------
+
+The output list is divided into three tiers, 1, 2 and 3. Tier 1 is positioned
+at the beginning of the list, tier 2 in the middle, and tier 3 at the end.
+Tier 1 is used for error messages, tier 2 for regular menu items, and tier 3
+for KUAL's own menu.
+
+To place a button in a specific tier, set variable $TIER and call the
+processing function. You can use decimals to force and order within each tier.
+You can mix the call sequence as you please. Sample call sequence:
+
+  $TIER   label                Unsorted Buttons  Sorted Buttons
+  -----   -----                ----------------  --------------
+   2      lblC                      err2             err1
+   2      lblA                      err1             err2
+   1      err2                      lblC             lblA
+   2      lblB                      lblA             lblB
+   3.99   Quit                      lblB             lblC
+   3      Open                      Open             Open
+   1      err1                      Quit             Quit
 
 More On Processing Functions
 ----------------------------
@@ -89,7 +134,7 @@ generating the command string would look similar to:
   command="$json_action $json_params"
 which would result in command "bin/setorientation.sh U"
 
-Note that all values must be properly encoded UTF-8 strings [5].
+Note that all values must be properly encoded UTF-8 strings.[4]
 
 Since version 20130221,a - which introduced features that imply a
 variable-length output record, processing functions must prepend META
@@ -98,26 +143,24 @@ information (the record length) to each record, i.e.,
   3;group;label;action
   4;cindex;group;label;action
 
-Default_output Processing Function
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+One_level Processing Function
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Default_output() builds an output record which consists of:
+One_level() builds an output record which consists of:
   json_name,action' 'json_params
-As its name implies, this is the default output when another format isn't
-specified with option -f. The default output format is best suited for
-single-item json files. It is probably less appealing for nested menus,
-because the group menu name isn't displayed, and sorting the list results
-in scattering sub-items that the developer of the menu really meant to keep
-together. The default_output format was the standard format of Unified Kindle
-Launcher up to version 0.3.
+This output format is best suited for single-item json files. It is probably
+less appealing for nested menus, because the group menu name isn't displayed,
+and sorting the list results in scattering sub-items that the developer of the
+menu really meant to keep together. One_level was the standard format up to
+KUAL version 0.3, then it got replaced with two_level.
 
 Two_level Processing Function
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Two_level() vs default_output() adds a group menu (the $json_name_ if set, the
+Two_level() vs one_level() adds a group menu (the $json_name_ if set, the
 $xml_name otherwise), which is suitable for identifying nested menus. When
 option -c=N with N>0 specifies a maximum color value, two_level also prepends a
-cyclical 'color' index ($cindex) modulo $COLORMAX, which the GUI could use for
+modular 'color' index ($cindex) modulo $COLORMAX, which the GUI could use for
 displaying groups in zebra-style strips. cindex increments when the the group
 name changes, so all json_names in the same group share the cindex. The GUI
 could map each cindex value to a different background color and fill the page
@@ -222,6 +265,8 @@ real    0.89s        real    2.97s
 user    0.41s        user    0.50s
 sys     0.12s        sys     1.50s
 
+Further reading: [5]
+
 Sorting
 -------
 
@@ -229,9 +274,9 @@ Aloop implements stable sorting, which means that if record A appears before
 record B in the input set, and sort criteria do not affect the relative order
 of A and B, then A will appear before B in the output set, for any A and B.
 
-Lexicographic and by-priority sort criteria are provided through options
--s and -S respectively. In some cases (-f=twolevel) lexicographic and
-by-priority sorting are combined to yield an 'expected/natural' order.
+Lexicographic and priority sort criteria are provided through options
+-s=abc and -s=123 respectively. In some cases (-f=twolevel) lexicographic and
+priority sorting are combined to yield an 'expected/natural' order.
 In all cases lexicographic order folds upper- and lower-case letters
 together.
 Json key "priority", for a whole menu and for individual menu entries, is
@@ -274,15 +319,57 @@ functions in aloop.sh, notably:
 . store_button_filepath - defined on K5/PW only
 and more.
 
+Scripting Interface
+-------------------
+
+KUAL starts a script, which can call aloop's functions as follows:
+
+  [[ "$KUAL" ]] && $KUAL $number $args
+
+The code checks to see if $KUAL is defined (this test will fail for a
+script that does not run under KUAL). Then it calls $KUAL's (actually
+aloop's) function number $number (1,2,...) with function-specific
+arguments $args. For example:
+
+  msg="USBNETWORKING $DIRECTION CHANGES COMPLETE
+`date`"
+  [[ "$KUAL" ]] && $KUAL 1 "$msg" || eips 2 38 "$msg"
+
+It is a good idea to always provice a fallback measure should $KUAL be
+undefined. In the above example ' || eips 2 38 "$msg" ' is the fallback.
+
+The following function numbers are available:
+
+   1  Write up to 4 lines to the screen reporting area.
+      Arguments: [-lm=COL] [-wo] "$message"
+      Default left margin is column 5. Insert -lm=N, with N=0..48, to change
+      Add -wo (after -lm, if any) to write OVER a previous screen_msg (skips blanking the reporting area)
+      Leading dash(es) in $message are deleted (otherwise eips gets confused).
+      Exclamation marks in $message white out to end of line (eips does it).
+      Screenshot: http://www.mobileread.com/forums/showpost.php?p=2438452&postcount=496
+      Test script (white space matters):
+      | lm=1
+      | while [[ $lm -le 46 ]]; do
+      | ash /mnt/us/opt/bin/aloop.sh -x 1 -lm=$lm $wo "a
+      |  b
+      |   c
+      |    d"
+      | wo=-wo
+      | lm=$(($lm + 4))
+      | sleep 1
+      | done
+
 The Test Applet
 ---------------
 
-Currently the test applet is just a stub that runs "network info 411".
-Ideally it should be something that reinforces a positive user experience, and
-that all kindles can run.
+Currently the test applet prints a welcome message in the screen reporting
+area, and directs the user to install extensions.
 
 References
 ----------
+
+[0] Almquist shell versions
+    http://www.in-ulm.de/~mascheck/various/ash/#busybox
 
 [1] Can a bash script determine where it is? Includes accounting for links.
     http://hintsforums.macworld.com/archive/index.php/t-73839.html
@@ -294,7 +381,15 @@ References
 [3] Sorting Tutorial
     http://www.skorks.com/2010/05/sort-files-like-a-master-with-the-linux-sort-command-bash/
 
-[4] The Absolute Minimum Every Software Developer Absolutely, Positively Must Know About Unicode and Character Sets (No Excuses!)
-    http://www.joelonsoftware.com/articles/Unicode.html
-[5] How do you echo a 4 digit unicode character in bash?
+[4] How do you echo a 4 digit unicode character in bash?
     http://stackoverflow.com/questions/602912/how-do-you-echo-a-4-digit-unicode-character-in-bash
+  . The Absolute Minimum Every Software Developer Absolutely, Positively Must Know About Unicode and Character Sets (No Excuses!)
+    http://www.joelonsoftware.com/articles/Unicode.html
+
+[5] Optimizing Shell Scripts
+    http://www.thelinuxblog.com/optimizing-shell-scripts/
+  . How To Remove Comments From A Shell Script
+    http://blog.sleeplessbeastie.eu/2012/11/07/how-to-remove-comments-from-a-shell-script/
+
+[6] SubShell
+    http://mywiki.wooledge.org/SubShell
