@@ -7,9 +7,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
+//import java.util.StringTokenizer;
 
 public class Util {
+/*
 	public static String[] splitLine(String input, String delim) {
 		StringTokenizer st = new StringTokenizer(input, delim);
 		List result = new ArrayList();
@@ -23,7 +24,7 @@ public class Util {
 		return split;
 
 	}
-
+*/
 	public static void copy(InputStream is, OutputStream os) throws IOException {
 		byte[] buffer = new byte[4096];
 		int bytesRead;
@@ -36,9 +37,8 @@ public class Util {
 
 	public static BufferedReader execute(String scriptName) throws IOException,
 			InterruptedException {
-		// String cmd[] = new String[] { "/bin/sh", scriptName };
-		// String cmd[] = new String[] { "/bin/sh", scriptName, " -f=twolevel -s" };
-		String cmd[] = new String[] { "/bin/ash", scriptName }; // parse.sh defaults to -f=twolevel -s if no KUAL.cfg
+		String[] cmd = new String[] { "/bin/ash", scriptName };
+
 		Process process = Runtime.getRuntime().exec(cmd, null);
 		process.waitFor();
 
@@ -46,5 +46,4 @@ public class Util {
 				process.getInputStream()));
 		return input;
 	}
-
 }
