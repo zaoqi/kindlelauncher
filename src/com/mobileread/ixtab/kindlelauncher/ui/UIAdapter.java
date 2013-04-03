@@ -55,4 +55,8 @@ public abstract class UIAdapter {
 	public abstract void suicide(KindletContext context);
 
 	public abstract int getDefaultPageSize();
+
+	public int getGap() {
+		return 5;
+	}
 }

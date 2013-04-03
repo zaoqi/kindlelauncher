@@ -21,14 +21,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import com.amazon.kindle.kindlet.KindletContext;
 import com.mobileread.ixtab.kindlelauncher.resources.ResourceLoader;
+import com.mobileread.ixtab.kindlelauncher.ui.GapComponent;
 import com.mobileread.ixtab.kindlelauncher.ui.UIAdapter;
 
 public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
@@ -105,24 +106,37 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
 	private void initializeUI() {
 		Container root = context.getRootContainer();
+		int gap = getUI().getGap();
 		root.removeAll();
-		root.setLayout(new BorderLayout());
+		
+		
+		root.setLayout(new BorderLayout(gap,gap));
+		Container main = getUI().newPanel(new BorderLayout(gap,gap));
+		
+		// this is a horrible workaround to simulate adding a border around
+		// the main container. It has to be done this way because we have
+		// to support different framework versions.
+		root.add(main, BorderLayout.CENTER);
+		root.add(new GapComponent(0), BorderLayout.NORTH);
+		root.add(new GapComponent(0), BorderLayout.EAST);
+		root.add(new GapComponent(0), BorderLayout.SOUTH);
+		root.add(new GapComponent(0), BorderLayout.WEST);
 
-		root.add(prevPageButton, BorderLayout.WEST);
-		root.add(nextPageButton, BorderLayout.EAST);
+		main.add(prevPageButton, BorderLayout.WEST);
+		main.add(nextPageButton, BorderLayout.EAST);
 		status = getUI().newLabel("Status");
-		root.add(status, BorderLayout.SOUTH);
+		main.add(status, BorderLayout.SOUTH);
 
-		GridLayout grid = new GridLayout(getPageSize(), 1);
+		GridLayout grid = new GridLayout(getPageSize(), 1, gap, gap);
 		entriesPanel = getUI().newPanel(grid);
 
-		root.add(entriesPanel, BorderLayout.CENTER);
+		main.add(entriesPanel, BorderLayout.CENTER);
 
 		// FOR TESTING ONLY, if a specific number of entries is needed.
 		// for (int i = 0; i < 25; ++i) {
 		// executablesMap.put("TEST-" + i, "touch /tmp/test-" + i + ".tmp");
 		// }
-
+		
 		updateDisplayedLaunchers();
 
 	}
@@ -280,9 +294,10 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			}
 			entriesPanel.add(button);
 		}
+		
 		// weird shit: it's actually the setStatus() which prevents the Kindle
 		// Touch from simply showing an empty list. WTF?!
-		setStatus("Items " + (offset + 1) + " - " + end + " of "
+		setStatus("Entries " + (offset + 1) + " - " + end + " of "
 				+ executablesMap.size());
 		boolean enableButtons = getPageSize() < executablesMap.size();
 		prevPageButton.setEnabled(enableButtons);

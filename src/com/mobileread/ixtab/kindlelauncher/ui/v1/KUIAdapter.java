@@ -24,7 +24,7 @@ public class KUIAdapter extends UIAdapter {
 	}
 
 	public Component newButton(String text, ActionListener listener) {
-		KButton button = new KButton(text);
+		KButton button = new KualButton(text);
 		if (listener != null) {
 			button.setName(text);
 			button.addActionListener(listener);
@@ -50,5 +50,4 @@ public class KUIAdapter extends UIAdapter {
 		// these are non-touch models, so it's tedious to scroll.
 		return 5;
 	}
-	
 }

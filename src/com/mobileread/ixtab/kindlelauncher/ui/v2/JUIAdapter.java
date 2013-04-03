@@ -50,5 +50,4 @@ public class JUIAdapter extends UIAdapter {
 		// these are Touch models, so having more information on one page seems reasonable.
 		return 10;
 	}
-
 }
