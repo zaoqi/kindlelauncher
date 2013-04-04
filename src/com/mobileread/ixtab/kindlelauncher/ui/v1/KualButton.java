@@ -37,7 +37,7 @@ public class KualButton extends KButton {
 
 		if (hasFocus()) {
 			background = foreground;
-			foreground = getBackground();
+			foreground = COLOR_BACKGROUND;
 		} else {
 			g.setColor(background);
 			g.fillRoundRect(GAP_PX + BORDER_PX, GAP_PX + BORDER_PX,
