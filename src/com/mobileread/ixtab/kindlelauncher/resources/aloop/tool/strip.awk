@@ -14,23 +14,31 @@ WARNING="=== Non-greedy shell script comment stripper ==="\
 "\n1) Hash comments within multi-line strings"\
 "\n	x=\"that is NOT"\
 "\n	# a comment"\
-"\n	but it will still be deleted (incorrectly)\""
+"\n	but it will still be deleted (incorrectly)"\
+"\n"\
+"\nSuspend stripping by enclosing a block within /:#? SSTR .../,/:#? RSTR .../"\
+"\nStrip a whole block by enclosing it within /:#? BSTR .../,/#?: ESTR .../"\
 "\n"
-"\nSuspend stripping by enclosing a block within /: SSTR/,/: RSTR/"
-"\nStrip a whole block by enclosing it within /: BSTR/,/: ESTR/" 
 	print WARNING >"/dev/stderr"
+
+	if ("" == PROMPT || 0 != PROMPT) {
+PROMPT="Usage: strip.awk [-v PROMPT=0] script.sh > new_script.sh"\
+"\nPress any key to strip '"ARGV[1]"' to stdout ..."
+	printf PROMPT >"/dev/stderr"
+		getline <"/dev/stdin"
+	}
 
 	CONTINUATION=0
 	SUSPENDED=0
 }
 # suspend stripping
 {
-	if ($0 ~ /^\s*: RSTR\s*$/) { SUSPENDED=0; next }
-	else if ($0 ~ /^\s*: SSTR\s*$/) { SUSPENDED=1; next }
+	if ($0 ~ /^\s*#?: RSTR\>/) { SUSPENDED=0; next }
+	else if ($0 ~ /^\s*#?: SSTR\>/) { SUSPENDED=1; next }
 	else if (SUSPENDED) { print; next }
 }
 # forced stripping
-/^\s*: BSTR\s*$/,/^\s*: ESTR\s*$/ {
+/^\s*#?: BSTR\>/,/^\s*#?: ESTR\>/ {
 	next
 }
 # commented continuation line isn't a continuation

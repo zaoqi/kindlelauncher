@@ -1,6 +1,6 @@
 #!/bin/busybox ash
-# aloop-v2.sh - version 20130404,b,stepk
-VERSION="20130404,b"
+# aloop-v2.sh - version 20130404,c,stepk
+VERSION="20130404,c"
 usage () {
 local -
 }
@@ -70,7 +70,6 @@ readonly MAX_LABEL_LEN=40
 XenErrConfig="Config"
 XenErrSyntax="Syntax"
 XenErrUsage="Usage"
-XenErrNoTestApplet="Can't install $PRODUCTNAME test applet"
 XenErrTestAppletStuck="Can't uninstall $PRODUCTNAME test applet"
 screen_msg () {
   local - IFS=${WSP_IFS} msg caps col row=8 line i wo=0
@@ -112,16 +111,16 @@ test_applet () {
   uninstall)
      rmdir "$dir" 2>/dev/null || true
      if [ -d "$dir" ]; then
-      echo >&2 "${0##*/}: XenErrTestAppletStuck"
-      emit_error 1 XenErrTestAppletStuck
+      scream "$XenErrTestAppletStuck"
       echo -n ''
+      return
     fi
     log "test applet uninstalled"
   ;;
   install)
     mkdir -p "$dir"
-    if ! { [[ -d "$dir" ]] \
-    && echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
+    if [ -d "$dir" ]; then
+      echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>
 <extension>
 	<information>
 		<name>$PRODUCTNAME</name>
@@ -132,21 +131,20 @@ test_applet () {
 	<menus>
 		<menu type=\"json\">menu.json</menu>
 	</menus>
-</extension>" > "$xml" \
-    && echo "{
+</extension>" > "$xml" &&
+      echo "{
 \"items\": [
 	{\"name\": \"Test $PRODUCTNAME\", \"priority\": -1000, \"action\": \"test.sh\"}
 ]
-}" > "$json" \
-    && echo "#/bin/ash -
+}" > "$json" &&
+      echo "#/bin/ash -
 [[ \"\$KUAL\" ]] && exec \$KUAL 1 -lm=3 \"$enTestApplet\" || eips 2 38 \"$XenErrNotInstalled\"
-" > "$sh" \
-    && chmod +x "$sh" && log "test applet installed"
-    }
-    then
-      echo >&2 "${0##*/}: $XenErrNoTestApplet"
-      emit_error 1 XenErrNoTestApplet
+" > "$sh" &&
+      chmod +x "$sh" && log "test applet installed"
+    else
+      # can't scream "$XenErrNoTestApplet"
       echo -n ''
+      return
     fi
   ;;
   esac
@@ -165,7 +163,7 @@ case "$1" in
   dbus-send --system /default com.lab126.powerd.resuming int32:1
   exit
 ;;
-3) test_applet install; exit 
+3) test_applet install; exit $? 
 ;;
 esac
 esac
@@ -387,27 +385,26 @@ send_config () {
     echo "$VERSION"
     cat "$CONFIGPATH"
   else
-    echo 0
+    echo -e "1\n$VERSION"
   fi
 }
 unpack () { 
 cat << 'UNPACK' 
 BEGIN { 
-	VERSION="20130404,b"
-	NARGV = ARGC
-	while (0 < (getline ARGV[++ARGC] < "/dev/stdin")) {
-		if (ARGV[ARGC] == "")
-			break
+	VERSION="20130404,c"
+	if (1 < ARGC) { print "usage!" > "/dev/stderr"; exit(1) }
+	while (0 < getline < "/dev/stdin") {
+		if (NF) { ARGV[++ARGC]=$0 } else break
 	}
-	srand()
-	RS="n/o/m/a/t/c/h" rand()
+	srand(); RS="n/o/m/a/t/c/h" rand()
 	init()
-	if (1 == ARGC - NARGV) {
-		ARGC = find_menu_fullpathnames(EXTENSIONDIR, ARGV, ARGC)
-		if (1 == ARGC - NARGV && "" != SCRIPTPATH) { 
-			"/bin/ash '"SCRIPTPATH"' -x 3" | getline 
+	if (1 >= ARGC) {
+		ARGC = find_menu_fullpathnames(EXTENSIONDIR, ARGV, ARGC-1)
+		if (1 > ARGC && "" != SCRIPTPATH) { 
+			"/bin/ash '"SCRIPTPATH"' -x 3 2>/dev/null" | getline 
 			if ("" != $0) ARGV[++ARGC] = $0
 		}
+		if("" != ARGV[ARGC]) ++ARGC 
 	}
 	BRIEF=1; 
 	STREAM=0;
@@ -493,7 +490,8 @@ function config_get(configfullpath,
 	getline slurp < configfullpath
 	if ("" != slurp) {
 		nary = split(slurp, ary, /\n/)
-		for (i = 1; i < nary; i++) {
+		if (nary) --nary; 
+		for (i = 1; i <= nary; i++) {
 			if (ary[i] ~ "^\\s*"PRODUCTNAME"_\\w+=") {
 				s = ary[i]
 				s = substr(s,1+index(s,"_"))
@@ -513,7 +511,8 @@ function find_menu_fullpathnames(dirs, return_ary, base,
 	gsub(/;/, " ", dirs) 
 	"find "dirs follow" -name config.xml 2>/dev/null" | getline slurp
 	nary = split(slurp, ary, /\n/)
-	for (i=1; i < nary; i++) {
+        if (nary) --nary 
+	for (i=1; i <= nary; i++) {
 		menu = pathjson = pathxml = ""
 		getline slurp < ary[i] 
 		if (slurp ~ /<extension>.+<\/extension>/) { 
@@ -521,7 +520,7 @@ function find_menu_fullpathnames(dirs, return_ary, base,
 			    slurp = substr(slurp,RSTART,RLENGTH-7) 
 			    menu = substr(slurp,1+index(slurp,">")) 
 		    }
-		} #else print "slurp("slurp")" > "/dev/stderr" 
+		}
 		if ("" != menu) {
 			if ("^/" !~ menu) { 
 				match(ary[i], /^.*\//)
