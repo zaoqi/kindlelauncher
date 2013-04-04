@@ -52,8 +52,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
 	private Container entriesPanel;
 	private Component status;
-	private Component nextPageButton = getUI().newButton("  >  ", this);
-	private Component prevPageButton = getUI().newButton("  <  ", this);
+	private Component nextPageButton = getUI().newButton("  \u25B6  ", this);
+	private Component prevPageButton = getUI().newButton("  \u25C0  ", this);
 
 	private int offset = 0;
 
