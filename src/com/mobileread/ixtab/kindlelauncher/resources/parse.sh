@@ -1,6 +1,6 @@
 #!/bin/busybox ash
-# aloop-v2.sh - version 20130404,c,stepk
-VERSION="20130404,c"
+# aloop-v2.sh - version 20130404,d stepk
+VERSION="20130404,d"
 usage () {
 local -
 }
@@ -391,7 +391,7 @@ send_config () {
 unpack () { 
 cat << 'UNPACK' 
 BEGIN { 
-	VERSION="20130404,c"
+	VERSION="20130404,d"
 	if (1 < ARGC) { print "usage!" > "/dev/stderr"; exit(1) }
 	while (0 < getline < "/dev/stdin") {
 		if (NF) { ARGV[++ARGC]=$0 } else break
@@ -400,8 +400,10 @@ BEGIN {
 	init()
 	if (1 >= ARGC) {
 		ARGC = find_menu_fullpathnames(EXTENSIONDIR, ARGV, ARGC-1)
-		if (1 > ARGC && "" != SCRIPTPATH) { 
-			"/bin/ash '"SCRIPTPATH"' -x 3 2>/dev/null" | getline 
+		if (1 > ARGC && "" != SCRIPTPATH) {
+			X = "/bin/ash '"SCRIPTPATH"' -x 3 2>/dev/null"
+			X | getline
+			close(X)
 			if ("" != $0) ARGV[++ARGC] = $0
 		}
 		if("" != ARGV[ARGC]) ++ARGC 
@@ -438,13 +440,13 @@ END {
 function init(   i) { 
 if (""==FORMATTER) FORMATTER="multiline"
 if (""==OPT_SORT) OPT_SORT="ABC"
-KUAL_show_KUAL_buttons="" # "i j k"... | "0" | "" 
 delete COUNTER
 COUNTER["nameNull"]=0
 if(""==EXTENSIONDIR) EXTENSIONDIR="/mnt/us/extensions" 
 if(""==PRODUCTNAME) PRODUCTNAME="KUAL"
 if(""==CONFIGFILE) CONFIGFILE=PRODUCTNAME".cfg" 
 CONFIGPATH=config_full_path()
+if(""!=CONFIGPATH) config_get(CONFIGPATH)
 SEP="\x01"
 SCREAM_LOG="/var/tmp/" PRODUCTNAME ".log"
 VALID_KEYS["action"]=K_action=0x00  
@@ -473,48 +475,57 @@ function config_full_path(create, # {{{ [create="create"] creates first(EXTENSIO
 	nary = split(EXTENSIONDIR, ary, /;/)
 	for (i = 1; i <= nary; i++) {
 		cfp = ary[i]"/"CONFIGFILE
-		if (0 < (getline x < cfp))
+		if (0 <= (getline x < cfp)) {
+			close(cfp)
 			break
+		}
 	}
-	if ("" != cfp)
+	if ("" != x)
 		return cfp
 	if ("create" == create) {
 		cfp=ary[1]"/"CONFIGFILE
 		"date" | getline x
-		print "# "CONFIGFILE" - created on "x > cfp ; close(cfp)
+		close("date")
+		print "# "CONFIGFILE" - created on "x > cfp
+		close(cfp)
 		return cfp
 	}
+	return ""
 }
 function config_get(configfullpath, 
-	ary,nary,slurp,s,p,count) {
-	getline slurp < configfullpath
+	ary,nary,slurp,k,v,p,count) {
+	if (0 <= (getline slurp < configfullpath))
+		close(configfullpath)
 	if ("" != slurp) {
 		nary = split(slurp, ary, /\n/)
-		if (nary) --nary; 
+		if (nary) --nary 
 		for (i = 1; i <= nary; i++) {
 			if (ary[i] ~ "^\\s*"PRODUCTNAME"_\\w+=") {
-				s = ary[i]
-				s = substr(s,1+index(s,"_"))
-				p = index(s, "=")
-				CONFIG[substr(s,1,p-1)] = substr(s,p+1)
-				++count
+				k = ary[i]
+				k = substr(k,1+index(k,"_"))
+				p = index(k, "=")
+				v = substr(k,p+1)
+				gsub(/^"|"$/,"",v) 
+				CONFIG[substr(k,1,p-1)] = v
+				++count 
 			}
 		}
 	}
 	return 0+count
 }
-function exec_self_menu() { 
-}
 function find_menu_fullpathnames(dirs, return_ary, base,  
-	pj,nj,follow,slurp,i,ary,nary,menu) {
+	pj,nj,follow,slurp,i,ary,nary,menu,cmd) {
 	follow = "true" == CONFIG["KUAL_nofollow"] ? "" : " -follow"
 	gsub(/;/, " ", dirs) 
-	"find "dirs follow" -name config.xml 2>/dev/null" | getline slurp
+	cmd = "find "dirs follow" -name config.xml 2>/dev/null"
+	cmd | getline slurp
+	close(cmd)
 	nary = split(slurp, ary, /\n/)
-        if (nary) --nary 
+	if (nary) --nary 
 	for (i=1; i <= nary; i++) {
 		menu = pathjson = pathxml = ""
-		getline slurp < ary[i] 
+		if (0 <= (getline slurp < ary[i])) 
+			close(ary[i])
 		if (slurp ~ /<extension>.+<\/extension>/) { 
 		    if (match(slurp, /<menu\>[^>]+\<type="json"[^>]*>[^<]+<\/menu>/)) { # type="json"
 			    slurp = substr(slurp,RSTART,RLENGTH-7) 
@@ -526,8 +537,10 @@ function find_menu_fullpathnames(dirs, return_ary, base,
 				match(ary[i], /^.*\//)
 				menu = substr(ary[i],RSTART,RLENGTH) menu 
 			}
-			if (0 < (getline x < menu))
+			if (0 <= (getline x < menu)) {
 				return_ary[++base] = menu
+				close(menu)
+			}
 		}
 	}
 	return base
@@ -554,19 +567,22 @@ function json_emit_self_menu_and_parsing_errors(   json,
 	}
 }
 function json_self_menu (   json, 
-	show,b,verb,btnpath) {
-	if (0 == (show=KUAL_show_KUAL_buttons)) # "i j k"... | "0" | ""
+	show,b,verb,btnpath,bak) {
+	if (0 == (show = CONFIG["show_KUAL_buttons"])) 
 		return ""
 	if ("" == show) show="1 2 99" 
 	json = ""
 	if (split(show, ary, /\s+/)) {
 		for (b in ary) {
 			if (1 == ary[b]) {
-				verb="Replace"
+				verb="Restore"
 				if ("" == (btnpath=store_button_filepath()))
 					continue
-				if (0 < (getline < btnpath".KUAL_bak"))
-					verb="Restore"
+				bak = btnpath".KUAL_bak"
+				if (0 > (getline < bak))
+					verb="Replace"
+				else
+					close(bak)
 				json=json ",{\"name\": \"" \
 					verb" Store Button" \
 				"\", \"action\": \"" \
@@ -706,14 +722,17 @@ function new_item() {
 function new_submenu() { 
 	ITEM[K_name]=""; ITEM[K_priority]=0; ITEM[K_hidden]=""
 }
-function sort(ary, nary, sort_options,     tfl,i) { 
+function sort(ary, nary, sort_options,   
+	tfl,i,cmd) {
 	tfl=TFL"-sort" rand()
 	for (i=1; i<=nary; i++) {
 		print ary[i] > tfl
 	}
 	close(tfl)
 	SORTED_DATA = ""
-	"/bin/busybox sort -t \""SEP"\" "sort_options" < \""tfl"\"" | getline SORTED_DATA
+	cmd = "/bin/busybox sort -t \""SEP"\" "sort_options" < \""tfl"\""
+	cmd | getline SORTED_DATA
+	close(cmd)
 }
 function sort_criteria(sortable_tag, opt_sort) { # {{{ build sortable data in accordance with user's sorting criteria
 	if ("123" == opt_sort) {
@@ -847,19 +866,21 @@ function shortpathname(pathname,   ary,nary) {
 	return (nary = split(pathname, ary, /\//)) \
 		? ary[nary-1] "/" ary[nary] : pathname
 }
-function store_button_filepath(   KT532) { 
+function store_button_filepath(   KT532,ret) { 
 	if ("-" == FILEPATH_STORE_BUTTON) {
 		return ""
 	} else if ("" != FILEPATH_STORE_BUTTON) {
 		return FILEPATH_STORE_BUTTON
 	}
 	KT532="/usr/share/webkit-1.0/pillow/javascripts/search_bar.js"
-	if (0 < (getline < KT532)) {
-		return (FILEPATH_STORE_BUTTON = KT532)
+	if (0 <= (getline < KT532)) {
+		ret = FILEPATH_STORE_BUTTON = KT532
+		close(KT532)
 	} else {
 		FILEPATH_STORE_BUTTON = "-"
-		return ""
+		ret = ""
 	}
+	return ret
 }
 function get_token() { 
 	TOKEN = TOKENS[++ITOKENS] 

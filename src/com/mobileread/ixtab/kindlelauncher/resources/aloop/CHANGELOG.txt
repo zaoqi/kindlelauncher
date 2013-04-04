@@ -1,4 +1,8 @@
 CHANGE LOG
+20130404,d
+- Fix file descriptors and segmentation fault
+= Port of user option handling complete
+
 20130404,c
 - Fixed regression bug in EXTENSIONDIR scan
 - Fixed missing version string (corner case)
