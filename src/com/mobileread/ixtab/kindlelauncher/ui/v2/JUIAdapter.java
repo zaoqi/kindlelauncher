@@ -31,9 +31,21 @@ public class JUIAdapter extends UIAdapter {
 		return button;
 	}
 
+/*	public void setHorizontalAlignment(Component component, int alignment);
+		if (component instanceof JLabel) {
+			((JLabel) component).setHorizontalAlignment(alignment);
+		}
+		if (component instanceof JButton) {
+			((JButton) component).setHorizontalAlignment(alignment);
+		}
+	}*/
+
 	public void setText(Component component, String text) {
 		if (component instanceof JLabel) {
 			((JLabel) component).setText(text);
+		}
+		if (component instanceof JButton) {
+			((JButton) component).setText(text);
 		}
 	}
 

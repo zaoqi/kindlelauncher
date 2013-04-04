@@ -7,7 +7,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 
 public class Util {
-	
+
 	public static void copy(InputStream is, OutputStream os) throws IOException {
 		byte[] buffer = new byte[4096];
 		int bytesRead;

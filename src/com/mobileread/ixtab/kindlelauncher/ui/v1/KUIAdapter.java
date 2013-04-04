@@ -32,12 +32,27 @@ public class KUIAdapter extends UIAdapter {
 		return button;
 	}
 
+/*	public void setHorizontalAlignment(Component component, int alignment);
+		if (component instanceof KLabel) {
+			((KLabel) component).setHorizontalAlignment(alignment);
+			component.repaint();
+		}
+		if (component instanceof KButton) {
+			((KButton) component).setHorizontalAlignment(alignment);
+			component.repaint();
+		}
+	}*/
+
 	public void setText(Component component, String text) {
 		if (component instanceof KLabel) {
 			((KLabel) component).setText(text);
 			component.repaint();
 		}
-	}
+		if (component instanceof KButton) {
+			((KButton) component).setName(text);
+			component.repaint();
+		}
+}
 
 	public void suicide(KindletContext context) {
 		int code = KindleKeyCodes.VK_BACK;
@@ -50,4 +65,5 @@ public class KUIAdapter extends UIAdapter {
 		// these are non-touch models, so it's tedious to scroll.
 		return 5;
 	}
+	
 }

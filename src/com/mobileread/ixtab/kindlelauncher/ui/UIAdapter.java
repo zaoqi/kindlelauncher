@@ -50,8 +50,10 @@ public abstract class UIAdapter {
 
 	public abstract Component newButton(String text, ActionListener listener);
 
+//	public abstract void setHorizontalAlignment(Component component, int alignment);
+
 	public abstract void setText(Component component, String text);
-	
+
 	public abstract void suicide(KindletContext context);
 
 	public abstract int getDefaultPageSize();
