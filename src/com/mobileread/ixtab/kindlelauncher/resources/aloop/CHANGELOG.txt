@@ -1,4 +1,17 @@
 CHANGE LOG
+20130405,a
+Extensions can now write a message to the trail/status lines
++ Extension can write a fixed message into the trail line with json
+  {"name":"label","action":"TRAIL","params":"this message","exitmenu":false}
++ Extension can write a verbatim message into the status line with json
+  {"name":"label","action":"STATUS","params":"this message","exitmenu":false}
+! Note that it's a fixed message; sh doesn't process it at all
++ Capture stderr of extensions to /var/tmp/KUAL.log
++ New KUAL sub-menu button "File KUAL log as a document"; moves KUAL.log to /mnt/us/documents/
+! Still not quite working; the log file is always empty. Could it be due to the suicidal context ?!?
+- Fix out of range index in setTrail()
+- Removed more dead wood and command-line options -c -f,
+
 20130404,d
 - Fix file descriptors and segmentation fault
 = Port of user option handling complete

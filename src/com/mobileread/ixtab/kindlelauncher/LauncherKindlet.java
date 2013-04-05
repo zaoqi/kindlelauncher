@@ -64,9 +64,6 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private Component nextPageButton = getUI().newButton("  \u25B6  ", this); //>
 	private Component prevPageButton = getUI().newButton("  \u25C0  ", this); //<
 	private Component prevLevelButton = getUI().newButton("\u25B2", this); //^
-	//private Component nextPageButton = getUI().newButton("  ▶  ", this);
-	//private Component prevPageButton = getUI().newButton("  ◀  ", this);
-	//private Component prevLevelButton = getUI().newButton("▲", this);
 
 	private String scriptVersion = ""; //from script
 	private int[] offset = {0,0,0,0,0,0,0,0,0,0}; //10
@@ -127,7 +124,6 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
 	private void setTrail(String left, String center) {
 		String upArr = "\u25B2"; //^
-		//String upArr = "▲"; //^
 		String text = null == left ? "" : left + " ";
 		if (null != center) {
 			text += center;
@@ -137,13 +133,14 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 //TODO			getUI().setHorizontalAlignment(prevLevelButton, Label.CENTER);
 		} else {
 			String label = "";
-			for (int i = depth-1; i >= 0 && label.length() <= 48; i--) { //TODO 48 as v1/v2 GUI constant
+			int width=getTrailMaxWidth() - text.length() ;
+			for (int i = depth-1; i >= 0 && label.length() <= width; i--) {
 				label = trail[i][0] + label;
 			}
 			int len = label.length();
-			if (len > 48)
-				label = "..."+label.substring(len-45);
-			text += label.substring(0,len-1) + upArr;
+			if (len > width)
+				label = "..."+label.substring(len-width-3);
+			text += label.substring(0,label.length()-1) + upArr;
 //TODO			getUI().setHorizontalAlignment(prevLevelButton, Label.LEFT);
 		}
 		getUI().setText(prevLevelButton, text);
@@ -490,6 +487,12 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		return isize > 0 ? isize : getUI().getDefaultPageSize();
 	}
 
+	private int getTrailMaxWidth() {
+		// A fixed value will never work in all situations because kindle uses
+		// a proportional font; this is a best guess
+		return 54; //FIXME
+	}
+
 	private String getConfigValue(String name) {
 		String value = (String) configMap.get("KUAL_" + name);
 		if (value == null)
@@ -526,6 +529,27 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			} catch (Throwable ex) {
 				String report = ex.getMessage();
 				setStatus(report);
+			}
+		} else if (cmd.startsWith("#")) { // run kindlet function
+			// '#' int_id ';' String_args
+			cmd = cmd.substring(1);
+			int id = -1;
+			p = cmd.indexOf(";");
+			try {
+				id = Integer.parseInt((String) cmd.substring(0,p));
+			} catch (Throwable ex) {
+				setStatus(ex.getMessage());
+			}
+			cmd = cmd.substring(p+1);
+			switch (id) {
+				case 1: setTrail(cmd, null);
+				case 2: setStatus(cmd);
+			}
+			if (-1 == options.indexOf("e")) {
+				// suicide
+				commandToRunOnExit = "true";
+				dirToChangeToOnExit = dir;
+				getUI().suicide(context);
 			}
 		} else { // run cmd
 			if (-1 == options.indexOf("e")) {
@@ -590,12 +614,9 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		bw.write("#!/bin/ash");
 		bw.newLine();
 
-		if (background) {
-			// wrap inside {} to support backgrounding multiple commands, e.g., x=1; use.sh $x ...
-			bw.write("{ " + init + cmd + " ; } &");
-		} else {
-			bw.write(cmd);
-		}
+		// wrap cmd inside {} to support backgrounding multiple commands and redirecting stderr
+		bw.write("{ " + init + cmd + " ; } 2>/var/tmp/KUAL.log"
+				+ (background ? " &" : ""));
 
 		bw.newLine();
 		bw.close();

@@ -1,19 +1,17 @@
 #!/bin/busybox ash
-# aloop-v2.sh - version 20130404,d stepk
-VERSION="20130404,d"
+# aloop-v2.sh - version 20130405,a stepk
+VERSION="20130405,a"
 usage () {
 local -
 }
 set -f 
-readonly CONFIGFILE="KUAL.cfg" 
-readonly PRODUCTNAME="KUAL"
 readonly EXTENSIONDIR="/mnt/us/extensions" 
+readonly PRODUCTNAME="KUAL"
+readonly CONFIGFILE="$PRODUCTNAME.cfg" 
 readonly SEPARATOR=`printf "\x01"`
-COLORMAX=0 
 EXITSTATUS=0
-readonly EXITMENU=1 # Kindlet commits suicide (default for all buttons, json "exitmenu":false saves)
 readonly SCREAM_LOG="/var/tmp/$PRODUCTNAME.log"
-alias scream='echo >&4'
+alias scream='echo >>"$SCREAM_LOG"' # DON'T ever overwrite the log file!
 case " $* " in
   *" -l "*)
      opt_log=1; 
@@ -167,7 +165,6 @@ case "$1" in
 ;;
 esac
 esac
-exec 4> "$SCREAM_LOG"
 script_full_path () {
   local pth=$(2>/dev/null cd "${0%/*}" >&2; pwd -P)
   [[ "-p" = "$1" ]] || pth=$pth/${0##*/}
@@ -289,21 +286,10 @@ emit_error () {
 }
 get_options () {
 local - opt status=0 x
-unset opt_execmenu opt_format opt_sort
+unset opt_execmenu opt_sort
 for opt in "$@"; do
   case "$opt" in
-    -c=*) x=${opt#*=}
-       case "$x" in [0-9]|[0-9][0-9]|[0-9][0-9][0-9]) COLORMAX=$(($x)) ;; esac ;;
     -e=*) opt_execmenu=${opt#*=} ;;
-    -f=*) x=${opt#*=}
-      case "$x" in
-        onelevel|twolevel|touchrunner|debuginfo) opt_format=$x ;;
-        *)
-          echo >&2 "${0##*/}: invalid option '-f=$x': using default options"
-          echo "emit_error 1 XenErrUsage \"-f=$x invalid, defaults used\""
-        ;;
-      esac
-    ;;
     -h|--help) usage >&2; exit ;;
     -l) ;; 
     -p=*)  opt_formatter=${opt#*=} ;;
@@ -348,35 +334,16 @@ until [[ true = "$gotOptions" ]]; do
     set -- ${opt_log+-l}
   fi
 done
-[[ -z "$opt_format" ]] && opt_format=twolevel 
 [[ -e "$CONFIGPATH" -a -n "$opt_log" ]] && log "found $CONFIGPATH
 `cat $CONFIGPATH`"
 log "system `uname -rsnm`"
-log "run options: $opt_format $opt_sort ($*)"
+log "run options: $opt_sort ($*)"
 clean_up_previous_runs "$SCRIPTPATH"
 if [[ "$opt_execmenu" ]]; then
   exec_self_menu $opt_execmenu
   exit $?
 fi
-case "$opt_format" in
-  twolevel) proc=two_level; COLORIDX=-1 ; COLORSTATE="" ;;
-  debuginfo) proc=debug_info ;;
-esac
 test_applet uninstall >/dev/null
-echo "
-CONFIGPATH='$CONFIGPATH'
-SCRIPTPATH='$SCRIPTPATH'
-KUAL_show_KUAL_buttons='$KUAL_show_KUAL_buttons'
-KUAL_nofollow='$KUAL_nofollow'
-opt_format='$opt_format'
-opt_sort='$opt_sort'
-opt_log='$opt_log'
-opt_execmenu='$opt_execmenu'
-opt_engine='$opt_engine'
-opt_formatter='$opt_formatter'
-proc='$proc'
-COLORMAX='$COLORMAX'
-"
 }
 send_config () {
   if [[ -e "$CONFIGPATH" ]]; then
@@ -391,7 +358,7 @@ send_config () {
 unpack () { 
 cat << 'UNPACK' 
 BEGIN { 
-	VERSION="20130404,d"
+	VERSION="20130405,a"
 	if (1 < ARGC) { print "usage!" > "/dev/stderr"; exit(1) }
 	while (0 < getline < "/dev/stdin") {
 		if (NF) { ARGV[++ARGC]=$0 } else break
@@ -448,7 +415,7 @@ if(""==CONFIGFILE) CONFIGFILE=PRODUCTNAME".cfg"
 CONFIGPATH=config_full_path()
 if(""!=CONFIGPATH) config_get(CONFIGPATH)
 SEP="\x01"
-SCREAM_LOG="/var/tmp/" PRODUCTNAME ".log"
+if(""==SCREAM_LOG) SCREAM_LOG="/var/tmp/" PRODUCTNAME ".log"
 VALID_KEYS["action"]=K_action=0x00  
 VALID_KEYS["priority"]=K_priority=0x01 
 VALID_KEYS["params"]=K_params=0x02
@@ -466,6 +433,8 @@ MMRK="\xE2\x96\xB6"
 MAX_LABEL_LEN=40
 XenErrSyntax="Syntax"
 TFL="/var/tmp/--" PRODUCTNAME "--" # use a fixed stem, not rand() nor alt PROCINFO["pid"]
+KINDLET["TRAIL"] = 1
+KINDLET["STATUS"] = 2
 }
 function teardown(   i) { 
 	system("cd /var/tmp && rm -f \"" TFL "\"* 2>/dev/null")
@@ -545,13 +514,23 @@ function find_menu_fullpathnames(dirs, return_ary, base,
 	}
 	return base
 }
+function format_action(action, params,   
+	p,cmd) {
+	p = index(action, ";")
+	cmd = substr(action,p+1)
+	if (cmd in KINDLET) {
+		cmd = KINDLET[cmd]
+		return substr(action,1,p)"#"cmd";"params
+	}
+	return (action) ("" != params ? " " : "") (params)
+}
 function json_emit_self_menu_and_parsing_errors(   json,     
 	name,sname,msg,ary,nary) {
 	json=json_self_menu() 
 	for(name in FAILS) {
 		json=json ",{\"priority\": -1000, \"name\": \"" \
 			fit_button("."XenErrSyntax" ", shortpathname(name)) \
-		       	"\", \"action\": \"[ \\\"$KUAL\\\" ] && $KUAL 2\"}"
+		       	"\", \"action\": \"TRAIL\", \"params\": \"[more info in "PRODUCTNAME" log]\", \"exitmenu\": false}"
 	} 
 	if (json) { 
 		name = PRODUCTNAME
@@ -566,11 +545,11 @@ function json_emit_self_menu_and_parsing_errors(   json,
 		jp2np(JPATHS, NJPATHS, 0, "/var/tmp/.")
 	}
 }
-function json_self_menu (   json, 
+function json_self_menu(   json, 
 	show,b,verb,btnpath,bak) {
 	if (0 == (show = CONFIG["show_KUAL_buttons"])) 
 		return ""
-	if ("" == show) show="1 2 99" 
+	if ("" == show) show="1 2 3 99" 
 	json = ""
 	if (split(show, ary, /\s+/)) {
 		for (b in ary) {
@@ -595,6 +574,12 @@ function json_self_menu (   json,
 				"\", \"action\": \"" \
 					"/bin/ash '"SCRIPTPATH"' '-e=2,-s="verb"'" \
 				"\", \"priority\": 2}"
+			} else if (3 == ary[b]) {
+				json=json ",{\"name\": \"" \
+					"Save and reset "PRODUCTNAME" log" \
+				"\", \"action\": \"" \
+					"[ \\\"$KUAL\\\" ] && $KUAL 2" \
+				"\", \"priority\": 3}"
 			} else if (99 == ary[b]) {
 				json=json ",{\"name\": \"" \
 					"× Quit" \
@@ -634,6 +619,7 @@ function jp2np(ary, size, serial, menufilepathname,
 		if (K_name == key) {
 			gsub(NBSP0, NBSP1, value)
 		} else if (K_action == key) {
+			gsub(/\\\"/, "\"", value)
 			value=apath ";" value
 		} else if (K_params == key) {
 			gsub(/\\\"/, "\"", value)
@@ -676,7 +662,7 @@ function np2mn(ary, size,
 							kindlet_options(),
 							level":"this_(K_name, snpath), # refers to this."name"
 							ITEM[K_name], # VALID_KEYS w/o "items"
-							ITEM[K_action] ("" != ITEM[K_params] ? " " : "") ITEM[K_params]  )
+							format_action(ITEM[K_action], ITEM[K_params]))
 						new_item()
 					} else { 
 						ITEM[key]=value" "MMRK 
@@ -1028,22 +1014,15 @@ UNPACK
 }
 log "start pid($$)"
 readonly TFL="/var/tmp/$PRODUCTNAME-$$"
-readonly EMIT="$TFL-emit"
 trap handler EXIT HUP INT QUIT TERM KILL
 handler () {
   local -
   set +f
   cd /var/tmp && rm -f "$TFL"* 2>/dev/null
-  scream "$PRODUCTNAME exit $EXITSTATUS `date`"
-  cat "$SCREAM_LOG" >&2
+  [ 0 != "$EXITSTATUS" ] && scream "exit parser ($EXITSTATUS)"
   log "end pid($$)"
 }
-starter=`init "$@"` 
-log "starter($starter)"
-proc=':' 
-eval "$starter" >/dev/null 
-log "proc($proc)"
-log "engine version 2"
+init "$@"
 send_config 
 test_applet uninstall >/dev/null
 	unpack > "$TFL.awk" &&
@@ -1052,7 +1031,6 @@ test_applet uninstall >/dev/null
 		-v FORMATTER=${opt_formatter:-multiline} \
 		-v OPT_SORT=$opt_sort \
 		-v EXTENSIONDIR="$EXTENSIONDIR"
-	t=$?
-[ -z "$EXITSTATUS" ] && EXITSTATUS=$t
+	EXITSTATUS=$?
 log "exit status($EXITSTATUS)"
 exit $EXITSTATUS
