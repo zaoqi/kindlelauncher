@@ -615,7 +615,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		bw.newLine();
 
 		// wrap cmd inside {} to support backgrounding multiple commands and redirecting stderr
-		bw.write("{ " + init + cmd + " ; } 2>/var/tmp/KUAL.log"
+		bw.write("{ " + init + cmd + " ; } 2>>/var/tmp/KUAL.log"
 				+ (background ? " &" : ""));
 
 		bw.newLine();
