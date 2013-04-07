@@ -1,4 +1,27 @@
 CHANGE LOG
+20130407,a
+New options and default values speed up scanning /mnt/us/extensions
+# Change: by default do not recurse /mnt/us/extensions/* when
+  searching for json files. Equivalent to setting KUAL_search_depth=2
+# Change: by default skip searching /mnt/us/extensions/system.
++ KUAL.cfg option: KUAL_search_depth="N"
+  search /mnt/us/extensions up to N levels deep (default N=2)
++ KUAL.cfg option: KUAL_search_exclude_paths="system"
+  semicolon-separated list of paths to exclude when scanning
+  /mnt/us/extensions.
+  It does make a noticeable difference when scanning a huge extension
+  folder like the 'KUAL system' extension.  Comparison: KT running
+  version 20130407a vs. 20130405a w/ and w/o 'system' extension
+    20130407a w/o                w/
+    real    0m 0.67s   real   0m 0.93s   <<<<
+    user    0m 0.55s   user   0m 0.74s
+    sys     0m 0.11s   sys    0m 0.11s
+
+    20130405a w/o                w/
+    real    0m 0.76s   real   0m 3.90s   <<<<
+    user    0m 0.53s   user   0m 0.77s
+    sys     0m 0.14s   sys    0m 0.48s
+
 20130405,a
 Extensions can now write a message to the trail/status lines
 + Extension can write a fixed message into the trail line with json

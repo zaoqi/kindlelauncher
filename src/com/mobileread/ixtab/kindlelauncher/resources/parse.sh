@@ -1,6 +1,6 @@
 #!/bin/busybox ash
-# aloop-v2.sh - version 20130405,a stepk
-VERSION="20130405,a"
+# aloop-v2.sh - version 20130407,a stepk
+VERSION="20130407,a"
 usage () {
 local -
 }
@@ -358,7 +358,7 @@ send_config () {
 unpack () { 
 cat << 'UNPACK' 
 BEGIN { 
-	VERSION="20130405,a"
+	VERSION="20130407,a"
 	if (1 < ARGC) { print "usage!" > "/dev/stderr"; exit(1) }
 	while (0 < getline < "/dev/stdin") {
 		if (NF) { ARGV[++ARGC]=$0 } else break
@@ -413,7 +413,9 @@ if(""==EXTENSIONDIR) EXTENSIONDIR="/mnt/us/extensions"
 if(""==PRODUCTNAME) PRODUCTNAME="KUAL"
 if(""==CONFIGFILE) CONFIGFILE=PRODUCTNAME".cfg" 
 CONFIGPATH=config_full_path()
-if(""!=CONFIGPATH) config_get(CONFIGPATH)
+if(""!=CONFIGPATH) config_read(CONFIGPATH)
+CONFIG["bb find"]="/bin/busybox find"
+CONFIG["bb sort"]="/bin/busybox sort"
 SEP="\x01"
 if(""==SCREAM_LOG) SCREAM_LOG="/var/tmp/" PRODUCTNAME ".log"
 VALID_KEYS["action"]=K_action=0x00  
@@ -461,7 +463,10 @@ function config_full_path(create, # {{{ [create="create"] creates first(EXTENSIO
 	}
 	return ""
 }
-function config_get(configfullpath, 
+function config_get(key) { 
+	return key in CONFIG ? CONFIG[key] : ""
+}
+function config_read(configfullpath, 
 	ary,nary,slurp,k,v,p,count) {
 	if (0 <= (getline slurp < configfullpath))
 		close(configfullpath)
@@ -483,10 +488,14 @@ function config_get(configfullpath,
 	return 0+count
 }
 function find_menu_fullpathnames(dirs, return_ary, base,  
-	pj,nj,follow,slurp,i,ary,nary,menu,cmd) {
-	follow = "true" == CONFIG["KUAL_nofollow"] ? "" : " -follow"
-	gsub(/;/, " ", dirs) 
-	cmd = "find "dirs follow" -name config.xml 2>/dev/null"
+	pj,nj,follow,depth,paths,slurp,i,ary,nary,menu,cmd) {
+	follow = "true" == config_get("nofollow") ? "" : "-follow"
+	depth = config_get("search_depth")
+	depth =	"-maxdepth " (""==depth ? 2 : 0+depth)
+	paths = config_get("search_exclude_paths")
+	paths = "-path "dirs"/" (""==paths ? "system" : paths)
+	gsub(/;/," -o -path "dirs"/",paths) 
+	cmd = config_get("bb find")" "dirs" "follow" "depth" \\( "paths" \\) \\( -prune -type f \\) -o \\( -name config.xml -type f \\) 2>/dev/null"
 	cmd | getline slurp
 	close(cmd)
 	nary = split(slurp, ary, /\n/)
@@ -547,7 +556,7 @@ function json_emit_self_menu_and_parsing_errors(   json,
 }
 function json_self_menu(   json, 
 	show,b,verb,btnpath,bak) {
-	if (0 == (show = CONFIG["show_KUAL_buttons"])) 
+	if (0 == (show = config_get("show_KUAL_buttons"))) 
 		return ""
 	if ("" == show) show="1 2 3 99" 
 	json = ""
@@ -716,7 +725,7 @@ function sort(ary, nary, sort_options,
 	}
 	close(tfl)
 	SORTED_DATA = ""
-	cmd = "/bin/busybox sort -t \""SEP"\" "sort_options" < \""tfl"\""
+	cmd = config_get("bb sort")" -t \""SEP"\" "sort_options" < \""tfl"\""
 	cmd | getline SORTED_DATA
 	close(cmd)
 }
