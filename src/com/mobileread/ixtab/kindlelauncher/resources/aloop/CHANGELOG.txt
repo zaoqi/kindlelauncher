@@ -1,4 +1,9 @@
 CHANGE LOG
+20130408,a
+Fix kindlet timeout issue
+- Fixed the reason for kindlet timeout issue in the parse script
++ Improved script's early error reporting mechanism
+
 20130407,a
 New options and default values speed up scanning /mnt/us/extensions
 # Change: by default do not recurse /mnt/us/extensions/* when

@@ -1,6 +1,6 @@
 #!/bin/busybox ash
-# aloop-v2.sh - version 20130407,a stepk
-VERSION="20130407,a"
+# aloop-v2.sh - version 20130408,a stepk
+VERSION="20130408,a"
 usage () {
 local -
 }
@@ -11,7 +11,7 @@ readonly CONFIGFILE="$PRODUCTNAME.cfg"
 readonly SEPARATOR=`printf "\x01"`
 EXITSTATUS=0
 readonly SCREAM_LOG="/var/tmp/$PRODUCTNAME.log"
-alias scream='echo >>"$SCREAM_LOG"' # DON'T ever overwrite the log file!
+alias scream="echo >> \"$SCREAM_LOG\"" 
 case " $* " in
   *" -l "*)
      opt_log=1; 
@@ -272,15 +272,10 @@ KUAL_filepath() {
 }
 EMIT_ERROR_COUNT=0
 emit_error () {
-  local - status=$1 name=$2 len
+  local - status=$1 name=$2
   shift 2
-  local f=$*
-  eval "len=\$((MAX_LABEL_LEN - \${#$name}))"
-  local x=$f
-  while [ ${#x} -gt $len ]; do x=${x#?}; done 
-  [ ${#f} -ge ${#x} ] && x=" ..${x#???}"
-  eval "x=\"\${$name}$x\""
-  >&3 jpath_add_entry_to_menu messages "$x" '[ "$KUAL" ] && $KUAL 2'
+  eval "name=\"\${$name}\""
+  scream "$name $*"
   EXITSTATUS=$status # don't run this in a sub-shell!
   EMIT_ERROR_COUNT=$((++EMIT_ERROR_COUNT))
 }
@@ -298,13 +293,13 @@ for opt in "$@"; do
         123|abc|ABC) opt_sort=$x ;;
         *)
           echo >&2 "${0##*/}: invalid option '-s=$x': using default options"
-          echo "emit_error 1 XenErrUsage \"-s=$x invalid, defaults used\""
+          emit_error 1 XenErrUsage "-s=$x invalid, defaults used"
         ;;
       esac
     ;;
     *)
       echo >&2 "${0##*/}: invalid option '$opt': using default options"
-      echo "emit_error 1 XenErrUsage \"$opt invalid, defaults used\""
+      emit_error 1 XenErrUsage "$opt invalid, defaults used"
       status=1
     ;;
   esac
@@ -312,27 +307,28 @@ done
 return $status
 }
 init () {
-local TIER=1 gotOptions=false KUAL_options='' x
+local - max_errors=2 KUAL_options='' x
 CONFIGPATH=`config_full_path`
 SCRIPTPATH=`script_full_path`
 if [[ -e "$CONFIGPATH" ]]; then
   if ! source "$CONFIGPATH"; then
-    echo "emit_error 1 XenErrConfig \"$CONFIGPATH\""
+    emit_error 1 XenErrConfig "$CONFIGPATH"
     KUAL_options='' 
   fi
 fi
-until [[ true = "$gotOptions" ]]; do
+until [ $max_errors -lt 1 ]; do
   if [[ \( 0 = $# -a -z "$KUAL_options" \) -o \( 1 = $# -a -n "$opt_log" -a -z "$KUAL_options" \) ]]; then
-    set -- -f=twolevel -s=abc 
+    set -- -s=ABC 
   else
     set -- $KUAL_options "$@"
   fi
   if get_options "$@"; then
-    gotOptions=true
+    break
   else
     KUAL_options=''
     set -- ${opt_log+-l}
   fi
+  max_errors=$((--max_errors))
 done
 [[ -e "$CONFIGPATH" -a -n "$opt_log" ]] && log "found $CONFIGPATH
 `cat $CONFIGPATH`"
@@ -358,7 +354,7 @@ send_config () {
 unpack () { 
 cat << 'UNPACK' 
 BEGIN { 
-	VERSION="20130407,a"
+	VERSION="20130408,a"
 	if (1 < ARGC) { print "usage!" > "/dev/stderr"; exit(1) }
 	while (0 < getline < "/dev/stdin") {
 		if (NF) { ARGV[++ARGC]=$0 } else break
@@ -395,7 +391,7 @@ BEGIN {
 	if (status) ++ERRORS
 }
 END { 
-	json_emit_self_menu_and_parsing_errors() 
+	json_emit_self_menu_and_parsing_errors(0+PARENT_ERRORS) 
 	delete MENUS; NMENUS=0
 	if (0 == (status = np2mn(NPATHS, NNPATHS))) {
 		delete NPATHS; NNPATHS=0
@@ -409,15 +405,15 @@ if (""==FORMATTER) FORMATTER="multiline"
 if (""==OPT_SORT) OPT_SORT="ABC"
 delete COUNTER
 COUNTER["nameNull"]=0
-if(""==EXTENSIONDIR) EXTENSIONDIR="/mnt/us/extensions" 
-if(""==PRODUCTNAME) PRODUCTNAME="KUAL"
-if(""==CONFIGFILE) CONFIGFILE=PRODUCTNAME".cfg" 
+if (""==EXTENSIONDIR) EXTENSIONDIR="/mnt/us/extensions" 
+if (""==PRODUCTNAME) PRODUCTNAME="KUAL"
+if (""==CONFIGFILE) CONFIGFILE=PRODUCTNAME".cfg" 
 CONFIGPATH=config_full_path()
-if(""!=CONFIGPATH) config_read(CONFIGPATH)
+if (""!=CONFIGPATH) config_read(CONFIGPATH)
 CONFIG["bb find"]="/bin/busybox find"
 CONFIG["bb sort"]="/bin/busybox sort"
 SEP="\x01"
-if(""==SCREAM_LOG) SCREAM_LOG="/var/tmp/" PRODUCTNAME ".log"
+if (""==SCREAM_LOG) SCREAM_LOG="/var/tmp/" PRODUCTNAME ".log"
 VALID_KEYS["action"]=K_action=0x00  
 VALID_KEYS["priority"]=K_priority=0x01 
 VALID_KEYS["params"]=K_params=0x02
@@ -434,9 +430,10 @@ NBSP1="\xC2\xA0"
 MMRK="\xE2\x96\xB6"
 MAX_LABEL_LEN=40
 XenErrSyntax="Syntax"
+XenParentErrors="Startup error"
 TFL="/var/tmp/--" PRODUCTNAME "--" # use a fixed stem, not rand() nor alt PROCINFO["pid"]
-KINDLET["TRAIL"] = 1
-KINDLET["STATUS"] = 2
+KINDLET["TRAIL"]=1
+KINDLET["STATUS"]=2
 }
 function teardown(   i) { 
 	system("cd /var/tmp && rm -f \"" TFL "\"* 2>/dev/null")
@@ -533,13 +530,15 @@ function format_action(action, params,
 	}
 	return (action) ("" != params ? " " : "") (params)
 }
-function json_emit_self_menu_and_parsing_errors(   json,     
-	name,sname,msg,ary,nary) {
+function json_emit_self_menu_and_parsing_errors(parent_errors,     
+	json,name,sname,msg,ary,nary) {
 	json=json_self_menu() 
+	if (parent_errors) {
+		++ERRORS
+		json=json "," json_error_button(fit_button("."XenParentErrors, ""))
+	}
 	for(name in FAILS) {
-		json=json ",{\"priority\": -1000, \"name\": \"" \
-			fit_button("."XenErrSyntax" ", shortpathname(name)) \
-		       	"\", \"action\": \"TRAIL\", \"params\": \"[more info in "PRODUCTNAME" log]\", \"exitmenu\": false}"
+		json=json "," json_error_button(fit_button("."XenErrSyntax" ", shortpathname(name)))
 	} 
 	if (json) { 
 		name = PRODUCTNAME
@@ -553,6 +552,11 @@ function json_emit_self_menu_and_parsing_errors(   json,
 		parse()
 		jp2np(JPATHS, NJPATHS, 0, "/var/tmp/.")
 	}
+}
+function json_error_button(message) {  
+	return "{\"priority\": -1000, \"name\": \"" \
+		message \
+		"\", \"action\": \"TRAIL\", \"params\": \"[more info in "PRODUCTNAME" log]\", \"exitmenu\": false}"
 }
 function json_self_menu(   json, 
 	show,b,verb,btnpath,bak) {
@@ -1039,7 +1043,8 @@ test_applet uninstall >/dev/null
 		-v SCRIPTPATH="$SCRIPTPATH" \
 		-v FORMATTER=${opt_formatter:-multiline} \
 		-v OPT_SORT=$opt_sort \
-		-v EXTENSIONDIR="$EXTENSIONDIR"
+		-v EXTENSIONDIR="$EXTENSIONDIR" \
+		-v PARENT_ERRORS="$EMIT_ERROR_COUNT"
 	EXITSTATUS=$?
 log "exit status($EXITSTATUS)"
 exit $EXITSTATUS

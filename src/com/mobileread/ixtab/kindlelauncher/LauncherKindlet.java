@@ -133,13 +133,13 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 //TODO			getUI().setHorizontalAlignment(prevLevelButton, Label.CENTER);
 		} else {
 			String label = "";
-			int width=getTrailMaxWidth() - text.length() ;
+			int width = getTrailMaxWidth() - text.length() ;
 			for (int i = depth-1; i >= 0 && label.length() <= width; i--) {
 				label = trail[i][0] + label;
 			}
 			int len = label.length();
 			if (len > width)
-				label = "..."+label.substring(len-width-3);
+				label = "..." + label.substring(len - width + 3);
 			text += label.substring(0,label.length()-1) + upArr;
 //TODO			getUI().setHorizontalAlignment(prevLevelButton, Label.LEFT);
 		}
@@ -154,41 +154,36 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		Container root = context.getRootContainer();
 		int gap = getUI().getGap();
 		root.removeAll();
-//XX		root.setLayout(new BorderLayout());
 
-//XX		root.add(prevPageButton, BorderLayout.WEST);
-//XX		root.add(nextPageButton, BorderLayout.EAST);
+		root.setLayout(new BorderLayout(gap,gap));
+		Container main = getUI().newPanel(new BorderLayout(gap,gap));
+		
+		// this is a horrible workaround to simulate adding a border around
+		// the main container. It has to be done this way because we have
+		// to support different framework versions.
 
+		root.add(main, BorderLayout.CENTER);
+		root.add(new GapComponent(0), BorderLayout.NORTH);
+		root.add(new GapComponent(0), BorderLayout.EAST);
+		root.add(new GapComponent(0), BorderLayout.SOUTH);
+		root.add(new GapComponent(0), BorderLayout.WEST);
 
-	root.setLayout(new BorderLayout(gap,gap));
-	Container main = getUI().newPanel(new BorderLayout(gap,gap));
-	
-	// this is a horrible workaround to simulate adding a border around
-	// the main container. It has to be done this way because we have
-	// to support different framework versions.
-
-	root.add(main, BorderLayout.CENTER);
-	root.add(new GapComponent(0), BorderLayout.NORTH);
-	root.add(new GapComponent(0), BorderLayout.EAST);
-	root.add(new GapComponent(0), BorderLayout.SOUTH);
-	root.add(new GapComponent(0), BorderLayout.WEST);
-
-	main.add(prevPageButton, BorderLayout.WEST);
-	main.add(nextPageButton, BorderLayout.EAST);
+		main.add(prevPageButton, BorderLayout.WEST);
+		main.add(nextPageButton, BorderLayout.EAST);
 
 		String show = getConfigValue("no_show_status");
 		if (null != show && show.equals("true")) {
 			status = null;
 		} else {
 			status = getUI().newLabel("Status");
-	main.add(status, BorderLayout.SOUTH); //CHG
+			main.add(status, BorderLayout.SOUTH);
 		}
-	main.add(prevLevelButton, BorderLayout.NORTH); //CHG
+		main.add(prevLevelButton, BorderLayout.NORTH);
 
-	GridLayout grid = new GridLayout(getPageSize(), 1, gap, gap); //CHG
+		GridLayout grid = new GridLayout(getPageSize(), 1, gap, gap); 
 		entriesPanel = getUI().newPanel(grid);
 
-	main.add(entriesPanel, BorderLayout.CENTER);
+		main.add(entriesPanel, BorderLayout.CENTER);
 
 		// FOR TESTING ONLY, if a specific number of entries is needed.
 		// for (int i = 0; i < 25; ++i) {
@@ -261,7 +256,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		}
 		reader.close();
 		//parseFile.delete(); //stepk: leave script in place to provide for backdoor option -e
-		parseFile.deleteOnExit(); //stepk: kindlet deletes on clean exit & parse.sh deletes leftovers
+		parseFile.deleteOnExit(); //stepk: kindlet deletes on clean exit & parse.sh deletes leftovers on next entry
 	}
 
 	private File extractParseFile() throws IOException, FileNotFoundException {
