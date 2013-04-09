@@ -1,4 +1,8 @@
 CHANGE LOG
+20130409,a
+- Fix "wrong action is executed when a menu.json file includes multiple top-level items".
+- Minor fixes and improvements
+
 20130408,a
 Fix kindlet timeout issue
 - Fixed the reason for kindlet timeout issue in the parse script

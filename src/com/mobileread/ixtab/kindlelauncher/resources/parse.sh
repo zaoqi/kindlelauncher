@@ -1,6 +1,6 @@
 #!/bin/busybox ash
-# aloop-v2.sh - version 20130408,a stepk
-VERSION="20130408,a"
+# aloop-v2.sh - version 20130409,a stepk
+VERSION="20130409,a"
 usage () {
 local -
 }
@@ -354,8 +354,9 @@ send_config () {
 unpack () { 
 cat << 'UNPACK' 
 BEGIN { 
-	VERSION="20130408,a"
-	if (1 < ARGC) { print "usage!" > "/dev/stderr"; exit(1) }
+	VERSION="20130409,a"
+	BAILOUT=0
+	if (1 < ARGC) { print "usage!" > "/dev/stderr"; BAILOUT=1; exit }
 	while (0 < getline < "/dev/stdin") {
 		if (NF) { ARGV[++ARGC]=$0 } else break
 	}
@@ -391,6 +392,7 @@ BEGIN {
 	if (status) ++ERRORS
 }
 END { 
+	if (BAILOUT) exit(BAILOUT)
 	json_emit_self_menu_and_parsing_errors(0+PARENT_ERRORS) 
 	delete MENUS; NMENUS=0
 	if (0 == (status = np2mn(NPATHS, NNPATHS))) {
@@ -799,19 +801,19 @@ function npath (jpath, serial,   items,key,snpath,ary,nary,i) {
 	sub(/^.+,/, "", key);
 	key=substr(key, 2, length(key)-2) 
 	sub(/\".+$/, "", ary[nary]) 
-	for(i=3; i<=nary; i++) { # drop <null> and invariant "items",0 [b]
+	for(i=2; i<=nary; i++) { 
 		snpath=snpath items sprintf("%02x", substr(ary[i],2,length(ary[i])-2))
 	}
 	snpath = snpath sprintf("%02x", VALID_KEYS[key])
 	return n_s2n(snpath) 
 }
 function n_n2s(npath,   x) { 
-	x=substr(npath, 3, length(npath)-4) 
+	x=substr(npath, 3) 
 	sub(/(ff)+$/, "", x)
 	return x
 }
 function n_s2n(snpath) { # {{{ convert short npath to npath (right-pad with f's)
-    return xRESERVED substr(snpath FFS, 1, 44) xRESERVED 
+    return xRESERVED substr(snpath FFS, 1, 46) 
 }
 function this_(key, snpath) { 
     return substr(snpath,1,length(snpath)-2) sprintf("%02x", key) 
