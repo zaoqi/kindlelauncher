@@ -1,6 +1,6 @@
 #!/bin/busybox ash
 # aloop-v2.sh - version 20130409,a stepk
-VERSION="20130409,a"
+VERSION="20130410,a"
 usage () {
 local -
 }
@@ -226,37 +226,23 @@ exec_self_menu() {
     esac
   ;;
   2) 
-    local opt=$2 config=`config_full_path create` newtext='' line found=0
-    local _s=`printf "[\x20\x09]"` dquot=`printf "\x22"`
+    local opt=$2 config=`config_full_path create` newtext=''
     IFS=${NO_WSP}
-    newtext=$( 
-      sed -e "
-/^${_s}*KUAL_options=/ {
-	# delete existing sort option(s)
-	s/${_s}-s=.*\>//g
-	s/-s=.*\>${_s}//g
-	s/-s=.*${dquot}/${dquot}/
-}
-      " "$config" \
-    | {
-    while read line; do
-        case $line in 
-          *KUAL_options=\"\") echo "KUAL_options=\"$opt\"" ; found=1
-        ;; 
-          *KUAL_options=\"*\") echo "${line%?} $opt\"" ; found=1
-        ;; 
-          *KUAL_options=*) echo "KUAL_options=\"${line#KUAL_options=} $opt\"" ; found=1
-        ;; 
-          *) echo "$line"
-        ;;
-        esac
-      done
-      [[ 0 = $found ]] && echo KUAL_options=\"$opt\"
-      }
+    newtext=$(awk '
+	BEGIN {NOT_FOUND=1}
+	/^\s*KUAL_options=/ {
+		gsub(/\s?-s=\w+/,"")
+		sub(/\s?"$/," '$opt'\"")
+		sub(/KUAL_options=\"\s*/,"KUAL_options=\"")
+		NOT_FOUND=0
+	}
+	{print}
+	END {exit NOT_FOUND}
+	' "$config" || echo KUAL_options=\"$opt\"
     ) 
-    [[ 0 != ${#newtext} ]] && echo "$newtext" > "$config"
+    [ 0 != ${#newtext} ] && echo "$newtext" > "$config"
   ;;
-  99) 
+  3|99) 
   ;;
   esac
 }
@@ -342,11 +328,16 @@ fi
 test_applet uninstall >/dev/null
 }
 send_config () {
-  if [[ -e "$CONFIGPATH" ]]; then
-    set -- `wc -l "$CONFIGPATH"`
-    echo $((1+$1))
-    echo "$VERSION"
-    cat "$CONFIGPATH"
+  if [ -r "$CONFIGPATH" ]; then
+    awk '
+	/^\s*#|^\s*$/ { next }
+	{ line[++nlines]=$0 }
+	END {
+		print 1+nlines"\n"'$VERSION'
+		for (i = 1; i <= nlines; i++)
+			print line[i]
+	}
+    ' "$CONFIGPATH"
   else
     echo -e "1\n$VERSION"
   fi
@@ -354,7 +345,7 @@ send_config () {
 unpack () { 
 cat << 'UNPACK' 
 BEGIN { 
-	VERSION="20130409,a"
+	VERSION="20130410,a"
 	BAILOUT=0
 	if (1 < ARGC) { print "usage!" > "/dev/stderr"; BAILOUT=1; exit }
 	while (0 < getline < "/dev/stdin") {
@@ -382,7 +373,7 @@ BEGIN {
 	SVNJPATHS = 0+NJPATHS
 	tokenize($0) 
 	if (0 == (status = parse())) { 
-		++GOODCOUNT # ++GOODCOUNT leaves serial 0 free for menu 'messages'
+		++GOODCOUNT 
 		status = jp2np(JPATHS, NJPATHS, GOODCOUNT, FILENAME) 
 	} else { 
 		while(NJPATHS > SVNJPATHS) {
@@ -420,12 +411,13 @@ VALID_KEYS["action"]=K_action=0x00
 VALID_KEYS["priority"]=K_priority=0x01 
 VALID_KEYS["params"]=K_params=0x02
 VALID_KEYS["exitmenu"]=K_exitmenu=0x03
-VALID_KEYS["hidden"]=K_hidden=0x04
+VALID_KEYS["hidden"]=K_hidden=0x04 
 VALID_KEYS["name"]=K_name=0x05 
 VALID_KEYS["items"]=K_items=0xff # don't change
 VALID_KEYS["ERROR"]="??"
-RESERVED=0xff
-xRESERVED="ff"
+xRESERVED=0xff
+sRESERVED="ff"
+sRESERVED_len=2
 FFS="ffffffffffffffffffffffffffffffffffffffffffffffff" 
 NBSP0="&nbsp;"
 NBSP1="\xC2\xA0" 
@@ -433,7 +425,7 @@ MMRK="\xE2\x96\xB6"
 MAX_LABEL_LEN=40
 XenErrSyntax="Syntax"
 XenParentErrors="Startup error"
-TFL="/var/tmp/--" PRODUCTNAME "--" # use a fixed stem, not rand() nor alt PROCINFO["pid"]
+TFL="/var/tmp/--" PRODUCTNAME "--" 
 KINDLET["TRAIL"]=1
 KINDLET["STATUS"]=2
 }
@@ -610,7 +602,7 @@ function jp2np(ary, size, serial, menufilepathname,
 	i,x,n,apath,jpath,key,value,level,errors) {
 	errors=0
 	apath=menufilepathname; sub(/\/[^\/]+$/, "", apath)
-	while (jp2np_LAST_SEEN <= size) {
+	while (jp2np_LAST_SEEN <= size) { 
 		line=ary[jp2np_LAST_SEEN++]  # {
 		if (line ~ /[]}]$/) {
 			continue
@@ -629,7 +621,7 @@ function jp2np(ary, size, serial, menufilepathname,
 			continue
 		}
 		--level 
-		n=npath(jpath, serial)
+		n=npath(jpath, serial) 
 		gsub(/^"|"$/, "", value)
 		if (K_name == key) {
 			gsub(NBSP0, NBSP1, value)
@@ -646,9 +638,9 @@ function jp2np(ary, size, serial, menufilepathname,
 function np2mn(ary, size,    
 	i,slurp,lines,nlines,iline,errors,
 	npary,level,npath,key,value,xname,options,
-	this_items,select_level,needle,snpath,last_action  ) {
+	npath_s_this_items,select_level,needle,snpath,last_action  ) {
 	errors=0
-	sort(ary, size, "-s -k2,2 -k1,1 -k3,3")
+	sort(ary, size, "-k2."(1+sRESERVED_len)",2 -k1,1 -k3,3") 
 	if ("" == SORTED_DATA) {
 		scream("np2mn can't sort 1")
 		++errors
@@ -656,13 +648,13 @@ function np2mn(ary, size,
 		new_item()
 		new_submenu()
 		snpath="SNPATH"; last_action="SNPATH"
-	       	select_level[0] = n_s2n("00") 
+	       	select_level[0] = npath_s2n("00") 
 		xname = sprintf("%02x", K_name)
 		if (0 < (nlines = split(SORTED_DATA,lines, /\n/))) {
 			for(iline = 1; iline < nlines; iline++) {
 				split(lines[iline], npary, SEP)
 				level = npary[1]; npath = npary[2]; key = npary[3]; value = npary[4]
-				snpath = n_n2s(npath)
+				snpath = npath_n2s(npath)
 				if (K_action == key) {
 					ITEM[key] = value
 					last_action = snpath
@@ -671,20 +663,20 @@ function np2mn(ary, size,
 						value = "??"(++COUNTER["nameNull"])
 					if (submenuQ(snpath, last_action)) { 
 						ITEM[key]=value 
-						sortable_tag=select_level[level]
+						sortable_tag=substr(select_level[level],1+0*sRESERVED_len) 
 						MENUS[++NMENUS] = work_record( \
 							sort_criteria(sortable_tag, OPT_SORT),
 							kindlet_options(),
-							level":"this_(K_name, snpath), # refers to this."name"
+							level":"npath_s_this_(K_name, snpath), # refers to this."name"
 							ITEM[K_name], # VALID_KEYS w/o "items"
 							format_action(ITEM[K_action], ITEM[K_params]))
 						new_item()
 					} else { 
 						ITEM[key]=value" "MMRK 
-          this_items = this_(K_items, snpath) # refers to this."items"
-          select_level[level+1] = n_s2n(this_items) 
-	  sortable_tag = select_level[level] 
-	  needle="^" (level+1) ":" this_items ".." xname "$"
+						npath_s_this_items = npath_s_this_(K_items, snpath) # refers to this."items"
+						select_level[level+1] = npath_s2n(npath_s_this_items) 
+						sortable_tag = select_level[level] 
+						needle="^" (level+1) ":" npath_s_this_items ".." xname "$"
 						MENUS[++NMENUS] = work_record( \
 							sort_criteria(sortable_tag, OPT_SORT),
 							kindlet_options(),
@@ -723,6 +715,36 @@ function new_item() {
 function new_submenu() { 
 	ITEM[K_name]=""; ITEM[K_priority]=0; ITEM[K_hidden]=""
 }
+function npath (jpath, serial,   # convert a jpath to a unique numeric path 
+	items,key,snpath,ary,nary,i) {
+	items = sprintf("%02x", K_items)
+	snpath = sprintf("%s%02x", items, serial) 
+	jpath=substr(jpath,2,length(jpath)-2) 
+	nary=split(jpath, ary, /\"items\"/)
+	key=ary[nary]
+	sub(/^.+,/, "", key);
+	key=substr(key, 2, length(key)-2) 
+	sub(/\".+$/, "", ary[nary]) 
+	for(i=2; i<=nary; i++) { 
+		snpath=snpath items sprintf("%02x", substr(ary[i],2,length(ary[i])-2))
+	}
+	snpath = snpath sprintf("%02x", VALID_KEYS[key])
+	return npath_s2n(snpath) 
+}
+function npath_n2s(npath,   x) { 
+	x=substr(npath, 3) 
+	sub(/(ff)+$/, "", x)
+	return x
+}
+function npath_s2n(snpath) { # {{{ convert short npath to npath (right-pad with f's)
+    return sRESERVED substr(snpath FFS, 1, 46) 
+}
+function npath_s_KUAL_menu() { 
+	return sprintf("%02x%02x%02x%02x%02x",K_items,0,K_items,0,K_name)
+}
+function npath_s_this_(key, snpath) { 
+    return substr(snpath,1,length(snpath)-2) sprintf("%02x", key) 
+}
 function sort(ary, nary, sort_options,   
 	tfl,i,cmd) {
 	tfl=TFL"-sort" rand()
@@ -759,7 +781,7 @@ function sort_criteria_cut(ary, opt_sort,
 }
 function sort_for_user(ary, nary, opt_sort,    # {{{ 
 	cherry,i) {
-	cherry = SEP "0:"sprintf("%02x%02x%02x",K_items,0,K_name) SEP
+	cherry = SEP "0:" npath_s_KUAL_menu() SEP
 	for (i = 1; i <= nary; i++) {
 		if (index(ary[i], cherry)) {
 			cherry = ary[i]
@@ -772,7 +794,7 @@ function sort_for_user(ary, nary, opt_sort,    # {{{
 	if ("123" == opt_sort) {
 		sort(ary, nary, "-s -k1,1 -k2,2n")
 	} else if ("ABC" == opt_sort || "abc" == opt_sort) {
-		sort(ary, nary, "-s -k1,1 -k2,2")
+		sort(ary, nary, "-s -f -k1,1 -k2,2")
 	} else { # least likely usage, "fake" SORTED_DATA {{{
 		SORTED_DATA=MENUS[1]
 		for(i=2; i<=NMENUS; i++) {
@@ -791,32 +813,6 @@ function work_record(sort_criteria, options, lvlsnpath, name, action) {
 		"" == options ? 3 : 4, 
 		options,
 	       	lvlsnpath, name, action)
-}
-function npath (jpath, serial,   items,key,snpath,ary,nary,i) {
-	items = sprintf("%02x", K_items)
-	snpath = sprintf("%s%02x", items, serial) 
-	jpath=substr(jpath,2,length(jpath)-2) 
-	nary=split(jpath, ary, /\"items\"/)
-	key=ary[nary]
-	sub(/^.+,/, "", key);
-	key=substr(key, 2, length(key)-2) 
-	sub(/\".+$/, "", ary[nary]) 
-	for(i=2; i<=nary; i++) { 
-		snpath=snpath items sprintf("%02x", substr(ary[i],2,length(ary[i])-2))
-	}
-	snpath = snpath sprintf("%02x", VALID_KEYS[key])
-	return n_s2n(snpath) 
-}
-function n_n2s(npath,   x) { 
-	x=substr(npath, 3) 
-	sub(/(ff)+$/, "", x)
-	return x
-}
-function n_s2n(snpath) { # {{{ convert short npath to npath (right-pad with f's)
-    return xRESERVED substr(snpath FFS, 1, 46) 
-}
-function this_(key, snpath) { 
-    return substr(snpath,1,length(snpath)-2) sprintf("%02x", key) 
 }
 function fit_button(left, right,   len,rlen,cut) { 
 	len=MAX_LABEL_LEN - length(left)

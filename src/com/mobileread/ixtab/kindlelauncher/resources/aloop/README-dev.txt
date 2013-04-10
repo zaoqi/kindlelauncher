@@ -1,10 +1,13 @@
+*** THIS README-dev FILE IS NOT UP-TO-DATE WITH KUAL 2 SOURCE CODE ***
+
 Introduction
 ------------
 
 Aloop.sh a.k.a. parse.sh is a parser front-end for the KUAL kindlet. Originally,
-the kindlet unpacked parse.sh in a temporary folder and ran it to find and parse
-the xml/json files that implement KUAL buttons. As development has progressed,
-additional functions have moved from the kindlet to aloop.sh, in particular:
+the kindlet unpacked parse.sh into a temporary folder and ran it to find and
+parse the xml and json[7] files that implement KUAL buttons. As development
+has progressed additional functions have moved from the kindlet to aloop.sh,
+in particular:
 . sorting
 . cleaning up temporary files (some)
 . generating KUAL's own menus
@@ -50,10 +53,17 @@ then run it via KUAL and examine the trace file /tmp/action.log.
 Flow
 ----
 
-Script initialization sets shell option -f to prevent pathname expansion
-since it isn't necessary actually needed, and it could interfere with string
-operations should input data include shell metacharacters.
-Then it sets global variables:
+Note that the kindlet starts the parser script only once, and it expects all
+communication to take place through standard input. As a way of speaking, the
+script sends all its data to the kindlet through a single stream "channel"
+then it exits.
+
+Step 1 - initialization
+~~~~~~
+
+Script initialization sets shell option -f to prevent unnecessary pathname
+expansion which could interfere with string operations, should input data
+include shell metacharacters.  Then it sets global variables:
 
 # dev can change
 CONFIGFILE="KUAL.cfg"
@@ -71,14 +81,26 @@ TIER=... # output placement
 and determines Kindle busybox version to load model-specific support (code was
 removed after version 20130127,a).
 
-Then the script calls init() which sources the optional configuration file
+Step 2 - configuration
+~~~~~~
+
+The script calls init() which sources the optional configuration file
 KUAL.cfg, parses command-line options (and line 'KUAL_options=...' in KUAL.cfg)
-and sets global variables for all other functions.  The script captures early
-error messages until a channel (pipe) $to_user is fully set up. Once the
-channel is open, the script evaluates early error messages and sends them
-$to_user followed by the button records that loop() generates. Loop() goes
-through all config.xml files and for each file it calls xml_var() and
-json_parse() to get values in config.xml and its associated json menu file.
+and sets global variables for all other functions.
+
+At this stage the script captures early error messages which will be later sent
+to the kindlet, when the channel (pipe) $to_user will be fully set up.
+
+The script calls send_config() to transfer KUAL.cfg configuration variables,
+NAME=VALUE, to the kindlet.
+
+Step 3 - $to_user
+~~~~~~
+
+When channel $to_user is open, the script evaluates early error messages
+and sends them $to_user followed by the button records that loop() generates.
+Loop() goes through all config.xml files and for each file it calls xml_var()
+and json_parse() to get values in config.xml and its associated json menu file.
 Json_parse() stores values in global variables xml_<name> and json_<name> where
 each <name>s correspond to XML tags and json keys.
 Run aloop.sh -f=debuginfo to see an actual list of <name>s / values.
@@ -89,6 +111,8 @@ functions are available, and can be selected with option -f.
 For instance, function one_level() generates simple labels suitable for
 a flat (non-nested) menu. Processing function two_level() is more advanced and
 produces labels suitable for a two-level (nested) menu.
+However KUAL 1 can't display nested menus and flattens the two levels.
+See also section Json Menu Structure.
 Before exiting, loop() checks to see if at least one valid menu item is found.
 If not, loop() installs a test applet and emits its menu item. So the GUI
 can safely assume that there is at least one item to display and that the
@@ -98,6 +122,12 @@ Since version 20130221,a loop() also emits KUAL's own menus.
 
 Channel $to_user applies predefined options to optionally sort and
 'colorize' the output list.
+
+Step 4 - termination
+~~~~~~
+
+Note that the script file isn't deleted when the script terminates. It will
+be deleted the next time the script starts. See paragraph 'Temporary Files'.
 
 The Output List
 ---------------
@@ -324,7 +354,7 @@ Scripting Interface
 
 KUAL starts a script, which can call aloop's functions as follows:
 
-  [[ "$KUAL" ]] && $KUAL $number $args
+  [ "$KUAL" ] && $KUAL $number $args
 
 The code checks to see if $KUAL is defined (this test will fail for a
 script that does not run under KUAL). Then it calls $KUAL's (actually
@@ -333,7 +363,7 @@ arguments $args. For example:
 
   msg="USBNETWORKING $DIRECTION CHANGES COMPLETE
 `date`"
-  [[ "$KUAL" ]] && $KUAL 1 "$msg" || eips 2 38 "$msg"
+  [ "$KUAL" ] && $KUAL 1 "$msg" || eips 2 38 "$msg"
 
 It is a good idea to always provice a fallback measure should $KUAL be
 undefined. In the above example ' || eips 2 38 "$msg" ' is the fallback.
@@ -359,11 +389,67 @@ The following function numbers are available:
       | sleep 1
       | done
 
+   2  Save KUAL error log as a new document.
+
 The Test Applet
 ---------------
 
 Currently the test applet prints a welcome message in the screen reporting
 area, and directs the user to install extensions.
+
+Json Menu Structure
+-------------------
+
+Going from KUAL 1 (flat menu) to KUAL 2 (nested menu) we face an issue
+concerning how to properly describe a menu object with json.
+Two slightly different menu templates are in common use.
+The first template fully conforms to Yifan Lu's definition[8], e.g.:
+{
+  "items": [
+     {"name": "Main menu, Item 1", "action": "act1.sh"},
+     {
+       "name": "Main menu, Submenu 1",
+       "items": [
+         {"name": "Submenu 1, Item 1", "action": "act11.sh"},
+         {"name": "Submenu 1, Item 2", "action": "act12.sh"}
+       ]
+     }
+  ]
+}
+
+Template 1 provides no explicit way of specifying a main menu label, which
+suggests to me that Yifan Lu's intended the Kindle menu button as the main menu,
+and when you press it Yifan Lu's launcher displays "Main menu, Item 1" as the
+top level item.
+
+Template 2 is a sort of application package menu:
+{
+  "name": "Application 1 menu"
+  "items": [
+     {"name": "Application 1 menu, Item 1", "action": "act1.sh"},
+     {
+       "name": "Application 1 menu, Submenu 1",
+       "items": [
+         {"name": "Application 1 menu, Submenu 1, Item 1", "action": "act11.sh"},
+         {"name": "Application 1 menu, Submenu 1, Item 2", "action": "act12.sh"}
+       ]
+     }
+  ]
+}
+
+The two templates look almost the same, but a small difference is of great import.
+Template 2 (mis)uses the first "name" as a structural element to insert a
+submenu - the Application menu - into the main menu.
+Notice that with template 2 there is no syntactically valid way to add a single
+item at the top level.
+
+KUAL 1 (flat menu series) treats both templates indistinctly, because all menu
+items are inserted at the top menu level anyway.
+
+The upcoming KUAL 2 (nestable menu series) ignores all top-level keys but "items".
+So it effectively interprets the second template as it interprets the first one.
+In KUAL 2, "Application 1 menu, Item 1" displays as a single, top-level menu
+entry, just like "Main menu, Item 1".
 
 References
 ----------
@@ -393,3 +479,12 @@ References
 
 [6] SubShell
     http://mywiki.wooledge.org/SubShell
+    
+[7] Crockford, Douglas (May 28, 2009). "Introducing JSON". json.org. Retrieved July 3, 2009
+    http://json.org/
+
+[8] Yifan Lu's original graphical menu for the Kindle
+    https://github.com/yifanlu/KindleLauncher/blob/master/src/com/yifanlu/Kindle/JSONMenu.java
+
+[9] Basic vs. Extended Regular Expressions
+    http://en.wikipedia.org/wiki/Regular_expression#Deciding_equivalence_of_regular_expressions

@@ -1,4 +1,9 @@
 CHANGE LOG
+20130410,a
+- Fix regression in KUAL menu sort option
+# Change: now ABC sorting ignores case
++ documentation updates
+
 20130409,a
 - Fix "wrong action is executed when a menu.json file includes multiple top-level items".
 - Minor fixes and improvements

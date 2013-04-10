@@ -14,6 +14,8 @@ extensions/orientation/config.xml
 extensions/orientation/menu.json
 extensions/skipstone/config.xml
 extensions/skipstone/menu.json
+extensions/test_no_suicide/config.xml
+extensions/test_no_suicide/menu.json
 extensions/leafpad/config.xml
 extensions/leafpad/menu.json
 extensions/xterm/config.xml
