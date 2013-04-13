@@ -1,4 +1,26 @@
 CHANGE LOG
+
+20130412,a
+# Change: ABC sorting only sorts the top-level entries and leaves sub-menu
+    entries in the order that the menu author defined.
+  . You can force ABC sorting at ALL levels by adding/changing the following
+    option in KUAL.cfg:       KUAL_options="-s=ABC!"
+  . If you use KUAL_options="-s=ABC" (without ! that is) or omit -s=xyz from
+    KUAL_options you get top-level alphabetic sorting only (default).
+  . Be aware that changing sort order from the "KUAL" sub-menu resets the
+    value of -s=xyz in KUAL_options.
+  . When ABC (not ABC!) sorting is in effect, you can rearrange the order of
+    "KUAL" sub-menu entries by simply listing them in a specific order in
+    option KUAL_show_KUAL_buttons, i.e.,  KUAL_show_KUAL_buttons="99 1 2 3"
+    shows the Quit button on top. This tweak has no effect when 123 or ABC!
+    sorting are in effect.
+- Fixed tokenizer issue upon reading backslash-backslash in a JSON string
++ Improved JSON parser error reporting
+# Changed error annunciator (cosmetic)
+
+Internal changes:
+# More dead wood removed from ash script.
+
 20130410,a
 - Fix regression in KUAL menu sort option
 # Change: now ABC sorting ignores case

@@ -1,6 +1,6 @@
 #!/bin/busybox ash
-# aloop-v2.sh - version 20130409,a stepk
-VERSION="20130410,a"
+# aloop-v2.sh - version 20130412,a stepk
+VERSION="20130412,a"
 usage () {
 local -
 }
@@ -36,19 +36,10 @@ readonly k_hidden=0x04
 readonly k_name=0x05 
 readonly k_items=0xff # don't change
 readonly RESERVED=0xff
-readonly NBSP0='&nbsp;'
-readonly NBSP1=`printf "\xC2\xA0"` 
-readonly MMRK=`printf "\xE2\x96\xB6"`
-alias dprintf="printf >&2"
-alias decho="echo >&2"
-alias sort='/bin/busybox sort' 
-alias SORT="/bin/busybox sort -t '$SEPARATOR'"
-alias find='/bin/busybox find'
 alias sed='/bin/busybox sed'
 alias grep='/bin/busybox grep'
 alias CUT="/bin/busybox cut -d '$SEPARATOR'"
 alias cat='/bin/busybox cat'
-alias wc='/bin/busybox wc'
 enTestApplet="              WELCOME TO $PRODUCTNAME
 
 $PRODUCTNAME IS INSTALLED. PLEASE ADD SOME EXTENSIONS"
@@ -231,7 +222,7 @@ exec_self_menu() {
     newtext=$(awk '
 	BEGIN {NOT_FOUND=1}
 	/^\s*KUAL_options=/ {
-		gsub(/\s?-s=\w+/,"")
+		gsub(/\s?-s=\w+!?/,"")
 		sub(/\s?"$/," '$opt'\"")
 		sub(/KUAL_options=\"\s*/,"KUAL_options=\"")
 		NOT_FOUND=0
@@ -276,7 +267,7 @@ for opt in "$@"; do
     -p=*)  opt_formatter=${opt#*=} ;;
     -s=*)  x=${opt#*=}
       case "$x" in
-        123|abc|ABC) opt_sort=$x ;;
+        123|abc|ABC|abc!|ABC!) opt_sort=$x ;;
         *)
           echo >&2 "${0##*/}: invalid option '-s=$x': using default options"
           emit_error 1 XenErrUsage "-s=$x invalid, defaults used"
@@ -345,7 +336,7 @@ send_config () {
 unpack () { 
 cat << 'UNPACK' 
 BEGIN { 
-	VERSION="20130410,a"
+	VERSION="20130412,a"
 	BAILOUT=0
 	if (1 < ARGC) { print "usage!" > "/dev/stderr"; BAILOUT=1; exit }
 	while (0 < getline < "/dev/stdin") {
@@ -413,15 +404,19 @@ VALID_KEYS["params"]=K_params=0x02
 VALID_KEYS["exitmenu"]=K_exitmenu=0x03
 VALID_KEYS["hidden"]=K_hidden=0x04 
 VALID_KEYS["name"]=K_name=0x05 
-VALID_KEYS["items"]=K_items=0xff # don't change
+VALID_KEYS["items"]=K_items=0xff 
 VALID_KEYS["ERROR"]="??"
+sK_name=sprintf("%02x", K_name)
 xRESERVED=0xff
 sRESERVED="ff"
 sRESERVED_len=2
+NPATH_len=48
 FFS="ffffffffffffffffffffffffffffffffffffffffffffffff" 
 NBSP0="&nbsp;"
 NBSP1="\xC2\xA0" 
-MMRK="\xE2\x96\xB6"
+MMRK="\xE2\x96\xB6" 
+CROSS="\xC3\x97" 
+ATTN="\xE2\x97\x8F" 
 MAX_LABEL_LEN=40
 XenErrSyntax="Syntax"
 XenParentErrors="Startup error"
@@ -432,7 +427,7 @@ KINDLET["STATUS"]=2
 function teardown(   i) { 
 	system("cd /var/tmp && rm -f \"" TFL "\"* 2>/dev/null")
 }
-function config_full_path(create, # {{{ [create="create"] creates first(EXTENSIONDIR)/CONFIGFILE if it doesn't exist
+function config_full_path(create, 
 	i,ary,nary,x) {
 	nary = split(EXTENSIONDIR, ary, /;/)
 	for (i = 1; i <= nary; i++) {
@@ -524,20 +519,23 @@ function format_action(action, params,
 	}
 	return (action) ("" != params ? " " : "") (params)
 }
+function format_action_enter_submenu(level, items_path) { 
+	return "^" (level+1) ":" npath_wo_reserved(items_path) ".." sK_name "$"
+}
 function json_emit_self_menu_and_parsing_errors(parent_errors,     
 	json,name,sname,msg,ary,nary) {
 	json=json_self_menu() 
 	if (parent_errors) {
 		++ERRORS
-		json=json "," json_error_button(fit_button("."XenParentErrors, ""))
+		json=json "," json_error_button(fit_button(ATTN" "XenParentErrors, ""))
 	}
 	for(name in FAILS) {
-		json=json "," json_error_button(fit_button("."XenErrSyntax" ", shortpathname(name)))
+		json=json "," json_error_button(fit_button(ATTN" "XenErrSyntax" ", shortpathname(name)))
 	} 
 	if (json) { 
 		name = PRODUCTNAME
 		if (ERRORS)
-			name = name "( "ERRORS" )"
+			name = name " " ATTN " " ERRORS
 		json="{\"items\":[{\"name\":\"" name \
 			"\",\"items\":[" \
 			substr(json,2) "]}]}"
@@ -553,13 +551,13 @@ function json_error_button(message) {
 		"\", \"action\": \"TRAIL\", \"params\": \"[more info in "PRODUCTNAME" log]\", \"exitmenu\": false}"
 }
 function json_self_menu(   json, 
-	show,b,verb,btnpath,bak) {
+	show,b,ary,nary,verb,btnpath,bak) {
 	if (0 == (show = config_get("show_KUAL_buttons"))) 
 		return ""
 	if ("" == show) show="1 2 3 99" 
 	json = ""
-	if (split(show, ary, /\s+/)) {
-		for (b in ary) {
+	if (nary = split(show, ary, /\s+/)) {
+		for (b = 1; b <= nary; b++) {
 			if (1 == ary[b]) {
 				verb="Restore"
 				if ("" == (btnpath=store_button_filepath()))
@@ -575,7 +573,7 @@ function json_self_menu(   json,
 					"/bin/ash '"SCRIPTPATH"' '-e=1,"verb"'" \
 				"\", \"priority\": 1}"
 			} else if (2 == ary[b]) {
-				verb = OPT_SORT ~ /^ABC|abc$/ ? "123" : "ABC"
+				verb = OPT_SORT ~ /^ABC|abc$/ ? "123" : "ABC" 
 				json=json ",{\"name\": \"" \
 					"Sort Menu "verb \
 				"\", \"action\": \"" \
@@ -589,7 +587,7 @@ function json_self_menu(   json,
 				"\", \"priority\": 3}"
 			} else if (99 == ary[b]) {
 				json=json ",{\"name\": \"" \
-					"× Quit" \
+					CROSS" Quit" \
 				"\", \"action\": \"" \
 					"true" \
 				"\", \"priority\": 99}"
@@ -599,7 +597,7 @@ function json_self_menu(   json,
 	return json
 }
 function jp2np(ary, size, serial, menufilepathname,   
-	i,x,n,apath,jpath,key,value,level,errors) {
+	i,x,npath,apath,jpath,key,value,level,errors) {
 	errors=0
 	apath=menufilepathname; sub(/\/[^\/]+$/, "", apath)
 	while (jp2np_LAST_SEEN <= size) { 
@@ -621,7 +619,7 @@ function jp2np(ary, size, serial, menufilepathname,
 			continue
 		}
 		--level 
-		n=npath(jpath, serial) 
+		npath = npath_new(jpath, serial)
 		gsub(/^"|"$/, "", value)
 		if (K_name == key) {
 			gsub(NBSP0, NBSP1, value)
@@ -631,13 +629,13 @@ function jp2np(ary, size, serial, menufilepathname,
 		} else if (K_params == key) {
 			gsub(/\\\"/, "\"", value)
 		}
-		NPATHS[++NNPATHS]=level SEP n SEP key SEP value
+		NPATHS[++NNPATHS]=level SEP npath SEP key SEP value
 	}
 	return errors
 }
 function np2mn(ary, size,    
 	i,slurp,lines,nlines,iline,errors,
-	npary,level,npath,key,value,xname,options,
+	npary,level,npath,key,value,options,
 	npath_s_this_items,select_level,needle,snpath,last_action  ) {
 	errors=0
 	sort(ary, size, "-k2."(1+sRESERVED_len)",2 -k1,1 -k3,3") 
@@ -647,14 +645,12 @@ function np2mn(ary, size,
 	} else {
 		new_item()
 		new_submenu()
-		snpath="SNPATH"; last_action="SNPATH"
-	       	select_level[0] = npath_s2n("00") 
-		xname = sprintf("%02x", K_name)
+	       	select_level[0] = npath_wo_reserved(npath_new("",0))
 		if (0 < (nlines = split(SORTED_DATA,lines, /\n/))) {
 			for(iline = 1; iline < nlines; iline++) {
 				split(lines[iline], npary, SEP)
 				level = npary[1]; npath = npary[2]; key = npary[3]; value = npary[4]
-				snpath = npath_n2s(npath)
+				snpath = npath_get_short(npath)
 				if (K_action == key) {
 					ITEM[key] = value
 					last_action = snpath
@@ -663,26 +659,25 @@ function np2mn(ary, size,
 						value = "??"(++COUNTER["nameNull"])
 					if (submenuQ(snpath, last_action)) { 
 						ITEM[key]=value 
-						sortable_tag=substr(select_level[level],1+0*sRESERVED_len) 
+						sortable_tag=select_level[level] 
 						MENUS[++NMENUS] = work_record( \
 							sort_criteria(sortable_tag, OPT_SORT),
 							kindlet_options(),
-							level":"npath_s_this_(K_name, snpath), # refers to this."name"
-							ITEM[K_name], # VALID_KEYS w/o "items"
+							level,npath_s_this_(K_name, snpath), # refers to this."name"
+							ITEM[K_name],
 							format_action(ITEM[K_action], ITEM[K_params]))
 						new_item()
 					} else { 
 						ITEM[key]=value" "MMRK 
 						npath_s_this_items = npath_s_this_(K_items, snpath) # refers to this."items"
-						select_level[level+1] = npath_s2n(npath_s_this_items) 
+						select_level[level+1] = npath_wo_reserved(npath_padded(npath_s_this_items))
 						sortable_tag = select_level[level] 
-						needle="^" (level+1) ":" npath_s_this_items ".." xname "$"
 						MENUS[++NMENUS] = work_record( \
 							sort_criteria(sortable_tag, OPT_SORT),
 							kindlet_options(),
-							level":"snpath,
-							ITEM[K_name], # VALID_KEYS for a submenu (needle as "action")
-							needle)
+							level,snpath,
+							ITEM[K_name],
+							format_action_enter_submenu(level, npath_s_this_items))
 						new_submenu()
 					}
 				} else if (K_priority == key || K_params == key || K_exitmenu == key || K_hidden == key) {
@@ -707,7 +702,7 @@ function np2mn(ary, size,
 function kindlet_options(   x) { 
 	x = (ITEM[K_exitmenu] ~ /^(0|false)$/ ? "e" : "") \
 		(ITEM[K_hidden] ~ /^(1|true)$/ ? "h" : "")
-	return ""==x ? "" : x SEP
+	return "" == x ? "" : x SEP
 }
 function new_item() { 
 	ITEM[K_name]=""; ITEM[K_action]=""; ITEM[K_params]=""; ITEM[K_priority]=0; ITEM[K_exitmenu]=""; ITEM[K_hidden]=""
@@ -715,10 +710,10 @@ function new_item() {
 function new_submenu() { 
 	ITEM[K_name]=""; ITEM[K_priority]=0; ITEM[K_hidden]=""
 }
-function npath (jpath, serial,   # convert a jpath to a unique numeric path 
+function npath_create(jpath, serial,   
 	items,key,snpath,ary,nary,i) {
 	items = sprintf("%02x", K_items)
-	snpath = sprintf("%s%02x", items, serial) 
+	snpath = npath_reserved() sprintf("%s%02x", items, serial)
 	jpath=substr(jpath,2,length(jpath)-2) 
 	nary=split(jpath, ary, /\"items\"/)
 	key=ary[nary]
@@ -726,21 +721,55 @@ function npath (jpath, serial,   # convert a jpath to a unique numeric path
 	key=substr(key, 2, length(key)-2) 
 	sub(/\".+$/, "", ary[nary]) 
 	for(i=2; i<=nary; i++) { 
-		snpath=snpath items sprintf("%02x", substr(ary[i],2,length(ary[i])-2))
+		snpath = snpath items sprintf("%02x", substr(ary[i],2,length(ary[i])-2))
 	}
 	snpath = snpath sprintf("%02x", VALID_KEYS[key])
-	return npath_s2n(snpath) 
+	return npath_padded(snpath)
 }
-function npath_n2s(npath,   x) { 
-	x=substr(npath, 3) 
-	sub(/(ff)+$/, "", x)
-	return x
+function npath_new(jpath, serial, 
+	key,npath,snpath) {
+	key = jpath SEP serial
+	if (key in NPATH_MAP)
+		return NPATH_MAP[key]
+	npath = snpath = npath_create(jpath, serial)
+	sub(/(ff)+$/, "", snpath) 
+	return NPATH_MAP[key] = NPATH_MAP[npath_wo_reserved(npath)] = NPATH_MAP[npath_wo_reserved(snpath)] = npath
 }
-function npath_s2n(snpath) { # {{{ convert short npath to npath (right-pad with f's)
-    return sRESERVED substr(snpath FFS, 1, 46) 
+function npath_get(path, 
+	upath,npath) {
+	upath = npath_wo_reserved(path)
+	return upath in NPATH_MAP ? NPATH_MAP[upath] : (npath_reserved() "NON-EXISTENT:npath_get("path")")
+}
+function npath_get_short(path, 
+	upath,snpath) {
+	upath = npath_wo_reserved(path)
+	if (upath in NPATH_MAP) {
+		snpath = NPATH_MAP[upath]
+		sub(/(ff)+$/, "", snpath)
+		return snpath
+	}
+	return (npath_reserved() "NON-EXISTENT:npath_get_short("path")")
+}
+function npath_padded(path) { 
+	return substr(path FFS, 1, NPATH_len)
+}
+function npath_put(path, 
+	npath,snpath,upath,prev) {
+	npath = snpath = npath_padded(path) 
+	sub(/(ff)+$/, "", snpath) 
+	upath = npath_wo_reserved(path)
+	prev = upath in NPATH_MAP ? NPATH_MAP[prev] : ""
+	NPATH_MAP[npath_wo_reserved(npath)] = NPATH_MAP[npath_wo_reserved(snpath)] = npath
+	return prev
+}
+function npath_reserved(path) { 
+	return "" == path ? sRESERVED : substring(path, 1, sRESERVED_len)
+}
+function npath_wo_reserved(path,   x) { 
+	return substr(path,1+sRESERVED_len)
 }
 function npath_s_KUAL_menu() { 
-	return sprintf("%02x%02x%02x%02x%02x",K_items,0,K_items,0,K_name)
+	return npath_get_short(npath_new("[\"[items\",0,\"items\",0,\"name\"]", 0))
 }
 function npath_s_this_(key, snpath) { 
     return substr(snpath,1,length(snpath)-2) sprintf("%02x", key) 
@@ -757,17 +786,17 @@ function sort(ary, nary, sort_options,
 	cmd | getline SORTED_DATA
 	close(cmd)
 }
-function sort_criteria(sortable_tag, opt_sort) { # {{{ build sortable data in accordance with user's sorting criteria
+function sort_criteria(sortable_tag, opt_sort) { 
 	if ("123" == opt_sort) {
 		return sortable_tag SEP ITEM[K_priority] SEP 
-	} else if ("ABC" == opt_sort || "abc" == opt_sort) {
+	} else if (toupper(opt_sort) ~ /ABC!?/) {
 		return sortable_tag SEP ITEM[K_name] SEP 
 	} else return ""
 }
 function sort_criteria_cut(ary, opt_sort,   
 	nary,p,x,i) {
 	i = nary = split(SORTED_DATA, ary, /\n/)
-	if (opt_sort ~ /^(123|ABC|abc)$/) {
+	if (toupper(opt_sort) ~ /^(123|ABC!?)$/) {
 		while (i > 0) {
 			x = ary[i]
 			p = index(x, SEP)
@@ -780,20 +809,38 @@ function sort_criteria_cut(ary, opt_sort,
 	return nary
 }
 function sort_for_user(ary, nary, opt_sort,    # {{{ 
-	cherry,i) {
-	cherry = SEP "0:" npath_s_KUAL_menu() SEP
+	cherry,i,ary0,nary0,non_zero) {
+	cherry = SEP "0:" npath_wo_reserved(npath_s_KUAL_menu()) SEP
 	for (i = 1; i <= nary; i++) {
 		if (index(ary[i], cherry)) {
 			cherry = ary[i]
-			delete ary[i]
+			delete ary[i] 
 			break
 		}
 	}
-	if (i > nary) cherry="" 
+	if (i > nary) {
+		cherry="" 
+		scream("can't select "PRODUCTNAME" menu entry")
+	}
 	SORTED_DATA=""
 	if ("123" == opt_sort) {
 		sort(ary, nary, "-s -k1,1 -k2,2n")
-	} else if ("ABC" == opt_sort || "abc" == opt_sort) {
+	} else if ("ABC" == toupper(opt_sort)) {
+		nary0 = 0
+		non_zero = "" 
+		for (i = 1; i <= nary; i++) {
+			if (ary[i] ~ SEP"0:")
+				ary0[++nary0] = ary[i]
+			else
+				non_zero = non_zero "/" i
+		}
+		sort(ary0, nary0, "-s -f -k1,1 -k2,2")
+		non_zero = non_zero "/"
+		for (i = 1; i <= nary; i++) {
+			if (index(non_zero, "/"i"/"))
+				SORTED_DATA = SORTED_DATA "\n" ary[i]
+		}
+	} else if ("ABC!" == toupper(opt_sort)) {
 		sort(ary, nary, "-s -f -k1,1 -k2,2")
 	} else { # least likely usage, "fake" SORTED_DATA {{{
 		SORTED_DATA=MENUS[1]
@@ -801,13 +848,20 @@ function sort_for_user(ary, nary, opt_sort,    # {{{
 			SORTED_DATA = SORTED_DATA "\n" MENUS[i]
 		}
 	}
-	if ("" != cherry)
-		SORTED_DATA = cherry SORTED_DATA
+	if ("" != cherry) {
+		sub(/^\n/, "", SORTED_DATA)
+		gsub(/\n\n+/, "\n", SORTED_DATA)
+		SORTED_DATA = cherry "\n" SORTED_DATA
+	}
 }
-function submenuQ(snpath, last_action) { 
-	return substr(snpath,1,length(snpath)-2) == substr(last_action,1,length(last_action)-2)
+function submenuQ(snpath, last_action,     x,y) { 
+	x = npath_wo_reserved(snpath)
+	y = npath_wo_reserved(last_action)
+	return substr(x,1,length(x)-2) == substr(y,1,length(y)-2)
 }
-function work_record(sort_criteria, options, lvlsnpath, name, action) { 
+function work_record(sort_criteria, options, level,snpath, name, action, 
+	lvlsnpath) {
+	lvlsnpath = level ":" npath_wo_reserved(snpath)
 	return sprintf("%s%s"SEP"%s%s"SEP"%s"SEP"%s",
 		sort_criteria,
 		"" == options ? 3 : 4, 
@@ -824,14 +878,14 @@ function fit_button(left, right,   len,rlen,cut) {
 }
 function formatter(ary, nary, fmt_name,   fmt,i,x,n) { 
 	if ("multiline" == fmt_name) {
-		for (i=1; i<nary; i++) {
+		for (i = 1; i <= nary; i++) {
 			x = ary[i]
 			gsub(SEP,"\n",x)
 			print x
 		}
 	} else if ("tbl" == fmt_name) {
 		fmt="%-3.3s|%-20.20s|%-20.20s|%-33.33s\n"
-		for (i=1; i<nary; i++) {
+		for (i = 1; i <= nary; i++) {
 			n = split(ary[i], x, SEP)
 			if (n-1 != x[1]) {
 				scream("wrong record size <"x[1]"> in record # "i" (formatter)")
@@ -849,13 +903,13 @@ function formatter(ary, nary, fmt_name,   fmt,i,x,n) {
 			}
 		}
 	} else if ("tab" == fmt_name) {
-		for (i=1; i<nary; i++) {
+		for (i = 1; i <= nary; i++) {
 			x = ary[i]
 			gsub(SEP,"\t",x)
 			print x
 		}
 	} else {
-		for (i=1; i<nary; i++)
+		for (i = 1; i <= nary; i++)
 			print ary[i]
 	}
 }
@@ -990,8 +1044,15 @@ function parse(   ret) {
 	}
 	return 0
 }
-function report(expected, got) { 
-	scream("expected <" expected "> but got <" got "> at input token " ITOKENS, FILENAME)
+function report(expected,got,   i,from,to,context) { 
+	from = ITOKENS - 10; if (from < 1) from = 1
+	to = ITOKENS + 10; if (to > NTOKENS) to = NTOKENS
+	for (i = from; i < ITOKENS; i++)
+		context = context sprintf("%s ", TOKENS[i])
+	context = context "<<" got ">> "
+	for (i = ITOKENS + 1; i <= to; i++)
+		context = context sprintf("%s ", TOKENS[i])
+	scream("expected <" expected "> but got <" got "> at input token " ITOKENS "\n" context, FILENAME)
 }
 function reset() { 
 	TOKEN=""; delete TOKENS; NTOKENS=ITOKENS=0
@@ -1005,7 +1066,7 @@ function scream(msg, originator) {
 	print msg > "/dev/stderr"
 	print msg >> SCREAM_LOG
 }
-function tokenize(a1,   pq,ESCAPE,CHAR,STRING,NUMBER,KEYWORD,SPACE) { 
+function tokenize(a1,   pq,pb,ESCAPE,CHAR,STRING,NUMBER,KEYWORD,SPACE) { 
 	ESCAPE="(\\[^u[:cntrl:]]|\\u[0-9a-fA-F]{4})"
 	CHAR="[^[:cntrl:]\\\"]"
 	STRING="\"" CHAR "*(" ESCAPE CHAR "*)*\""
@@ -1013,9 +1074,12 @@ function tokenize(a1,   pq,ESCAPE,CHAR,STRING,NUMBER,KEYWORD,SPACE) {
 	KEYWORD="null|false|true"
 	SPACE="[[:space:]]+"
 	pq="/p/r/e/s/e/r/v/e/q/u/o/t/e/" rand() 
+	pb="/p/r/e/s/e/r/v/e/b/a/c/k/s/" rand() 
+	gsub(/\\\\/, pb, a1)
 	gsub(/\\"/, pq, a1) 
         gsub(STRING "|" NUMBER "|" KEYWORD "|" SPACE "|.", "\n&", a1)
 	gsub(pq, "\\\"", a1) 
+	gsub(pb, "\\\\", a1) 
         gsub("\n" SPACE, "\n", a1)
 	sub(/^\n/, "", a1)
 	ITOKENS=0 
