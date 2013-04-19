@@ -1,5 +1,49 @@
 CHANGE LOG
 
+20130418,a
++ Added cache. KUAL starts faster when the cache exists.
+  . Until implementation of a cache expiration policy (TODO) users
+    Users need to manually delete the cache to apply changes
+    to their configuration and menu. Use new button in KUAL menu
+    'Clear chache on restart' - TEMPORARY.
+  . The cache file includes all configuration data, so if you edit
+    KUAL.cfg or change sort order you need to clear the cache.
+# Change: In KUAL.cfg KUAL_options becomes KUAL_sort_mode.
+   YOU NEED TO manually update your KUAL.cfg file once.
+   # Change sorting options.
+   # "ABC" (default) lexicographically sorts top-level entries only and
+   # leaves sub-menu entries in the order that the menu author defined.
+   # "ABC!" (bang) sorts ALL levels lexicographically.
+   # "123" sorts EACH level by json key "priority" (=0 when unspecified)
+   #KUAL_sort_mode="ABC"
++ Enhanced usability of sub-menu "KUAL"
+! Certain features are discontinued to simplify async execution of
+  the parser script (see Internal changes below).
+  Discontinued features include:
+  . Test applet - replaced by trail message button 'Add some extensions!'
+  . 'Replace/Restore Store button' button - it may come back as a
+     stand-alone extension for KT/PW, if enough interest.
+  . The '[ "$KUAL" ] && $KUAL $n"' application interface. In particular
+    this takes away the 4-line message display.
+- Fix: added expansion of all JSON string escapes, \n \t etc.
+  . KNOWN LIMITATION: can't expand \uHHHH escape
+- Fixed rare (and harmless) error message upon sorting zero entries.
+
+Planned (not in this build):
++ Menu collation. Stutus: implemented. Testing in progress.
++ Menu navigation improvements for lower devices.
+
+Internal changes:
+# Script parse.awk replaces parse.sh
++ Upgraded parser core to JSON.awk 1.10.
++ (EXPERIMENTAL) Async execution of the parser script. Now the kindlet
+  does not wait for the parser to exit before calling initializeGUI().
+  This change aims at buying the kindlet more time to build its GUI
+  before the 5000 ms timeout expires. It also frees the parser to run
+  errands as necessary after sending the kindlet the parsed menu - either
+  from the cache file or from scratch.
+# Minor tool and documentation updates.
+
 20130412,a
 # Change: ABC sorting only sorts the top-level entries and leaves sub-menu
     entries in the order that the menu author defined.
@@ -20,6 +64,7 @@ CHANGE LOG
 
 Internal changes:
 # More dead wood removed from ash script.
+
 
 20130410,a
 - Fix regression in KUAL menu sort option

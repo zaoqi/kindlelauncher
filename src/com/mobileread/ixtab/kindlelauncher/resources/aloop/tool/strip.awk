@@ -5,26 +5,35 @@ function prnt(txt,pre,cmp)
 {
 #debug#	if(pre) printf ("%4d::%s::\t%s\n\t\t", NR, pre, cmp)
 	print txt
+
+	sub(/^\s+/, "", txt)
+	if (pre ~ /^kp/) printf "%3d to be safe didn't change %4d: %s\n",++TOBESAFE, NR, txt >"/dev/stderr"
 }
 
 BEGIN	{
-WARNING="=== Non-greedy shell script comment stripper ==="\
+	if ("" == WARN || 0 != WARN) {
+WARNING="=== Non-greedy shell/AWK script comment stripper ==="\
 "\nThe following input syntax WILL result in incorrect output, so rid your"\
 "\nscript of such syntax before stripping it - You have been warned!"\
-"\n1) Hash comments within multi-line strings"\
-"\n	x=\"that is NOT"\
-"\n	# a comment"\
-"\n	but it will still be deleted (incorrectly)"\
-"\n"\
-"\nSuspend stripping by enclosing a block within /:#? SSTR .../,/:#? RSTR .../"\
-"\nStrip a whole block by enclosing it within /:#? BSTR .../,/#?: ESTR .../"\
+"\n. Hash comments within multi-line strings"\
+"\n    x=\"this is NOT"\
+"\n    # a comment"\
+"\n  but it will be recognized as such and be removed (incorrectly)"\
+"\n\nYou may suspend stripping a text block altogether (Stop/Resume):"\
+"\n  :#? SSTR ..."\
+"\n  a block of text"\
+"\n  :#? RSTR ..."\
+"\nYou may force stripping (Begin/End): /:#? BSTR .../,/#?: ESTR .../"\
+"\n\nBest practice:"\
+"\n. In in-line comments replace ' and \" with ` (backtick)"\
 "\n"
-	print WARNING >"/dev/stderr"
+		print WARNING >"/dev/stderr"
+	}
 
 	if ("" == PROMPT || 0 != PROMPT) {
-PROMPT="Usage: strip.awk [-v PROMPT=0] script.sh > new_script.sh"\
+PROMPT="Usage: strip.awk [-v WARN=0] [-v PROMPT=0] script.sh > new_script.sh"\
 "\nPress any key to strip '"ARGV[1]"' to stdout ..."
-	printf PROMPT >"/dev/stderr"
+		printf PROMPT >"/dev/stderr"
 		getline <"/dev/stdin"
 	}
 

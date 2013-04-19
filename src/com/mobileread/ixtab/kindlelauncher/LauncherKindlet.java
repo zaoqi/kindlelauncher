@@ -36,10 +36,11 @@ import com.mobileread.ixtab.kindlelauncher.ui.UIAdapter;
 
 public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
-	public static final String RESOURCE_PARSER_SCRIPT = "parse.sh";
+	public static final String RESOURCE_PARSER_SCRIPT = "parse.awk"; //"parse.sh";
 	private static final String EXEC_PREFIX_PARSE = "klauncher_parse-";
 	private static final String EXEC_PREFIX_BACKGROUND = "klauncher_background-";
 	private static final String EXEC_EXTENSION_SH = ".sh";
+	private static final String EXEC_EXTENSION_AWK = ".awk";
 	private static final long serialVersionUID = 1L;
 
 	private static final int PAGING_PREVIOUS = -1;
@@ -104,11 +105,12 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		for (int i=0; i<10; ++i) {
 			offset[i] = 0;
 		}
-		viewLevel = viewOffset = -1; //only used in updateDisplayedLauncher()
+		viewLevel = viewOffset = -1; // used in updateDisplayedLaunchers() only
 
 		try {
 			initializeState();
-			initializeUI(); //depends on initializeState()
+			// State() set menu data and getPageSize() for UI()
+			initializeUI();
 		} catch (Throwable t) {
 			throw new RuntimeException(t);
 		}
@@ -262,7 +264,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private File extractParseFile() throws IOException, FileNotFoundException {
 		InputStream script = ResourceLoader.load(RESOURCE_PARSER_SCRIPT);
 		File parseInput = File.createTempFile(EXEC_PREFIX_PARSE,
-				EXEC_EXTENSION_SH);
+				EXEC_EXTENSION_AWK);//EXEC_EXTENSION_SH);
 
 		OutputStream cmd = new FileOutputStream(parseInput);
 		Util.copy(script, cmd);
@@ -305,7 +307,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		for (int i = 0; i < files.length; i++) {
 			if (files[i].isFile()) {
 				String file = files[i].getName();
-				if (file.startsWith(EXEC_PREFIX_BACKGROUND)) {
+				if (file.startsWith(EXEC_PREFIX_BACKGROUND)
+					|| file.startsWith(EXEC_PREFIX_PARSE)) {
 					files[i].delete();
 				}
 			}
@@ -514,6 +517,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		}
 //DEBUG del//setStatus("dir("+dir+") cmd("+cmd+")"); if(true) return;
 
+		setTrail("", "");
 		if (cmd.startsWith("^")) { // dive into sub-menu
 					//name,       origin,     way (how to get there)
 			trail[level][0] = name;
@@ -537,8 +541,12 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			}
 			cmd = cmd.substring(p+1);
 			switch (id) {
-				case 1: setTrail(cmd, null);
+				// extension displays message in trail area
+				case 1: setTrail(cmd + " | ", null);
+					break;
+				// extension displays message in status area
 				case 2: setStatus(cmd);
+					break;
 			}
 			if (-1 == options.indexOf("e")) {
 				// suicide
@@ -568,13 +576,28 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 				}
 			}
 		}
+		if (-1 != options.indexOf("c")) {
+			// "checked" - add checkmark to button label
+		//TODO - WIP need to replace map keys from label to levelSnpath then adapt the code below...
+//			String checked = "\u2717 " + name; // X
+//			levelMap[level].put(checked, levelMap[level].get(name));
+//			levelMap[level].remove(name);
+			// checked button label with show on next refresh by updateDisplayedLaunchers()
+		}
+		if (-1 != options.indexOf("r")) {
+			// "reload" not implemented
+		}
+		if (-1 != options.indexOf("h")) {
+			// "hidden" not implemented
+		}
 	}
 
 	private Process execute(String cmd, String dir, boolean background) throws IOException,
 			InterruptedException {
 
 		File launcher = createLauncherScript(cmd, background,
-				"export KUAL='/bin/ash " + parseFile.getAbsolutePath() + " -x '; ");
+				"");
+//FIXME discontinued				"export KUAL='/bin/ash " + parseFile.getAbsolutePath() + " -x '; ");
 		File workingDir = new File(dir);
 		return Runtime.getRuntime().exec(
 				new String[] { "/bin/sh", launcher.getAbsolutePath() },

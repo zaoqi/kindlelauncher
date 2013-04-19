@@ -20,13 +20,15 @@ public class Util {
 
 	public static BufferedReader execute(String scriptName) throws IOException,
 			InterruptedException {
-		String[] cmd = new String[] { "/bin/ash", scriptName };
+		//String[] cmd = new String[] { "/bin/ash", scriptName };
+		String[] cmd = new String[] { "/usr/bin/awk", "-f", scriptName };
 
 		Process process = Runtime.getRuntime().exec(cmd, null);
-		process.waitFor();
+		//process.waitFor(); //stepk
 
 		BufferedReader input = new BufferedReader(new InputStreamReader(
 				process.getInputStream()));
+process.getOutputStream().close(); // start input
 		return input;
 	}
 }
