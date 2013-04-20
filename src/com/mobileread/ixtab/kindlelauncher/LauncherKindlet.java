@@ -28,6 +28,8 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import com.amazon.kindle.kindlet.KindletContext;
 import com.mobileread.ixtab.kindlelauncher.resources.ResourceLoader;
@@ -53,7 +55,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private final ArrayList viewList = new ArrayList();
 	private static int viewLevel = -1;
 	private static int viewOffset = -1;
-	private File parseFile;
+	private static int timerCount = 10;
+//	private File parseFile;
 
 	private KindletContext context;
 	private boolean started = false;
@@ -66,7 +69,6 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private Component prevPageButton = getUI().newButton("  \u25C0  ", this); //<
 	private Component prevLevelButton = getUI().newButton("\u25B2", this); //^
 
-	private String scriptVersion = ""; //from script
 	private int[] offset = {0,0,0,0,0,0,0,0,0,0}; //10
 	private String[][] trail = {{null,null,null}, // {origin_name, origin_level:snpath, way}
 		{null,null,null},{null,null,null},{null,null,null},
@@ -194,29 +196,51 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
 		updateDisplayedLaunchers(depth);
 
+		// check for messages from backgrounded parser script
+		Timer timer = new Timer();
+		timer.schedule(new TimerTask() {
+			public void run() {
+				if (checkMbx() || --timerCount <= 0)
+					this.cancel();
+			}
+		}, 1*1000,1*1000); // run 10 times once a sec, then check synchronously in updateDisplayedLaunchers()
 	}
 
 	private void initializeState() throws IOException, FileNotFoundException,
 			InterruptedException, NumberFormatException {
+		// Be as quick as possible through here.
+		// The kindlet is given 5000 ms maximum to initializeUI()
+
 		cleanupTemporaryDirectory();
-		killKnownOffenders(Runtime.getRuntime());
+		//postponed to when it's really needed:	killKnownOffenders(Runtime.getRuntime());
 
-		// run the parser script
-		parseFile = extractParseFile();
+		// run the parser script and read its output (we may get cached data)
+		File parseFile = extractParseFile();
 		BufferedReader reader = Util.execute(parseFile.getAbsolutePath());
+		readParser(reader);
+		reader.close();
 
+		// Do not delete the script file because it is updating the cache
+		// in the background.
+		// Let cleanupTemporaryDirectory() take care of it next time.
+	}
+
+	private void readParser(BufferedReader reader) throws IOException,
+			InterruptedException, NumberFormatException {
 		try {
-			// meta: size of record and version info
+			// meta info: version, mailboxpath
 			int size = Integer.parseInt(reader.readLine());
-			if (size>0)
-				scriptVersion = reader.readLine();
+			for (int i = 1; i <= size; i++) {
+				configMap.put("meta" + Integer.toString(i), reader.readLine());
+			}
 			// meta: slurp N\nKUAL.cfg:lines => configMap
-			int p;
 			String line = null;
-			for(int i = size; i>1; i--) {
+			size = Integer.parseInt(reader.readLine());
+			for(int i = 1; i <= size; i++) {
 				line = reader.readLine().trim();
 				if (! line.startsWith("#")) {
-					if ((p = line.indexOf('=')) > 0) {
+					int p = line.indexOf('=');
+					if (p > 0) {
 						configMap.put(line.substring(0,p), line.substring(p+1));
 					}
 				}
@@ -248,17 +272,15 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 						action = reader.readLine();
 						levelMap[level].put(label, action + ";" + options + "/" + levelSnpath);
 						break;
-					default: throw new Exception("invalid size"); // can't trust input format
+					default: throw new Exception("invalid record size"); // can't trust input format
 						 //break TheReading;
 				}
 			}
 		} catch (Throwable ex) {
 			String report = ex.getMessage();
-			levelMap[0].put("meta error: " + report, "[ \"$KUAL\" ] && $KUAL 2" + "/0:ff");
+			levelMap[0].put("meta error: " + report, "/var/tmp;#1;Try restarting \u266B;e/0:ff");
+			// /var/tmp(dir) ;#1(trail message) ;Try restarting(message) ;e(no suicide) /0(level 0) :ff(snpath)
 		}
-		reader.close();
-		//parseFile.delete(); //stepk: leave script in place to provide for backdoor option -e
-		parseFile.deleteOnExit(); //stepk: kindlet deletes on clean exit & parse.sh deletes leftovers on next entry
 	}
 
 	private File extractParseFile() throws IOException, FileNotFoundException {
@@ -290,13 +312,17 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		root.add(message, gbc);
 	}
 
-	private void killKnownOffenders(Runtime rtime) throws IOException {
+	private void killKnownOffenders(Runtime rtime) {
 		// Let's tidy up some known offenders...
-		// FIXME: this should be refactored to at least go into its own class.
-		rtime.exec("/usr/bin/killall -9 matchbox-keyboard", null);
-		rtime.exec("/usr/bin/killall -9 kterm", null);
-		rtime.exec("/usr/bin/killall -9 skipstone", null);
-		rtime.exec("/usr/bin/killall -9 cr3", null);
+		// Call this right before executing a menu action
+		String offenders="matchbox-keyboard kterm skipstone cr3";
+		try {
+			rtime.exec("/usr/bin/killall " + offenders, null); // gently
+			rtime.exec("/usr/bin/killall -9 " + offenders, null); // forcefully
+		} catch (Throwable ex) {
+			String report = ex.getMessage();
+			setStatus(report);
+		}
 	}
 
 	private void cleanupTemporaryDirectory() {
@@ -444,7 +470,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		if (null != status) {
 			setStatus("Entries " + (viewOffset + 1) + " - " + end + " of "
 				+ viewList.size()
-				+ " build " + scriptVersion);
+				+ " build " + configMap.get("meta1")); // script version
 		}
 		setTrail(null == status && enableButtons
 				? (viewOffset+1)+"-"+end+"/"+viewList.size()
@@ -452,6 +478,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		prevPageButton.setEnabled(enableButtons);
 		nextPageButton.setEnabled(enableButtons);
 		prevLevelButton.setEnabled(level>0);
+
+		checkMbx();
 
 		// just to be on the safe side
 		entriesPanel.invalidate();
@@ -517,7 +545,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		}
 //DEBUG del//setStatus("dir("+dir+") cmd("+cmd+")"); if(true) return;
 
-		setTrail("", "");
+		setTrail(null, null); // TODO refresh trail area to make cmd(#1) message more visible
 		if (cmd.startsWith("^")) { // dive into sub-menu
 					//name,       origin,     way (how to get there)
 			trail[level][0] = name;
@@ -555,6 +583,9 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 				getUI().suicide(context);
 			}
 		} else { // run cmd
+			// now is the right time to get rid of known offenders
+			killKnownOffenders(Runtime.getRuntime());
+
 			if (-1 == options.indexOf("e")) {
 				// suicide
 				try {
@@ -639,5 +670,25 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		bw.newLine();
 		bw.close();
 		return tempFile;
+	}
+
+	private boolean checkMbx() {
+		// did the backgrounded parser script send me a message?
+		try {
+			BufferedReader mbx = Util.mbxReader((String) configMap.get("meta2")); // mailbox path
+			if (null != mbx) {
+				String message = mbx.readLine();
+				if (message.startsWith("1 ")) {
+					setTrail("New menu \u25CF Restart to refresh | ", null);
+					message = message.substring(2); // cache path TODO refresh inside
+				}
+				mbx.close();
+				return true;
+			}
+		} catch (Throwable ex) {
+			String report = ex.getMessage();
+			setStatus(report);
+		}
+		return false;
 	}
 }

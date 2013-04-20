@@ -1,5 +1,13 @@
 CHANGE LOG
 
+20130420,a
++ Added automatic cache expiration. Manual cache management should
+  no longer be necessary. The 'Clear cache on restart' temporary
+  button will be phased out shortly, unless testers report that it's
+  still needed and why. Did you need to use it? Why?  Could you achieve
+  the same result in a different way without pressing the button?
+  . Tested on KT only
+
 20130418,a
 + Added cache. KUAL starts faster when the cache exists.
   . Until implementation of a cache expiration policy (TODO) users

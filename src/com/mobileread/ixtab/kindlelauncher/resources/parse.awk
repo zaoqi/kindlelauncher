@@ -1,8 +1,8 @@
 #!/usr/bin/awk -f
-# aloop-v2.awk - version 20130419,a stepk
+# aloop-v2.awk - version 20130420,a stepk
 BEGIN { 
-	VERSION="20130419,a"
-	ERRORS = BAILOUT = CACHE_SENT = CACHE_INVALID = SERIAL_PARSED_OK = 0
+	VERSION="20130420,a"
+	ERRORS = BAILOUT = CACHE_SENT = CACHE_INVALID = PARSED_OK_COUNTER = 0
 	SELF_BUTTONS_INSERT = SELF_BUTTONS_FILTER = SELF_BUTTONS_APPEND = ""
 	if (1 < ARGC) {
 		print "usage!" > "/dev/stderr"
@@ -17,10 +17,10 @@ BEGIN {
 	init()
 	if (0 == cache_send(CACHEPATH)) { 
 		close("/dev/stdout")
-		CACHE_SENT=1
-		exit 
+		CACHE_SENT=1 
+	} else {
+		config_send("/dev/stdout")
 	}
-	config_send("/dev/stdout")
 	if (1 >= ARGC) {
 		ARGC = find_menu_fullpathnames(EXTENSIONDIR, ARGV, ARGC-1)
 		if (1 > ARGC && "" != SCRIPTPATH) {
@@ -51,9 +51,17 @@ BEGIN {
 	if (status) ++ERRORS
 }
 END { 
-	if (BAILOUT || CACHE_SENT) {
+	if (BAILOUT) {
 		teardown()
 		exit(BAILOUT)
+	}
+	if (CACHE_SENT) { 
+		if (0 != cache_update()) {
+			scream(SenCantUpdateCache)
+			++ERRORS
+		}
+		teardown()
+		exit(ERRORS)
 	}
 	json_emit_self_menu_and_parsing_errors(0+PARENT_ERRORS) 
 	delete MENUS; NMENUS=0
@@ -66,7 +74,7 @@ END {
 			++ERRORS
 		}
 		close("/dev/stdout")
-		if (0 != cache_save(CACHEPATH)) {
+		if (0 != cache_save()) {
 			scream(SenCantWriteCache)
 			++ERRORS
 		}
@@ -80,9 +88,11 @@ if ("" == PRODUCTNAME) PRODUCTNAME="KUAL"
 if ("" == CONFIGFILE) CONFIGFILE=PRODUCTNAME".cfg" 
 if ("" == (CONFIGPATH = config_full_path())) CONFIGPATH = "/dev/null" 
 config_read(CONFIGPATH)
-CONFIG["NC bbawk"]="/bin/busybox awk"
-CONFIG["NC bbfind"]="/bin/busybox find"
-CONFIG["NC bbsort"]="/bin/busybox sort"
+x = "/bin/busybox "
+CONFIG["NCbbawk"] = x"awk"
+CONFIG["NCbbfind"] = x"find"
+CONFIG["NCbbmd5sum"] = x"md5sum"
+CONFIG["NCbbsort"] = x"sort"
 if (""==OPT_FMT) OPT_FMT="multiline"
 if (""==OPT_SORT) OPT_SORT= "" != (x = config_get("sort_mode")) ? x : "ABC"
 delete COUNTER
@@ -90,7 +100,9 @@ COUNTER["nameNull"]=0
 SEP="\x01"
 CACHEPATH = (x = "/var/tmp/" PRODUCTNAME) ".cache"
 if (""==SCREAM_LOG) SCREAM_LOG = x ".log"
-SCRIPTPATH = x ".sh"
+SCRIPTPATH = x ".sh" 
+MBXPATH = x ".mbx" 
+system("rm -f '"MBXPATH"'")
 VALID_KEYS["action"]=K_action=0x00  
 VALID_KEYS["priority"]=K_priority=0x01 
 VALID_KEYS["params"]=K_params=0x02
@@ -115,11 +127,13 @@ ATTN="\xE2\x97\x8F"
 MAX_LABEL_LEN=40
 XenErrSyntax="Syntax"
 XenParentErrors="Startup error"
+XenNoExtensionsFound=ATTN" No extensions found"
 SenCantChangeSortMode="can't change sorting mode"
 SenCantFindMenuFiles="can't find menu files"
-SenNoExtensionsFound=ATTN" No extensions found"
+SenCantHashCache="can't hash cache file"
 SenCantSendToKindlet="can't send menu to Kindlet"
 SenCantSort="can't sort"
+SenCantUpdateCache="can't update cached menu"
 SenCantWriteCache="can't cache menu"
 TFL="/var/tmp/--" PRODUCTNAME "--" 
 KINDLET["TRAIL"]=1
@@ -128,20 +142,38 @@ KINDLET["STATUS"]=2
 function teardown(   i) { 
 	system("cd /var/tmp && rm -f \"" TFL "\"* 2>/dev/null")
 }
-function cache_save(outfile,   # {{{ << globals CACHE_INVALID,MENUS,NMENUS,CONFIG; return 
-	errors) {
+function cache_save(    errors,hash1,hash2,cmd) { # {{{ << globals CACHE_INVALID,CACHEPATH,MENUS[],NMENUS,CONFIG[]; return 
 	if (CACHE_INVALID) {
 		system("rm -f '"CACHEPATH"'")
 		return 0
 	}
-	printf "" >outfile
-	errors += config_send(outfile)
-	errors += formatter(MENUS, NMENUS, "multiline", outfile)
-	if (-1 == close(outfile))
+	cmd = CONFIG["NCbbmd5sum"]" '"CACHEPATH"'"
+	cmd | getline hash1
+	if (close(cmd)) {
+		scream(SenCantHashCache)
+		hash1 = 0
+	}
+	printf "" >CACHEPATH
+	errors += config_send(CACHEPATH)
+	errors += formatter(MENUS, NMENUS, "multiline", CACHEPATH)
+	if (-1 == close(CACHEPATH)) {
 		++errors
+	} else {
+		cmd | getline hash2
+		if (close(cmd)) {
+			scream(SenCantHashCache)
+			hash2 = 0
+		}
+	}
+	if (hash1 && hash2 && hash1 != hash2) {
+		if (! errors) {
+			print "1 "CACHEPATH >MBXPATH
+			close(MBXPATH)
+		}
+	}
 	return errors
 }
-function cache_send(cachepath,   # {{{ << globals MENUS,NMENUS,CONFIG; return 
+function cache_send(cachepath,   # {{{ << globals MENUS[],NMENUS,CONFIG[]; return 
 	slurp) {
 	if (0 <= (getline slurp < cachepath))
 		close(cachepath)
@@ -150,6 +182,21 @@ function cache_send(cachepath,   # {{{ << globals MENUS,NMENUS,CONFIG; return
 		return 0
 	}
 	return 1
+}
+function cache_update(   errors) { # {{{ >> globals NPATHS[],NNPATHS,CACHE_INVALID,MENUS[],NMENUS,CONFIG[]; cache_save(); return 
+	json_emit_self_menu_and_parsing_errors(0+PARENT_ERRORS) 
+	delete MENUS; NMENUS=0
+	if (0 != np2mn(NPATHS, NNPATHS)) {
+		scream("error (np2mn)")
+		++errors
+	} else {
+		CACHE_INVALID = 0
+		if (0 != cache_save()) {
+			scream(SenCantWriteCache)
+			++errors 
+		}
+	}
+	return errors
 }
 function config_full_path(create, 
 	i,ary,nary,x) {
@@ -201,7 +248,7 @@ function config_send(outfile,   k,n) {
 	for (k in CONFIG)
 		if(k !~ /^NC/)
 			++n
-	printf "%d\n%s\n", 1+n, VERSION >>outfile
+	printf "%d\n%s\n%s\n%d\n", 2, VERSION, MBXPATH, n >>outfile
 	for (k in CONFIG)
 		if(k !~ /^NC/)
 			print PRODUCTNAME"_"k"=\""CONFIG[k]"\"" >>outfile
@@ -226,7 +273,7 @@ function find_menu_fullpathnames(dirs, return_ary, base,
 	paths = config_get("search_exclude_paths")
 	paths = "-path "dirs"/" (""==paths ? "system" : paths)
 	gsub(/;/," -o -path "dirs"/",paths) 
-	cmd = config_get("NC bbfind")" "dirs" "follow" "depth" \\( "paths" \\) \\( -prune -type f \\) -o \\( -name config.xml -type f \\) 2>/dev/null"
+	cmd = config_get("NCbbfind")" "dirs" "follow" "depth" \\( "paths" \\) \\( -prune -type f \\) -o \\( -name config.xml -type f \\) 2>/dev/null"
 	cmd | getline slurp
 	if (close(cmd)) {
 		scream(SenCantFindMenuFiles)
@@ -311,7 +358,7 @@ show = "0 " show
 		for (b = 1; b <= nary; b++) {
 			if ("+add_ext" == ary[b]) {
 				json = json "," json_self_menu_button( \
-				     SenNoExtensionsFound, \
+				     XenNoExtensionsFound, \
 				     "TRAIL", "help @ http://bit.ly/UW3v8V", \
 				     -200, "false")
   			}
@@ -552,7 +599,7 @@ function sort(ary, nary, sort_options,
 		if (rec = ary[i]) print rec > tfl
 	}
 	close(tfl)
-	cmd = config_get("NC bbsort")" -t \""SEP"\" "sort_options" < \""tfl"\""
+	cmd = config_get("NCbbsort")" -t \""SEP"\" "sort_options" < \""tfl"\""
 	cmd | getline SORTED_DATA
 	if (close(cmd))
 		scream(SenCantSort)

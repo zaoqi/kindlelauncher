@@ -1,6 +1,8 @@
 package com.mobileread.ixtab.kindlelauncher;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -28,7 +30,22 @@ public class Util {
 
 		BufferedReader input = new BufferedReader(new InputStreamReader(
 				process.getInputStream()));
-process.getOutputStream().close(); // start input
+
+		// The parser is waiting for either a list of json files or
+		// the null list, which tells the parser to generate its own list.
+		// Closing input to the parser means the null list.
+		process.getOutputStream().close();
+
+		return input;
+	}
+
+	public static BufferedReader mbxReader(String filePath) throws IOException,
+			InterruptedException {
+		BufferedReader input = null;
+		File file = new File(filePath);
+		if (file.isFile()) {
+			input = new BufferedReader(new FileReader(filePath));
+		}
 		return input;
 	}
 }
