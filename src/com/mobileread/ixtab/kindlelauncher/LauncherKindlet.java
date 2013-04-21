@@ -28,8 +28,9 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Timer;
-import java.util.TimerTask;
+
+import com.amazon.kindle.kindlet.util.Timer;
+import com.amazon.kindle.kindlet.util.TimerTask;
 
 import com.amazon.kindle.kindlet.KindletContext;
 import com.mobileread.ixtab.kindlelauncher.resources.ResourceLoader;
@@ -55,7 +56,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private final ArrayList viewList = new ArrayList();
 	private static int viewLevel = -1;
 	private static int viewOffset = -1;
-	private static int timerCount = 10;
+	private static int monitorMbxRepeat = 10;
 //	private File parseFile;
 
 	private KindletContext context;
@@ -196,14 +197,10 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
 		updateDisplayedLaunchers(depth);
 
-		// check for messages from backgrounded parser script
-		Timer timer = new Timer();
-		timer.schedule(new TimerTask() {
-			public void run() {
-				if (checkMbx() || --timerCount <= 0)
-					this.cancel();
-			}
-		}, 1*1000,1*1000); // run 10 times once a sec, then check synchronously in updateDisplayedLaunchers()
+		// monitor messages from backgrounded script (monitor ends
+		// after a fixed time then mailbox checking continues
+		// synchronously in updateDisplayedLaunchers())
+		monitorMbx();
 	}
 
 	private void initializeState() throws IOException, FileNotFoundException,
@@ -690,5 +687,18 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			setStatus(report);
 		}
 		return false;
+	}
+
+	private void monitorMbx() {
+		// schedule task to for messages in checkMbx()
+		// monitor ends on first message or after a fixed number of repetitions
+		Timer timer = new Timer();
+		TimerTask task = new TimerTask() {
+			public void run() {
+				if (checkMbx() || --monitorMbxRepeat <= 0)
+					this.cancel();
+			}
+		};
+		timer.schedule(task, 1*1000,1*1000);
 	}
 }

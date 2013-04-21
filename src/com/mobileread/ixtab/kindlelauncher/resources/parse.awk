@@ -1,8 +1,8 @@
 #!/usr/bin/awk -f
-# aloop-v2.awk - version 20130420,a stepk
+# aloop-v2.awk - version 20130421,a stepk
 BEGIN { 
-	VERSION="20130420,a"
-	ERRORS = BAILOUT = CACHE_SENT = CACHE_INVALID = PARSED_OK_COUNTER = 0
+	VERSION="20130421,a"
+	ERRORS = BAILOUT = CACHE_SENT = IN_MEMORY_CACHE_INVALID = PARSED_OK_COUNTER = 0
 	SELF_BUTTONS_INSERT = SELF_BUTTONS_FILTER = SELF_BUTTONS_APPEND = ""
 	if (1 < ARGC) {
 		print "usage!" > "/dev/stderr"
@@ -26,7 +26,7 @@ BEGIN {
 		if (1 > ARGC && "" != SCRIPTPATH) {
 			ARGV[ARGC] = ""
 			++ERRORS
-			++CACHE_INVALID
+			++IN_MEMORY_CACHE_INVALID
 			SELF_BUTTONS_INSERT = SELF_BUTTONS_INSERT ",+add_ext"
 			SELF_BUTTONS_FILTER = SELF_BUTTONS_FILTER ",-sort_menu"
 		}
@@ -142,16 +142,22 @@ KINDLET["STATUS"]=2
 function teardown(   i) { 
 	system("cd /var/tmp && rm -f \"" TFL "\"* 2>/dev/null")
 }
-function cache_save(    errors,hash1,hash2,cmd) { # {{{ << globals CACHE_INVALID,CACHEPATH,MENUS[],NMENUS,CONFIG[]; return 
-	if (CACHE_INVALID) {
-		system("rm -f '"CACHEPATH"'")
+function cache_file_delete() { 
+	system("rm -f '"CACHEPATH"'")
+}
+function cache_save(    errors,hash1,hash2,cmd) { # {{{ << globals IN_MEMORY_CACHE_INVALID,CACHEPATH,MENUS[],NMENUS,CONFIG[]; return 
+	if (IN_MEMORY_CACHE_INVALID) {
+		cache_file_delete() 
 		return 0
 	}
-	cmd = CONFIG["NCbbmd5sum"]" '"CACHEPATH"'"
-	cmd | getline hash1
-	if (close(cmd)) {
-		scream(SenCantHashCache)
-		hash1 = 0
+	cmd = CONFIG["NCbbmd5sum"]" '"CACHEPATH"' 2>/dev/null"
+	if (-1 < getline hash1 < CACHEPATH) { 
+		close(CACHEPATH)
+		cmd | getline hash1
+		if (close(cmd)) {
+			scream(SenCantHashCache)
+			hash1 = 0
+		}
 	}
 	printf "" >CACHEPATH
 	errors += config_send(CACHEPATH)
@@ -173,24 +179,30 @@ function cache_save(    errors,hash1,hash2,cmd) { # {{{ << globals CACHE_INVALID
 	}
 	return errors
 }
-function cache_send(cachepath,   # {{{ << globals MENUS[],NMENUS,CONFIG[]; return 
-	slurp) {
+function cache_send(cachepath,   # {{{ << globals MENUS[],NMENUS,CONFIG[]; >>global IN_MEMORY_CACHE_INVALID; return 
+	slurp,version) {
 	if (0 <= (getline slurp < cachepath))
 		close(cachepath)
 	if ("" != slurp) {
+		version = substr(slurp, index(slurp, "\n") + 1)
+		version = substr(version, 1, index(version, "\n") - 1)
+		if (version != VERSION) {
+			cache_file_delete()
+			return 1
+		}
 		printf "%s", slurp
 		return 0
 	}
 	return 1
 }
-function cache_update(   errors) { # {{{ >> globals NPATHS[],NNPATHS,CACHE_INVALID,MENUS[],NMENUS,CONFIG[]; cache_save(); return 
+function cache_update(   errors) { # {{{ >> globals NPATHS[],NNPATHS,IN_MEMORY_CACHE_INVALID,MENUS[],NMENUS,CONFIG[]; cache_save(); return 
 	json_emit_self_menu_and_parsing_errors(0+PARENT_ERRORS) 
 	delete MENUS; NMENUS=0
 	if (0 != np2mn(NPATHS, NNPATHS)) {
 		scream("error (np2mn)")
 		++errors
 	} else {
-		CACHE_INVALID = 0
+		IN_MEMORY_CACHE_INVALID = 0
 		if (0 != cache_save()) {
 			scream(SenCantWriteCache)
 			++errors 

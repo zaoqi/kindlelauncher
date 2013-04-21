@@ -1,5 +1,10 @@
 CHANGE LOG
 
+20130421,a
+- Fixed: failed starting on K3/K4
++ Added: auto-delete old cache file on new version upgrade.
+- Fixed: spurious "can't hash" error message on very first start.
+
 20130420,a
 + Added automatic cache expiration. Manual cache management should
   no longer be necessary. The 'Clear cache on restart' temporary
@@ -13,7 +18,7 @@ CHANGE LOG
   . Until implementation of a cache expiration policy (TODO) users
     Users need to manually delete the cache to apply changes
     to their configuration and menu. Use new button in KUAL menu
-    'Clear chache on restart' - TEMPORARY.
+    'Clear cache on restart' - TEMPORARY.
   . The cache file includes all configuration data, so if you edit
     KUAL.cfg or change sort order you need to clear the cache.
 # Change: In KUAL.cfg KUAL_options becomes KUAL_sort_mode.
