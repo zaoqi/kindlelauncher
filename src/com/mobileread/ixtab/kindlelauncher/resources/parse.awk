@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
-# aloop-v2.awk - version 20130421,a stepk
+# aloop-v2.awk - version 20130425,a stepk
 BEGIN { 
-	VERSION="20130421,a"
+	VERSION="20130425,a"
 	ERRORS = BAILOUT = CACHE_SENT = IN_MEMORY_CACHE_INVALID = PARSED_OK_COUNTER = 0
 	SELF_BUTTONS_INSERT = SELF_BUTTONS_FILTER = SELF_BUTTONS_APPEND = ""
 	if (1 < ARGC) {
@@ -121,7 +121,6 @@ NPATH_len=48
 FFS="ffffffffffffffffffffffffffffffffffffffffffffffff" 
 NBSP0="&nbsp;"
 NBSP1="\xC2\xA0" 
-MMRK="\xE2\x96\xB6" 
 CROSS="\xC3\x97" 
 ATTN="\xE2\x97\x8F" 
 MAX_LABEL_LEN=40
@@ -494,7 +493,7 @@ function np2mn(ary, size,
 							format_action_item(ITEM[K_action], ITEM[K_params]))
 						new_item()
 					} else { 
-						ITEM[key]=value" "MMRK 
+						ITEM[key]=value MMRK 
 						npath_s_this_items = npath_s_this_(K_items, snpath) 
 						select_level[level+1] = npath_wo_reserved(npath_padded(npath_s_this_items))
 						sortable_tag = select_level[level] 

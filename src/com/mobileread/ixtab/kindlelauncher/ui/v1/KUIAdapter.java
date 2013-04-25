@@ -12,6 +12,7 @@ import com.amazon.kindle.kindlet.ui.KButton;
 import com.amazon.kindle.kindlet.ui.KLabel;
 import com.amazon.kindle.kindlet.ui.KPanel;
 import com.mobileread.ixtab.kindlelauncher.ui.UIAdapter;
+import com.mobileread.ixtab.kindlelauncher.resources.KualEntry;
 
 public class KUIAdapter extends UIAdapter {
 
@@ -23,25 +24,14 @@ public class KUIAdapter extends UIAdapter {
 		return new KLabel(text);
 	}
 
-	public Component newButton(String text, ActionListener listener) {
-		KButton button = new KualButton(text);
+	public Component newButton(String text, ActionListener listener, KualEntry kualEntry) {
+		KButton button = new KualButton(text, kualEntry);
 		if (listener != null) {
 			button.setName(text);
 			button.addActionListener(listener);
 		}
 		return button;
 	}
-
-/*	public void setHorizontalAlignment(Component component, int alignment);
-		if (component instanceof KLabel) {
-			((KLabel) component).setHorizontalAlignment(alignment);
-			component.repaint();
-		}
-		if (component instanceof KButton) {
-			((KButton) component).setHorizontalAlignment(alignment);
-			component.repaint();
-		}
-	}*/
 
 	public void setText(Component component, String text) {
 		if (component instanceof KLabel) {
@@ -52,7 +42,7 @@ public class KUIAdapter extends UIAdapter {
 			((KButton) component).setName(text);
 			component.repaint();
 		}
-}
+	}
 
 	public void suicide(KindletContext context) {
 		int code = KindleKeyCodes.VK_BACK;
@@ -65,5 +55,10 @@ public class KUIAdapter extends UIAdapter {
 		// these are non-touch models, so it's tedious to scroll.
 		return 5;
 	}
-	
+
+	public KualEntry getKualEntry(Component component) {
+		if (component instanceof KualButton)
+			return ((KualButton) component).getKualEntry();
+		return null;
+	}
 }

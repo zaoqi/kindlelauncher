@@ -29,13 +29,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.amazon.kindle.kindlet.util.Timer;
-import com.amazon.kindle.kindlet.util.TimerTask;
-
 import com.amazon.kindle.kindlet.KindletContext;
 import com.mobileread.ixtab.kindlelauncher.resources.ResourceLoader;
 import com.mobileread.ixtab.kindlelauncher.ui.GapComponent;
 import com.mobileread.ixtab.kindlelauncher.ui.UIAdapter;
+import com.mobileread.ixtab.kindlelauncher.resources.KualEntry;
+import com.mobileread.ixtab.kindlelauncher.timer.TimerAdapter;
 
 public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
@@ -50,10 +49,9 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private static final int PAGING_NEXT = 1;
 	private static final int LEVEL_PREVIOUS = -1;
 	private static final int LEVEL_NEXT = 1;
-	private final LinkedHashMap[] levelMap = new LinkedHashMap[10];
-	private final HashMap[] trackerMap = new HashMap[10];
+	private final LinkedHashMap[] levelMap = new LinkedHashMap[10]; // all menu entries
 	private final HashMap configMap = new HashMap();
-	private final ArrayList viewList = new ArrayList();
+	private final ArrayList viewList = new ArrayList(); // a viewport on levelMap
 	private static int viewLevel = -1;
 	private static int viewOffset = -1;
 	private static int monitorMbxRepeat = 10;
@@ -66,15 +64,24 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
 	private Container entriesPanel;
 	private Component status;
-	private Component nextPageButton = getUI().newButton("  \u25B6  ", this); //>
-	private Component prevPageButton = getUI().newButton("  \u25C0  ", this); //<
-	private Component prevLevelButton = getUI().newButton("\u25B2", this); //^
+	private Component nextPageButton = getUI().newButton("  \u25B6  ", this, null); //>
+// Fiddling with UI concepts. GUI1 puts up button on top, but getting there is very tedious on K3.
+// Se let's experiment other placements... Here up button is placed left.
+//GUI1//	private Component prevPageButton = getUI().newButton("  \u25C0  ", this, null); //<
+private Component prevPageButton = getUI().newButton("  \u25B2  ", this, null); //^
+//GUI1//	private Component prevLevelButton = getUI().newButton("\u25B2", this, null); //^
+private Component prevLevelButton = getUI().newLabel("\u266A \u266B \u266A"); //j JJ j  FIXME is this needed?
+
+	private final String CROSS = "\u00D7"; // X - match parser's
+	private final String ATTN = "\u25CF"; // O - match parser's
+	private final String PATH_SEP = "/";
+	private final KualEntry toTopEntry = new KualEntry(3, PATH_SEP);
+	private final Component toTopButton = getUI().newButton(PATH_SEP, this, toTopEntry);
+	private final KualEntry quitEntry = new KualEntry(4, CROSS + " Quit");
+	private final Component quitButton = getUI().newButton(CROSS + " Quit", this, quitEntry);
 
 	private int[] offset = {0,0,0,0,0,0,0,0,0,0}; //10
-	private String[][] trail = {{null,null,null}, // {origin_name, origin_level:snpath, way}
-		{null,null,null},{null,null,null},{null,null,null},
-		{null,null,null},{null,null,null},{null,null,null},
-		{null,null,null},{null,null,null},{null,null,null}}; //10
+	private KualEntry[] keTrail = {null,null,null,null,null,null,null,null,null,null}; //10
 	private int depth = 0;
 
 	protected Jailbreak instantiateJailbreak() {
@@ -110,9 +117,23 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		}
 		viewLevel = viewOffset = -1; // used in updateDisplayedLaunchers() only
 
+/*
+ * High-level description of KUAL flow
+ *
+ * 1. kindlet: spawn the parser and block waiting for input from the parser
+ * 2. parser: send cached data so the kindlet can quickly move on to initialize the UI
+ * 3. kindlet: set a 10-time 1-second repeat timer - each time through will check a mailbox from the parser
+ * 4. kindlet: initialize UI
+ * 5. parser: (while kindlet is initializing UI) parse menu files and refresh the cache
+ * 6: parser: if cache changed post a message to mailbox
+ * 7: parser: exit
+ * 8: kindlet: if the timer found a message in the mailbox then tell user, "Hey, new menu, restart to refresh!"
+ * 9: kindlet: wait for user interaction; handle interaction
+ *
+*/
 		try {
 			initializeState();
-			// State() set menu data and getPageSize() for UI()
+			// initializeState() has set menu structure and getPageSize() for UI()
 			initializeUI();
 		} catch (Throwable t) {
 			throw new RuntimeException(t);
@@ -128,25 +149,22 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	}
 
 	private void setTrail(String left, String center) {
-		String upArr = "\u25B2"; //^
 		String text = null == left ? "" : left + " ";
 		if (null != center) {
 			text += center;
-//TODO			getUI().setHorizontalAlignment(prevLevelButton, Label.CENTER);
 		} else if (0 == depth) {
-			text += upArr;
-//TODO			getUI().setHorizontalAlignment(prevLevelButton, Label.CENTER);
+			text += PATH_SEP;
 		} else {
-			String label = "";
+			String label = keTrail[depth - 1].getBareLabel();
 			int width = getTrailMaxWidth() - text.length() ;
-			for (int i = depth-1; i >= 0 && label.length() <= width; i--) {
-				label = trail[i][0] + label;
+			for (int i = depth - 2; i >= 0 && label.length() <= width; i--) {
+				label = keTrail[i].getBareLabel() + PATH_SEP + label;
 			}
+			label = PATH_SEP + label;
 			int len = label.length();
 			if (len > width)
 				label = "..." + label.substring(len - width + 3);
-			text += label.substring(0,label.length()-1) + upArr;
-//TODO			getUI().setHorizontalAlignment(prevLevelButton, Label.LEFT);
+			text += label;
 		}
 		getUI().setText(prevLevelButton, text);
 	}
@@ -224,13 +242,14 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
 	private void readParser(BufferedReader reader) throws IOException,
 			InterruptedException, NumberFormatException {
+		KualEntry kualEntry;
 		try {
 			// meta info: version, mailboxpath
 			int size = Integer.parseInt(reader.readLine());
 			for (int i = 1; i <= size; i++) {
 				configMap.put("meta" + Integer.toString(i), reader.readLine());
 			}
-			// meta: slurp N\nKUAL.cfg:lines => configMap
+			// meta data: N\nKUAL.cfg lines
 			String line = null;
 			size = Integer.parseInt(reader.readLine());
 			for(int i = 1; i <= size; i++) {
@@ -243,40 +262,37 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 				}
 			}
 
-			// data: slurp list of buttons => levelMap[]
+			// data: read list of menu entries
+			// levelMap[i] <= ordered map of all entries at menu level i
+			// levelMap[i][id] <= entry of class KualEntry, entry.id is unique and isn't a label
 			for (int i=0; i<10; i++) {
 				levelMap[i] = new LinkedHashMap();
-				trackerMap[i] = new HashMap();
 			}
-			String spaces = new String(new char[16]).replace('\0', ' ');
-			//TheReading:
 			for (line = reader.readLine(); line != null; line = reader
 					.readLine()) {
-				String label = ""; String action = ""; String options = ""; String levelSnpath = ""; int level = -1;
-				switch (Integer.parseInt(line)) {
-					case 4: options = reader.readLine(); // e | h | eh
-					case 3: levelSnpath = reader.readLine(); // level:snpath
-						level = Integer.parseInt((String) levelSnpath.substring(0,levelSnpath.indexOf(":")));
-					case 2: label = reader.readLine();
-						if (trackerMap[level].containsKey(label)) { // seldom happens
-							// make unique key for levelMap
-							int n = Integer.parseInt((String) trackerMap[level].get(label));
-							trackerMap[level].put(label, Integer.toString(++n));
-							label = label + spaces.substring(0,n);
-						} else {
-							trackerMap[level].put(label, "0");
+				String options = "";
+				int level = -1;
+				kualEntry = null;
+				switch (line.charAt(0)) {
+					case '4':
+						options = reader.readLine();
+					case '3':
+						try {
+							kualEntry = new KualEntry(options, reader.readLine(),
+							reader.readLine(), reader.readLine());
+							break;
+						} catch(Throwable t) {
+							// fall into default case
 						}
-						action = reader.readLine();
-						levelMap[level].put(label, action + ";" + options + "/" + levelSnpath);
-						break;
-					default: throw new Exception("invalid record size"); // can't trust input format
-						 //break TheReading;
+					default:
+						throw new Exception("invalid entry"); // can't trust input format
 				}
+				levelMap[kualEntry.level].put(kualEntry.id, kualEntry);
 			}
 		} catch (Throwable ex) {
 			String report = ex.getMessage();
-			levelMap[0].put("meta error: " + report, "/var/tmp;#1;Try restarting \u266B;e/0:ff");
-			// /var/tmp(dir) ;#1(trail message) ;Try restarting(message) ;e(no suicide) /0(level 0) :ff(snpath)
+			kualEntry = new KualEntry(0, "meta error: " + report);
+			levelMap[0].put(kualEntry.id, kualEntry);
 		}
 	}
 
@@ -351,13 +367,14 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		Component button = (Component) e.getSource();
 		if (button == prevPageButton) {
-			handlePaging(PAGING_PREVIOUS, depth);
+//GUI1//			handlePaging(PAGING_PREVIOUS, depth);
+handleLevel(LEVEL_PREVIOUS);
 			//changes offset[]
 		} else if (button == nextPageButton) {
 			handlePaging(PAGING_NEXT, depth);
 			//changes offset[]
-		} else if (button == prevLevelButton) {
-			handleLevel(LEVEL_PREVIOUS);
+//GUI1//		} else if (button == prevLevelButton) {
+//GUI1//			handleLevel(LEVEL_PREVIOUS);
 			//changes offset[] and depth
 		} else {
 			handleLauncherButton(button, depth);
@@ -388,21 +405,14 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	}
 
 	private void handleLevel(int direction) {
-	// trail[level] ::= {origin_name, origin_level:snpath, way}
-	// way ::= '^' goto_level ':' pattern   ; way and pattern are regular expressions
 		int goToLevel;
 		int goToOffset;
-		if (-1 == direction) { // go up (return from submenu)
+		if (-1 == direction) { // return from submenu
 			goToLevel = depth > 0 ? depth - 1 : 0;
 			goToOffset = offset[goToLevel];
-		} else { // go way (dive into submenu)
-			String way = trail[depth][2];
-//DEBUG//setTrail("trail["+depth+"]={"+trail[depth][0]+","+trail[depth][1]+","+trail[depth][2]+"}");
-			try {
-				goToLevel = Integer.parseInt(way.substring(1, way.indexOf(":")));
-			} catch (Exception ex) {
-				goToLevel = 0;
-			}
+		} else { // dive into submenu
+			KualEntry ke = keTrail[depth]; // origin
+			goToLevel = ke.getGoToLevel();
 			goToOffset = 0;
 		}
 		depth = goToLevel;
@@ -412,7 +422,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
 	private void updateDisplayedLaunchers(int level) {
 	//changes viewList (and viewLevel and viewOffset)
-		// view just the keys that belong to the current trail
+
+		// view entries at the end of the trail
 		if (viewLevel != level || viewOffset != offset[level]) {
 			viewLevel = level;
 			viewOffset = offset[level];
@@ -420,25 +431,18 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			if (0 == level) {
 				viewList.addAll(levelMap[0].keySet());
 			} else {
-				// trail[i] ::= [origin_name, origin_snpath, '^' goto_level ':' way_regex '$']
-				String way = trail[level-1][2];
-				way = way.substring(way.indexOf("^")); //i.e., "^2:ff00...$"
+				KualEntry ke  = keTrail[level - 1];
+				String  parentLink = ke.getParentLink();
 				Iterator it = levelMap[level].entrySet().iterator();
-//DEBUG del//setStatus("vOf("+viewOffset+")vLv("+viewLevel+")lvl("+level+")trl-1("+trail[level-1][2]+")way("+way+")"); if (true) return;
 				while (it.hasNext()) {
 					Map.Entry entry = (Entry) it.next();
-					String target = ((String) entry.getValue()); //i.e., ".../3:ff00..."
-					target = target.substring(1+target.lastIndexOf("/")); //i.e., "3:ff00..."
-//DEBUG del//setStatus("way("+way+")tgt("+target+")"); if (true) return;
-					if (simplyMatches(way, target))
+					ke = (KualEntry) entry.getValue();
+					if (ke.isLinkedUnder(parentLink))
 						viewList.add(entry.getKey());
 				}
 			}
 		}
-//DEBUG del//setStatus(String.valueOf(viewList)+"off("+viewOffset+")"); if(level>0) return;
-//DEBUG del//setStatus("off="+viewOffset+String.valueOf(viewList));
 
-//DEBUG del//	Iterator it = viewMap.entrySet().iterator();
 		Iterator it = viewList.iterator();
 
 		// skip entries up to offset
@@ -449,13 +453,20 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		}
 		entriesPanel.removeAll();
 		int end = viewOffset;
+
+		// This button is appended at the end of the list.
+		//Component nullButton = getUI().newButton("", null, null);
+		//nullButton.setEnabled(false);
+		toTopButton.setEnabled(true);
+		quitButton.setEnabled(true);
+
 		for (int i = getPageSize(); i > 0; --i) {
-			Component button = getUI().newButton("", null);
-			button.setEnabled(false);
+			//Component button = getUI().newButton("", null, null); // fills whole column
+			//Component button = nullButton; // shortens column after last entry
+			Component button = 0 == level ? quitButton : toTopButton;
 			if (it.hasNext()) {
-//DEBUG del//			Map.Entry entry = (Entry) it.next();
-//DEBUG del//			button = getUI().newButton((String) entry.getKey(), this);
-				button = getUI().newButton((String) it.next(), this);
+				KualEntry ke = (KualEntry) levelMap[level].get(it.next());
+				button = getUI().newButton(ke.label, this, ke); //then getUI().getKualEntry(button) => ke
 				++end;
 			}
 			entriesPanel.add(button);
@@ -472,29 +483,18 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		setTrail(null == status && enableButtons
 				? (viewOffset+1)+"-"+end+"/"+viewList.size()
 				: null, null);
-		prevPageButton.setEnabled(enableButtons);
+//GUI1//		prevPageButton.setEnabled(enableButtons);
+prevPageButton.setEnabled(level>0);
 		nextPageButton.setEnabled(enableButtons);
-		prevLevelButton.setEnabled(level>0);
+//GUI1//		prevLevelButton.setEnabled(level>0);
 
-		checkMbx();
+		checkAndProcessMbx();
 
 		// just to be on the safe side
 		entriesPanel.invalidate();
 		entriesPanel.repaint();
 		context.getRootContainer().invalidate();
 		context.getRootContainer().repaint();
-	}
-
-	private boolean simplyMatches(String way, String target) {
-	//Since the input regex 'way' always looks like this:
-	//  ^<pairs of hex digits>..<pair of hex digits>$
-	//we can avoid regex engine overhead with simpler region matches
-
-		int dot = way.indexOf(".");
-		int len = target.length();
-		return way.regionMatches(1, target, 0, dot-1) &&
-			way.regionMatches(dot+2, target, len-2, 2) &&
-			way.length()-2 == len;
 	}
 
 	private int getEntriesCount(int level) {
@@ -513,7 +513,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private int getTrailMaxWidth() {
 		// A fixed value will never work in all situations because kindle uses
 		// a proportional font; this is a best guess
-		return 54; //FIXME
+		return 60; //FIXME
 	}
 
 	private String getConfigValue(String name) {
@@ -526,69 +526,48 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	}
 
 	private void handleLauncherButton(Component button, int level) {
-		String name = button.getName();
-		String cmd = (String) levelMap[level].get(name);
-		// user_cmd ::= dir ';' cmd ';' [kindlet_options] '/' button_levelSnpath
-		int p = cmd.lastIndexOf("/");
-		String levelSnpath = cmd.substring(p+1);
-		cmd = cmd.substring(0, p);
-		p = cmd.lastIndexOf(";");
-		String options = cmd.substring(p+1);
-		cmd = cmd.substring(0, p);
-		String dir = null;
-		if(-1 != (p = cmd.indexOf(";"))) {
-			dir = cmd.substring(0, p);
-			cmd = cmd.substring(1+p);
-		}
-//DEBUG del//setStatus("dir("+dir+") cmd("+cmd+")"); if(true) return;
-
+		KualEntry ke = getUI().getKualEntry(button);
 		setTrail(null, null); // TODO refresh trail area to make cmd(#1) message more visible
-		if (cmd.startsWith("^")) { // dive into sub-menu
-					//name,       origin,     way (how to get there)
-			trail[level][0] = name;
-		        trail[level][1] = levelSnpath;
-		        trail[level][2] = cmd;
+		if (ke.isSubmenu) { // dive into sub-menu
+			keTrail[level] = ke;
 			try {
 				handleLevel(LEVEL_NEXT);
 			} catch (Throwable ex) {
 				String report = ex.getMessage();
 				setStatus(report);
 			}
-		} else if (cmd.startsWith("#")) { // run kindlet function
-			// '#' int_id ';' String_args
-			cmd = cmd.substring(1);
-			int id = -1;
-			p = cmd.indexOf(";");
-			try {
-				id = Integer.parseInt((String) cmd.substring(0,p));
-			} catch (Throwable ex) {
-				setStatus(ex.getMessage());
-			}
-			cmd = cmd.substring(p+1);
-			switch (id) {
-				// extension displays message in trail area
-				case 1: setTrail(cmd + " | ", null);
+		} else if (ke.isInternalAction) {
+			switch (ke.internalAction) {
+				case 1: // extension displays message in trail area
+					setTrail(ke.internalArgs + " | ", null);
 					break;
-				// extension displays message in status area
-				case 2: setStatus(cmd);
+				case 2: // extension displays message in status area
+					setStatus(ke.internalArgs);
+					break;
+				case 3: // go to top menu
+					depth = 0;
+					handleLevel(LEVEL_PREVIOUS);
+					break;
+				case 4: // quit
+					// falls into ! option 'e'
 					break;
 			}
-			if (-1 == options.indexOf("e")) {
+			if (! ke.hasOption('e')) {
 				// suicide
-				commandToRunOnExit = "true";
-				dirToChangeToOnExit = dir;
+				commandToRunOnExit = ":";
+				dirToChangeToOnExit = ke.dir;
 				getUI().suicide(context);
 			}
 		} else { // run cmd
 			// now is the right time to get rid of known offenders
 			killKnownOffenders(Runtime.getRuntime());
 
-			if (-1 == options.indexOf("e")) {
+			if (! ke.hasOption('e')) {
 				// suicide
 				try {
-					setStatus(cmd);
-					commandToRunOnExit = cmd;
-					dirToChangeToOnExit = dir;
+					setStatus(ke.action);
+					commandToRunOnExit = ke.action;
+					dirToChangeToOnExit = ke.dir;
 					getUI().suicide(context);
 				} catch (Throwable ex) {
 					String report = ex.getMessage();
@@ -597,25 +576,24 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			} else {
 				// live
 				try {
-					execute(cmd, dir, true);
+					execute(ke.action, ke.dir, true);
 				} catch (Exception ex) {
 					String report = ex.getMessage();
 					setStatus(report);
 				}
 			}
 		}
-		if (-1 != options.indexOf("c")) {
+		if (ke.hasOption('c')) {
 			// "checked" - add checkmark to button label
-		//TODO - WIP need to replace map keys from label to levelSnpath then adapt the code below...
-//			String checked = "\u2717 " + name; // X
-//			levelMap[level].put(checked, levelMap[level].get(name));
-//			levelMap[level].remove(name);
-			// checked button label with show on next refresh by updateDisplayedLaunchers()
+			// checkmark will show on next updateDisplayedLaunchers()
+			ke.setChecked(true);
+			getUI().setText(button, ke.label);
+			// FIXME K3 doesn't refresh button label immediately
 		}
-		if (-1 != options.indexOf("r")) {
+		if (ke.hasOption('r')) {
 			// "reload" not implemented
 		}
-		if (-1 != options.indexOf("h")) {
+		if (ke.hasOption('h')) {
 			// "hidden" not implemented
 		}
 	}
@@ -625,7 +603,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
 		File launcher = createLauncherScript(cmd, background,
 				"");
-//FIXME discontinued				"export KUAL='/bin/ash " + parseFile.getAbsolutePath() + " -x '; ");
+//discontinued				"export KUAL='/bin/ash " + parseFile.getAbsolutePath() + " -x '; ");
 		File workingDir = new File(dir);
 		return Runtime.getRuntime().exec(
 				new String[] { "/bin/sh", launcher.getAbsolutePath() },
@@ -669,14 +647,32 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		return tempFile;
 	}
 
-	private boolean checkMbx() {
+	private static TimerAdapter getTimer() {
+		return TimerAdapter.INSTANCE;
+	}
+
+	private void monitorMbx() {
+		// monitor ends on first message in mailbox or after a fixed number of repetitions
+		final TimerAdapter instance = getTimer();
+		final Object timer = instance.newTimer();
+		Runnable runnable = new Runnable() {
+			public void run() {
+				if (checkAndProcessMbx() || --monitorMbxRepeat <= 0)
+					instance.cancel(timer);
+			}
+		};
+		Object task = instance.newTimerTask(runnable);
+		instance.schedule(timer, task, 1*1000, 1*1000);
+	}
+
+	private boolean checkAndProcessMbx() {
 		// did the backgrounded parser script send me a message?
 		try {
 			BufferedReader mbx = Util.mbxReader((String) configMap.get("meta2")); // mailbox path
 			if (null != mbx) {
 				String message = mbx.readLine();
 				if (message.startsWith("1 ")) {
-					setTrail("New menu \u25CF Restart to refresh | ", null);
+					setTrail("New menu " + ATTN + " Restart to refresh | ", null);
 					message = message.substring(2); // cache path TODO refresh inside
 				}
 				mbx.close();
@@ -687,18 +683,5 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			setStatus(report);
 		}
 		return false;
-	}
-
-	private void monitorMbx() {
-		// schedule task to for messages in checkMbx()
-		// monitor ends on first message or after a fixed number of repetitions
-		Timer timer = new Timer();
-		TimerTask task = new TimerTask() {
-			public void run() {
-				if (checkMbx() || --monitorMbxRepeat <= 0)
-					this.cancel();
-			}
-		};
-		timer.schedule(task, 1*1000,1*1000);
 	}
 }

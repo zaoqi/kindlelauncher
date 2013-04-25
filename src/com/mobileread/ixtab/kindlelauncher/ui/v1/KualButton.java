@@ -6,6 +6,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 
 import com.amazon.kindle.kindlet.ui.KButton;
+import com.mobileread.ixtab.kindlelauncher.resources.KualEntry;
 
 public class KualButton extends KButton {
 
@@ -22,8 +23,15 @@ public class KualButton extends KButton {
 	private static Font unicodeFont = null;
 	private static FontMetrics unicodeFontMetrics = null;
 
-	public KualButton(String text) {
+	private KualEntry kualEntry = null;
+
+	public KualButton(String text, KualEntry kualEntry) {
 		super(text);
+		this.kualEntry = kualEntry;
+	}
+
+	public KualEntry getKualEntry() {
+		return this.kualEntry;
 	}
 
 	public void paint(Graphics g) {

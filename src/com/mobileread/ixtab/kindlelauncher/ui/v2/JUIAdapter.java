@@ -11,6 +11,7 @@ import javax.swing.JPanel;
 
 import com.amazon.kindle.kindlet.KindletContext;
 import com.mobileread.ixtab.kindlelauncher.ui.UIAdapter;
+import com.mobileread.ixtab.kindlelauncher.resources.KualEntry;
 
 public class JUIAdapter extends UIAdapter {
 
@@ -22,23 +23,14 @@ public class JUIAdapter extends UIAdapter {
 		return new JLabel(text);
 	}
 
-	public Component newButton(String text, ActionListener listener) {
-		JButton button = new JButton(text);
+	public Component newButton(String text, ActionListener listener, KualEntry kualEntry) {
+		JButton button = new KualButton(text, kualEntry);
 		if (listener != null) {
 			button.setName(text);
 			button.addActionListener(listener);
 		}
 		return button;
 	}
-
-/*	public void setHorizontalAlignment(Component component, int alignment);
-		if (component instanceof JLabel) {
-			((JLabel) component).setHorizontalAlignment(alignment);
-		}
-		if (component instanceof JButton) {
-			((JButton) component).setHorizontalAlignment(alignment);
-		}
-	}*/
 
 	public void setText(Component component, String text) {
 		if (component instanceof JLabel) {
@@ -61,5 +53,11 @@ public class JUIAdapter extends UIAdapter {
 	public int getDefaultPageSize() {
 		// these are Touch models, so having more information on one page seems reasonable.
 		return 10;
+	}
+
+	public KualEntry getKualEntry(Component component) {
+		if (component instanceof KualButton)
+			return ((KualButton) component).getKualEntry();
+		return null;
 	}
 }
