@@ -39,12 +39,15 @@ public class Util {
 		return input;
 	}
 
-	public static BufferedReader mbxReader(String filePath) throws IOException,
-			InterruptedException {
+	public static BufferedReader sureFileReader(String filePath) {
 		BufferedReader input = null;
 		File file = new File(filePath);
 		if (file.isFile()) {
-			input = new BufferedReader(new FileReader(filePath));
+			try {
+				input = new BufferedReader(new FileReader(filePath));
+			} catch (Throwable t) {
+				input = null;
+			}
 		}
 		return input;
 	}

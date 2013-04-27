@@ -30,11 +30,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.amazon.kindle.kindlet.KindletContext;
+import com.mobileread.ixtab.kindlelauncher.resources.KualEntry;
+import com.mobileread.ixtab.kindlelauncher.resources.KualMenu;
+import com.mobileread.ixtab.kindlelauncher.resources.MailboxCommand;
+import com.mobileread.ixtab.kindlelauncher.resources.MailboxProcessor;
 import com.mobileread.ixtab.kindlelauncher.resources.ResourceLoader;
+import com.mobileread.ixtab.kindlelauncher.timer.TimerAdapter;
 import com.mobileread.ixtab.kindlelauncher.ui.GapComponent;
 import com.mobileread.ixtab.kindlelauncher.ui.UIAdapter;
-import com.mobileread.ixtab.kindlelauncher.resources.KualEntry;
-import com.mobileread.ixtab.kindlelauncher.timer.TimerAdapter;
 
 public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
@@ -49,32 +52,38 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private static final int PAGING_NEXT = 1;
 	private static final int LEVEL_PREVIOUS = -1;
 	private static final int LEVEL_NEXT = 1;
-	private final LinkedHashMap[] levelMap = new LinkedHashMap[10]; // all menu entries
-	private final HashMap configMap = new HashMap();
-	private final ArrayList viewList = new ArrayList(); // a viewport on levelMap
-	private static int viewLevel = -1;
-	private static int viewOffset = -1;
-	private static int monitorMbxRepeat = 10;
-//	private File parseFile;
+	private KualMenu kualMenu;
+	// Viewport on kualMenu at current depth
+	// . set in updateDisplayedLauncher()
+	// . used in getEntriesCount()
+	private final ArrayList viewList = new ArrayList();
 
 	private KindletContext context;
 	private boolean started = false;
 	private String commandToRunOnExit = null;
 	private String dirToChangeToOnExit = null;
 
+	private final String CROSS = "\u00D7"; // X - match parser script
+	private final String ATTN = "\u25CF"; // O - match parser script
+	private final String RARROW = "\u25B6";
+	private final String LARROW = "\u25C0";
+	private final String UARROW = "\u25B2";
+	private final String PATH_SEP = "/";
+
 	private Container entriesPanel;
 	private Component status;
-	private Component nextPageButton = getUI().newButton("  \u25B6  ", this, null); //>
-// Fiddling with UI concepts. GUI1 puts up button on top, but getting there is very tedious on K3.
-// Se let's experiment other placements... Here up button is placed left.
-//GUI1//	private Component prevPageButton = getUI().newButton("  \u25C0  ", this, null); //<
-private Component prevPageButton = getUI().newButton("  \u25B2  ", this, null); //^
-//GUI1//	private Component prevLevelButton = getUI().newButton("\u25B2", this, null); //^
-private Component prevLevelButton = getUI().newLabel("\u266A \u266B \u266A"); //j JJ j  FIXME is this needed?
+	private Component nextPageButton = getUI().newButton("  " + RARROW + "  ", this, null);
+// Fiddling with UI concepts.
+// Abandoned GUI1 - it placed the up-button in the trail area, and the left-button on the left
+// - on K3 clicking to select the up-button was tedious
+// Current UI (unlabelled) - it places the up-button left, no left-button nor an active button in the trail area.
+// I find that this solution works better - up-button is larger and easier to click on KT; K3 needs fewer clicks to select it
+// TODO (nice to have) wrapping around up/down press on 5-way controller
+//GUI1//	private Component prevPageButton = getUI().newButton("  " + LARROW + "  ", this, null);
+private Component prevPageButton = getUI().newButton("  " + UARROW + "  ", this, null);
+//GUI1//	private Component prevLevelButton = getUI().newButton(UARROW, this, null);
+private Component prevLevelButton = getUI().newLabel(PATH_SEP);
 
-	private final String CROSS = "\u00D7"; // X - match parser's
-	private final String ATTN = "\u25CF"; // O - match parser's
-	private final String PATH_SEP = "/";
 	private final KualEntry toTopEntry = new KualEntry(3, PATH_SEP);
 	private final Component toTopButton = getUI().newButton(PATH_SEP, this, toTopEntry);
 	private final KualEntry quitEntry = new KualEntry(4, CROSS + " Quit");
@@ -111,12 +120,6 @@ private Component prevLevelButton = getUI().newLabel("\u266A \u266B \u266A"); //
 			displayErrorMessage(error);
 			return;
 		}
-
-		for (int i=0; i<10; ++i) {
-			offset[i] = 0;
-		}
-		viewLevel = viewOffset = -1; // used in updateDisplayedLaunchers() only
-
 /*
  * High-level description of KUAL flow
  *
@@ -135,17 +138,24 @@ private Component prevLevelButton = getUI().newLabel("\u266A \u266B \u266A"); //
 			initializeState();
 			// initializeState() has set menu structure and getPageSize() for UI()
 			initializeUI();
+
+			// monitor messages from backgrounded script (monitoring ends
+			// after a fixed time, thereafter mailbox checking is repeated
+			// synchronously in updateDisplayedLaunchers())
+			new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), 1000, 1000, 10);
 		} catch (Throwable t) {
 			throw new RuntimeException(t);
 		}
-
 	}
 
+private static Component debug;
+public static void debug(String text) { getUI().setText(debug, text);}
 	private void setStatus(String text) {
 		if(null == status)
 			setTrail(text,null);
 		else
 			getUI().setText(status, text);
+debug = status;
 	}
 
 	private void setTrail(String left, String center) {
@@ -194,7 +204,7 @@ private Component prevLevelButton = getUI().newLabel("\u266A \u266B \u266A"); //
 		main.add(prevPageButton, BorderLayout.WEST);
 		main.add(nextPageButton, BorderLayout.EAST);
 
-		String show = getConfigValue("no_show_status");
+		String show = kualMenu.getConfig("no_show_status");
 		if (null != show && show.equals("true")) {
 			status = null;
 		} else {
@@ -213,17 +223,12 @@ private Component prevLevelButton = getUI().newLabel("\u266A \u266B \u266A"); //
 		// leveleMap[depth].put("TEST-" + i, "touch /tmp/test-" + i + ".tmp");
 		// }
 
-		updateDisplayedLaunchers(depth);
-
-		// monitor messages from backgrounded script (monitor ends
-		// after a fixed time then mailbox checking continues
-		// synchronously in updateDisplayedLaunchers())
-		monitorMbx();
+		updateDisplayedLaunchers(depth = 0, true);
 	}
 
 	private void initializeState() throws IOException, FileNotFoundException,
-			InterruptedException, NumberFormatException {
-		// Be as quick as possible through here.
+			InterruptedException, NumberFormatException, Exception {
+		// Go as quickly as possible through here.
 		// The kindlet is given 5000 ms maximum to initializeUI()
 
 		cleanupTemporaryDirectory();
@@ -241,59 +246,18 @@ private Component prevLevelButton = getUI().newLabel("\u266A \u266B \u266A"); //
 	}
 
 	private void readParser(BufferedReader reader) throws IOException,
-			InterruptedException, NumberFormatException {
-		KualEntry kualEntry;
-		try {
-			// meta info: version, mailboxpath
-			int size = Integer.parseInt(reader.readLine());
-			for (int i = 1; i <= size; i++) {
-				configMap.put("meta" + Integer.toString(i), reader.readLine());
-			}
-			// meta data: N\nKUAL.cfg lines
-			String line = null;
-			size = Integer.parseInt(reader.readLine());
-			for(int i = 1; i <= size; i++) {
-				line = reader.readLine().trim();
-				if (! line.startsWith("#")) {
-					int p = line.indexOf('=');
-					if (p > 0) {
-						configMap.put(line.substring(0,p), line.substring(p+1));
-					}
-				}
-			}
+			InterruptedException, Exception {
 
-			// data: read list of menu entries
-			// levelMap[i] <= ordered map of all entries at menu level i
-			// levelMap[i][id] <= entry of class KualEntry, entry.id is unique and isn't a label
-			for (int i=0; i<10; i++) {
-				levelMap[i] = new LinkedHashMap();
-			}
-			for (line = reader.readLine(); line != null; line = reader
-					.readLine()) {
-				String options = "";
-				int level = -1;
-				kualEntry = null;
-				switch (line.charAt(0)) {
-					case '4':
-						options = reader.readLine();
-					case '3':
-						try {
-							kualEntry = new KualEntry(options, reader.readLine(),
-							reader.readLine(), reader.readLine());
-							break;
-						} catch(Throwable t) {
-							// fall into default case
-						}
-					default:
-						throw new Exception("invalid entry"); // can't trust input format
-				}
-				levelMap[kualEntry.level].put(kualEntry.id, kualEntry);
-			}
-		} catch (Throwable ex) {
-			String report = ex.getMessage();
-			kualEntry = new KualEntry(0, "meta error: " + report);
-			levelMap[0].put(kualEntry.id, kualEntry);
+		// Read menu records to initialize menu entries.
+		kualMenu = new KualMenu(reader);
+
+		// Reset navigation helpers.
+		// keTrail[] - stack of menu entries, one for each node of the current menu path
+		// depth - keTrail top index
+		for (int i = 0; i < 10; i++) {
+			keTrail[i] = null;
 		}
+		depth = 0;
 	}
 
 	private File extractParseFile() throws IOException, FileNotFoundException {
@@ -378,8 +342,11 @@ handleLevel(LEVEL_PREVIOUS);
 			//changes offset[] and depth
 		} else {
 			handleLauncherButton(button, depth);
-			//changes trail[] & calls handleLevel() on submenu button 
+			//on submenu button it calls handleLevel()
 		}
+
+		// synchronously check for background menu updates
+		new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), 0, 0, 0);
 	}
 
 	private void handlePaging(int direction, int level) {
@@ -401,7 +368,7 @@ handleLevel(LEVEL_PREVIOUS);
 			return;
 		}
 		offset[level] = newOffset;
-		updateDisplayedLaunchers(level);
+		updateDisplayedLaunchers(level, false);
 	}
 
 	private void handleLevel(int direction) {
@@ -417,11 +384,20 @@ handleLevel(LEVEL_PREVIOUS);
 		}
 		depth = goToLevel;
 		offset[depth] = goToOffset;
-		updateDisplayedLaunchers(depth);
+		updateDisplayedLaunchers(depth, false);
 	}
 
-	private void updateDisplayedLaunchers(int level) {
-	//changes viewList (and viewLevel and viewOffset)
+	private static int viewLevel = -1;
+	private static int viewOffset = -1;
+
+	private void updateDisplayedLaunchers(int level, boolean resetViewport) {
+
+		if (resetViewport) {
+			viewLevel = viewOffset = -1;
+			for (int i = 0; i < 10; i++)
+				offset[i] = 0;
+			viewList.clear();
+		}
 
 		// view entries at the end of the trail
 		if (viewLevel != level || viewOffset != offset[level]) {
@@ -429,11 +405,11 @@ handleLevel(LEVEL_PREVIOUS);
 			viewOffset = offset[level];
 			viewList.clear();
 			if (0 == level) {
-				viewList.addAll(levelMap[0].keySet());
+				viewList.addAll(kualMenu.getLevel(0).keySet()); //WAS viewList.addAll(levelMap[0].keySet());
 			} else {
 				KualEntry ke  = keTrail[level - 1];
 				String  parentLink = ke.getParentLink();
-				Iterator it = levelMap[level].entrySet().iterator();
+				Iterator it = kualMenu.getLevel(level).entrySet().iterator(); //WAS Iterator it = levelMap[level].entrySet().iterator();
 				while (it.hasNext()) {
 					Map.Entry entry = (Entry) it.next();
 					ke = (KualEntry) entry.getValue();
@@ -465,7 +441,7 @@ handleLevel(LEVEL_PREVIOUS);
 			//Component button = nullButton; // shortens column after last entry
 			Component button = 0 == level ? quitButton : toTopButton;
 			if (it.hasNext()) {
-				KualEntry ke = (KualEntry) levelMap[level].get(it.next());
+				KualEntry ke = kualMenu.getEntry(level, it.next()); //WAS (KualEntry) levelMap[level].get(it.next());
 				button = getUI().newButton(ke.label, this, ke); //then getUI().getKualEntry(button) => ke
 				++end;
 			}
@@ -478,7 +454,7 @@ handleLevel(LEVEL_PREVIOUS);
 		if (null != status) {
 			setStatus("Entries " + (viewOffset + 1) + " - " + end + " of "
 				+ viewList.size()
-				+ " build " + configMap.get("meta1")); // script version
+				+ " build " + kualMenu.getVersion());
 		}
 		setTrail(null == status && enableButtons
 				? (viewOffset+1)+"-"+end+"/"+viewList.size()
@@ -488,8 +464,6 @@ prevPageButton.setEnabled(level>0);
 		nextPageButton.setEnabled(enableButtons);
 //GUI1//		prevLevelButton.setEnabled(level>0);
 
-		checkAndProcessMbx();
-
 		// just to be on the safe side
 		entriesPanel.invalidate();
 		entriesPanel.repaint();
@@ -498,31 +472,29 @@ prevPageButton.setEnabled(level>0);
 	}
 
 	private int getEntriesCount(int level) {
-		return viewList.size() > 0 ? viewList.size() : levelMap[level].size();
+		return viewList.size() > 0 ? viewList.size() : kualMenu.getLevel(level).size(); //WAS levelMap[level].size();
 	}
 
+	private static int onStartPageSize = -1; // tracks onStart() size, so ReloadMenuFromCache can't interfere
 	private int getPageSize() {
-		int isize = 0;
-		String size = getConfigValue("page_size");
+		if (0 < onStartPageSize) {
+			return onStartPageSize;
+		}
+		onStartPageSize = 0;
+		String size = kualMenu.getConfig("page_size");
 		if (null != size) try {
-			isize = Integer.parseInt((String) size);
+			onStartPageSize = Integer.parseInt((String) size);
 		} catch (Throwable ex) {};
-		return isize > 0 ? isize : getUI().getDefaultPageSize();
+		if (0 == onStartPageSize) {
+			onStartPageSize = getUI().getDefaultPageSize();
+		}
+		return onStartPageSize;
 	}
 
 	private int getTrailMaxWidth() {
 		// A fixed value will never work in all situations because kindle uses
 		// a proportional font; this is a best guess
 		return 60; //FIXME
-	}
-
-	private String getConfigValue(String name) {
-		String value = (String) configMap.get("KUAL_" + name);
-		if (value == null)
-			return null;
-		if (value.startsWith("\"") && value.endsWith("\""))
-			value = value.substring(1,value.lastIndexOf("\""));
-		return value;
 	}
 
 	private void handleLauncherButton(Component button, int level) {
@@ -591,7 +563,18 @@ prevPageButton.setEnabled(level>0);
 			// FIXME K3 doesn't refresh button label immediately
 		}
 		if (ke.hasOption('r')) {
-			// "reload" not implemented
+			// Here we *refresh* the menu by calling the parser then we reload it from
+			// the fresh cache. This enables extensions to dynamically change the menu.
+		// TODO - UNTESTED below
+			try {
+				setTrail("Extension is rebuilding the menu" + ATTN +" Please wait...", "");
+				setStatus("Rebuilding...");
+				initializeState();
+				initializeUI();
+				new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), 1000, 1000, 10);
+			} catch (Throwable t) {
+				throw new RuntimeException(t);
+			}
 		}
 		if (ke.hasOption('h')) {
 			// "hidden" not implemented
@@ -647,41 +630,17 @@ prevPageButton.setEnabled(level>0);
 		return tempFile;
 	}
 
-	private static TimerAdapter getTimer() {
-		return TimerAdapter.INSTANCE;
-	}
-
-	private void monitorMbx() {
-		// monitor ends on first message in mailbox or after a fixed number of repetitions
-		final TimerAdapter instance = getTimer();
-		final Object timer = instance.newTimer();
-		Runnable runnable = new Runnable() {
-			public void run() {
-				if (checkAndProcessMbx() || --monitorMbxRepeat <= 0)
-					instance.cancel(timer);
+	public class ReloadMenuFromCache implements MailboxCommand {
+		public void execute(Object data) {
+			setTrail("New menu " + ATTN + " Reloading " + ATTN +" Please wait...", "");
+			setStatus("Reloading...");
+			try {
+				readParser((BufferedReader) data);
+				updateDisplayedLaunchers(depth = 0, true);
+				setStatus("Reloading complete. Please go to the top menu");
+			} catch (Throwable t) {
+				setStatus(t.getMessage());
 			}
-		};
-		Object task = instance.newTimerTask(runnable);
-		instance.schedule(timer, task, 1*1000, 1*1000);
-	}
-
-	private boolean checkAndProcessMbx() {
-		// did the backgrounded parser script send me a message?
-		try {
-			BufferedReader mbx = Util.mbxReader((String) configMap.get("meta2")); // mailbox path
-			if (null != mbx) {
-				String message = mbx.readLine();
-				if (message.startsWith("1 ")) {
-					setTrail("New menu " + ATTN + " Restart to refresh | ", null);
-					message = message.substring(2); // cache path TODO refresh inside
-				}
-				mbx.close();
-				return true;
-			}
-		} catch (Throwable ex) {
-			String report = ex.getMessage();
-			setStatus(report);
 		}
-		return false;
 	}
 }

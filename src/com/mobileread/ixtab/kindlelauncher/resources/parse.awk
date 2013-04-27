@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
-# aloop-v2.awk - version 20130425,a stepk
+# aloop-v2.awk - version 20130427,a stepk
 BEGIN { 
-	VERSION="20130425,a"
+	VERSION="20130427,a"
 	ERRORS = BAILOUT = CACHE_SENT = IN_MEMORY_CACHE_INVALID = PARSED_OK_COUNTER = 0
 	SELF_BUTTONS_INSERT = SELF_BUTTONS_FILTER = SELF_BUTTONS_APPEND = ""
 	if (1 < ARGC) {
@@ -108,7 +108,7 @@ VALID_KEYS["priority"]=K_priority=0x01
 VALID_KEYS["params"]=K_params=0x02
 VALID_KEYS["exitmenu"]=K_exitmenu=0x03
 VALID_KEYS["checked"]=K_checked=0x04
-VALID_KEYS["reload"]=K_reload=0x05 
+VALID_KEYS["refresh"]=K_refresh=0x05
 VALID_KEYS["hidden"]=K_hidden=0x06 
 VALID_KEYS["name"]=K_name=0x07 
 VALID_KEYS["items"]=K_items=0xff 
@@ -244,10 +244,12 @@ function config_read(configfullpath,
 		for (i = 1; i <= nary; i++) {
 			if (ary[i] ~ "^\\s*"PRODUCTNAME"_\\w+=") {
 				k = ary[i]
+				gsub(/^\s+|\s+$/, "", k) 
 				k = substr(k,1+index(k,"_"))
 				p = index(k, "=")
 				v = substr(k,p+1)
-				gsub(/^"|"$/,"",v) 
+				if (match(v, /^".*"$/))
+					v = substr(v, 2, RLENGTH - 2) 
 				CONFIG[substr(k,1,p-1)] = v
 				++count 
 			}
@@ -262,7 +264,7 @@ function config_send(outfile,   k,n) {
 	printf "%d\n%s\n%s\n%d\n", 2, VERSION, MBXPATH, n >>outfile
 	for (k in CONFIG)
 		if(k !~ /^NC/)
-			print PRODUCTNAME"_"k"=\""CONFIG[k]"\"" >>outfile
+			print k"="CONFIG[k] >>outfile
 }
 function escs2chars(s) { 
 	if (!match(s,/\\/)) return s
@@ -410,14 +412,14 @@ x = "mv '"SCREAM_LOG"' \\\"/mnt/us/documents/"PRODUCTNAME"-`date -u -Iminutes | 
 	}
 	return json
 }
-function json_self_menu_button(name, action, params, priority, exitmenu, checked, reload, hidden) { 
+function json_self_menu_button(name, action, params, priority, exitmenu, checked, refresh, hidden) { 
 	return "{\"name\": \"" name "\"" \
 	", \"action\": \"" action "\"" \
 	("" != params ? ", \"params\": \"" params "\"" : "") \
 	("" != priority ? ", \"priority\": " priority : "") \
 	("" != exitmenu ? ", \"exitmenu\": " exitmenu : "") \
 	("" != checked ? ", \"checked\": " checked : "") \
-	("" != reload ? ", \"reload\": " reload : "") \
+	("" != refresh ? ", \"refresh\": " refresh : "") \
 	("" != hidden ? ", \"hidden\": " hidden : "") \
 	"}"
 }
@@ -434,7 +436,7 @@ function jp2np(ary, size, serial, menufilepathname,
 		jpath=substr(line, 1, x-1)
 		value=substr(line, x+1)
 		key = match(jpath, /"[^"]+"]$/) ? substr(jpath, 1+RSTART,RLENGTH-3) : "ERROR"
-		if (key !~ /^(name|action|params|priority|exitmenu|hidden|checked|reload)$/) {
+		if (key !~ /^(name|action|params|priority|exitmenu|hidden|checked|refresh)$/) {
 			continue
 		}
 		key=VALID_KEYS[key]
@@ -505,7 +507,7 @@ function np2mn(ary, size,
 							format_action_submenu(level, npath_s_this_items))
 						new_submenu()
 					}
-				} else if (K_priority == key || K_params == key || K_exitmenu == key || K_checked == key || K_reload == key || K_hidden == key) {
+				} else if (K_priority == key || K_params == key || K_exitmenu == key || K_checked == key || K_refresh == key || K_hidden == key) {
 					ITEM[key] = value
 				} else {
 					scream("unexpected key <"key"> (np2mu)")
@@ -526,7 +528,7 @@ function np2mn(ary, size,
 function kindlet_options(   x) {  # {{{ 
 	x = (ITEM[K_exitmenu] ~ /^(0|false)$/ ? "e" : "") \
 		(ITEM[K_checked] ~ /^(1|true)$/ ? "c" : "") \
-		(ITEM[K_reload] ~ /^(1|true)$/ ? "r" : "") \
+		(ITEM[K_refresh] ~ /^(1|true)$/ ? "r" : "") \
 		(ITEM[K_hidden] ~ /^(1|true)$/ ? "h" : "")
 	return "" == x ? "" : x SEP
 }
@@ -541,7 +543,7 @@ function menu_children(matcher, ary, nary,
 	return substr(list, 2)
 }
 function new_item() { 
-	ITEM[K_name] = ITEM[K_action] = ITEM[K_params] =  ITEM[K_exitmenu] = ITEM[K_checked] = ITEM[K_reload] = ITEM[K_hidden] = ""; ITEM[K_priority] = 0;
+	ITEM[K_name] = ITEM[K_action] = ITEM[K_params] =  ITEM[K_exitmenu] = ITEM[K_checked] = ITEM[K_refresh] = ITEM[K_hidden] = ""; ITEM[K_priority] = 0;
 }
 function new_submenu() { 
 	ITEM[K_name] = ITEM[K_hidden] = ""; ITEM[K_priority] = 0;

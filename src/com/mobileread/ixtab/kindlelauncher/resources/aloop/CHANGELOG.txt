@@ -1,5 +1,27 @@
 CHANGE LOG
 
+20130427,a
++ Auto-reload changed menu upon starting KUAL.
+
+Internal changes:
++ Classes KualMenu, kualConfig, and MailboxProcessor in package resources
++ Interface MailboxCommand in package resources
+# Kindlet code refactoring
+
+20130425,a
+# Testing usability of left-sided up button and new toTop and Quit buttons
+- Fixed: kindlet could run on either KT or K3 but not both (timer issue)
++ Added checked buttons - json key/value "checked":true
+  . FIXME K3 doesn't repaint the button label immediately
++ Added toTop and Quit buttons - placed after all level buttons
+. Minor cosmetic changes
+
+Internal changes:
++ Class KualEntry in package resources
++ Class TimerAdapter in package timer package
++ Class KualButton in package ui/v2
+# Kindlet code refactoring
+
 20130421,a
 - Fixed: failed starting on K3/K4
 + Added: auto-delete old cache file on new version upgrade.
@@ -37,7 +59,8 @@ CHANGE LOG
   . 'Replace/Restore Store button' button - it may come back as a
      stand-alone extension for KT/PW, if enough interest.
   . The '[ "$KUAL" ] && $KUAL $n"' application interface. In particular
-    this takes away the 4-line message display.
+    this takes away the 4-line message display on which demo extension
+    'Save KUAL from suicide' relies.
 - Fix: added expansion of all JSON string escapes, \n \t etc.
   . KNOWN LIMITATION: can't expand \uHHHH escape
 - Fixed rare (and harmless) error message upon sorting zero entries.

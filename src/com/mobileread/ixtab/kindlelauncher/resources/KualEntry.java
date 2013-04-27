@@ -47,7 +47,7 @@ public class KualEntry {
 				this.internalArgs = this.action.substring(p + 1);
 			}
 		} catch (Throwable t) {
-			throw new Exception("invalid entry");
+			throw new Exception("invalid entry " + t.getMessage());
 		}
 	}
 
