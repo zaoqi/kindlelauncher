@@ -1,7 +1,16 @@
 CHANGE LOG
 
+20130428,a
+- Fix: spurious message 'cannot update cached menu' in KUAL.log
++ Added: JSON key/value "refresh":true rescans /mnt/us/extensions
+  and refreshes the displayed menu. This enables extensions to
+  'dynamically change' the menu.
+
+Internal changes:
++ Class KualLog in package resources
+
 20130427,a
-+ Auto-reload changed menu upon starting KUAL.
++ Auto-reload changed menu.
 
 Internal changes:
 + Classes KualMenu, kualConfig, and MailboxProcessor in package resources
@@ -11,7 +20,7 @@ Internal changes:
 20130425,a
 # Testing usability of left-sided up button and new toTop and Quit buttons
 - Fixed: kindlet could run on either KT or K3 but not both (timer issue)
-+ Added checked buttons - json key/value "checked":true
++ Added checked buttons - JSON key/value "checked":true
   . FIXME K3 doesn't repaint the button label immediately
 + Added toTop and Quit buttons - placed after all level buttons
 . Minor cosmetic changes

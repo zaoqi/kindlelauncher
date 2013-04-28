@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
-# aloop-v2.awk - version 20130427,a stepk
+# aloop-v2.awk - version 20130428,a stepk
 BEGIN { 
-	VERSION="20130427,a"
+	VERSION="20130428,a"
 	ERRORS = BAILOUT = CACHE_SENT = IN_MEMORY_CACHE_INVALID = PARSED_OK_COUNTER = 0
 	SELF_BUTTONS_INSERT = SELF_BUTTONS_FILTER = SELF_BUTTONS_APPEND = ""
 	if (1 < ARGC) {
@@ -145,6 +145,7 @@ function cache_file_delete() {
 	system("rm -f '"CACHEPATH"'")
 }
 function cache_save(    errors,hash1,hash2,cmd) { # {{{ << globals IN_MEMORY_CACHE_INVALID,CACHEPATH,MENUS[],NMENUS,CONFIG[]; return 
+	errors = 0
 	if (IN_MEMORY_CACHE_INVALID) {
 		cache_file_delete() 
 		return 0
@@ -195,6 +196,7 @@ function cache_send(cachepath,   # {{{ << globals MENUS[],NMENUS,CONFIG[]; >>glo
 	return 1
 }
 function cache_update(   errors) { # {{{ >> globals NPATHS[],NNPATHS,IN_MEMORY_CACHE_INVALID,MENUS[],NMENUS,CONFIG[]; cache_save(); return 
+	errors = 0
 	json_emit_self_menu_and_parsing_errors(0+PARENT_ERRORS) 
 	delete MENUS; NMENUS=0
 	if (0 != np2mn(NPATHS, NNPATHS)) {

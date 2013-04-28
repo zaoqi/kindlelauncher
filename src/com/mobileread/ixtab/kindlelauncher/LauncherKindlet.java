@@ -31,6 +31,7 @@ import java.util.Map.Entry;
 
 import com.amazon.kindle.kindlet.KindletContext;
 import com.mobileread.ixtab.kindlelauncher.resources.KualEntry;
+import com.mobileread.ixtab.kindlelauncher.resources.KualLog;
 import com.mobileread.ixtab.kindlelauncher.resources.KualMenu;
 import com.mobileread.ixtab.kindlelauncher.resources.MailboxCommand;
 import com.mobileread.ixtab.kindlelauncher.resources.MailboxProcessor;
@@ -141,21 +142,18 @@ private Component prevLevelButton = getUI().newLabel(PATH_SEP);
 
 			// monitor messages from backgrounded script (monitoring ends
 			// after a fixed time, thereafter mailbox checking is repeated
-			// synchronously in updateDisplayedLaunchers())
+			// after handling each button event in actionPerformed()
 			new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), 1000, 1000, 10);
 		} catch (Throwable t) {
 			throw new RuntimeException(t);
 		}
 	}
 
-private static Component debug;
-public static void debug(String text) { getUI().setText(debug, text);}
 	private void setStatus(String text) {
 		if(null == status)
 			setTrail(text,null);
 		else
 			getUI().setText(status, text);
-debug = status;
 	}
 
 	private void setTrail(String left, String center) {
@@ -226,14 +224,15 @@ debug = status;
 		updateDisplayedLaunchers(depth = 0, true);
 	}
 
-	private void initializeState() throws IOException, FileNotFoundException,
-			InterruptedException, NumberFormatException, Exception {
+	private void initializeState() throws IOException, InterruptedException, Exception {
 		// Go as quickly as possible through here.
 		// The kindlet is given 5000 ms maximum to initializeUI()
 
 		cleanupTemporaryDirectory();
-		//postponed to when it's really needed:	killKnownOffenders(Runtime.getRuntime());
+		runParser();
+	}
 
+	private void runParser() throws IOException, InterruptedException, Exception {
 		// run the parser script and read its output (we may get cached data)
 		File parseFile = extractParseFile();
 		BufferedReader reader = Util.execute(parseFile.getAbsolutePath());
@@ -345,7 +344,7 @@ handleLevel(LEVEL_PREVIOUS);
 			//on submenu button it calls handleLevel()
 		}
 
-		// synchronously check for background menu updates
+		// foreground, non-blocking check for background menu updates
 		new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), 0, 0, 0);
 	}
 
@@ -533,48 +532,39 @@ prevPageButton.setEnabled(level>0);
 		} else { // run cmd
 			// now is the right time to get rid of known offenders
 			killKnownOffenders(Runtime.getRuntime());
+			setStatus(ke.action);
+			try {
+int beforeAction = 0;
+			if (0 < beforeAction)
+				Thread.sleep(beforeAction);
 
-			if (! ke.hasOption('e')) {
-				// suicide
-				try {
-					setStatus(ke.action);
+				if (! ke.hasOption('e')) {
+					// JSON  "exitmenu":true
+					// suicide
 					commandToRunOnExit = ke.action;
 					dirToChangeToOnExit = ke.dir;
 					getUI().suicide(context);
-				} catch (Throwable ex) {
-					String report = ex.getMessage();
-					setStatus(report);
-				}
-			} else {
-				// live
-				try {
+				} else {
+					// survive
 					execute(ke.action, ke.dir, true);
-				} catch (Exception ex) {
-					String report = ex.getMessage();
-					setStatus(report);
+int afterAction = 0;
+					if (0 < afterAction)
+						Thread.sleep(afterAction);
 				}
+			} catch (Exception ex) {
+				setStatus(ex.getMessage());
 			}
 		}
 		if (ke.hasOption('c')) {
-			// "checked" - add checkmark to button label
-			// checkmark will show on next updateDisplayedLaunchers()
+			// JSON "checked":true - add checkmark to button label
 			ke.setChecked(true);
 			getUI().setText(button, ke.label);
+			button.repaint();
 			// FIXME K3 doesn't refresh button label immediately
 		}
 		if (ke.hasOption('r')) {
-			// Here we *refresh* the menu by calling the parser then we reload it from
-			// the fresh cache. This enables extensions to dynamically change the menu.
-		// TODO - UNTESTED below
-			try {
-				setTrail("Extension is rebuilding the menu" + ATTN +" Please wait...", "");
-				setStatus("Rebuilding...");
-				initializeState();
-				initializeUI();
-				new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), 1000, 1000, 10);
-			} catch (Throwable t) {
-				throw new RuntimeException(t);
-			}
+			// JSON "refresh":true - refresh and reload the menu
+			refreshMenu(500L, 1500L);
 		}
 		if (ke.hasOption('h')) {
 			// "hidden" not implemented
@@ -584,10 +574,12 @@ prevPageButton.setEnabled(level>0);
 	private Process execute(String cmd, String dir, boolean background) throws IOException,
 			InterruptedException {
 
-		File launcher = createLauncherScript(cmd, background,
-				"");
-//discontinued				"export KUAL='/bin/ash " + parseFile.getAbsolutePath() + " -x '; ");
 		File workingDir = new File(dir);
+		if (! workingDir.isDirectory()) {
+			new KualLog().append("directory '" + dir + "' not found");
+			return null;
+		}
+		File launcher = createLauncherScript(cmd, background, "");
 		return Runtime.getRuntime().exec(
 				new String[] { "/bin/sh", launcher.getAbsolutePath() },
 					null, workingDir);
@@ -632,7 +624,7 @@ prevPageButton.setEnabled(level>0);
 
 	public class ReloadMenuFromCache implements MailboxCommand {
 		public void execute(Object data) {
-			setTrail("New menu " + ATTN + " Reloading " + ATTN +" Please wait...", "");
+			setTrail("About to reload new menu " + ATTN +" Please wait...", "");
 			setStatus("Reloading...");
 			try {
 				readParser((BufferedReader) data);
@@ -643,4 +635,52 @@ prevPageButton.setEnabled(level>0);
 			}
 		}
 	}
+
+	public void refreshMenu (long beforeParser, long afterParser) throws RuntimeException {
+			// FIXME unsure as to why trail and status lines don't get updated immediately
+			setTrail("Extension about to refresh the menu" + ATTN +" Please wait...", "");
+			setStatus("Refreshing...");
+
+			// Here we *refresh* the menu by instantiating the parser then reloading a
+			// fresh cache. This enables extensions to dynamically change the menu.
+			try {
+				// An extension that needs some time to stage the new menu may set JSON
+				//    TODO JSON sleep:"after_action,before_action,after_refresh,before_refresh"
+				// in milliseconds, where
+				// before_action/after_action refer to the time KUAL *backgrounds* the user's action
+				// before_refresh/refresh (default 500 ms) it's the delay before tearing down the
+				// current menu (a <500 value is allowed but not recommended)
+				// after_refresh (default 1500 ms) is the time that the parser takes to
+				// build a new cache (1500 ms is an average value)
+
+				/*
+				 * Goal: display a fresh menu with just one screen update.
+				 * If we allowed more screen updates it would be enough to just say:
+				 *   initializeState(); іnitializeUI(): new MailboxProcessor(..., 1000, 1000, 10).
+				 * But since we aim at a single screen update more steps are involved.
+				*/
+
+				// Yield 500 ms to allow an extension to stage its menu change.
+				// Extension developers may set beforeParser to achieve a longer pause.
+				Thread.sleep(beforeParser > 0 ? beforeParser : 500);
+
+				runParser(); // still sends the old cache while background-building a new one
+
+				// Wait long enough for the parser to complete building the new cache then consume it.
+				// Since we can't know how long that will take, we delay consuming data from the parser
+				// by afterParser ms (default 1500).  That's long enough for a medium-sized extension folder.
+				// Users with very large folders may need to increase afterParser.
+				new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), afterParser, 0, 0);
+
+				initializeState(); // now the parser is even more likely to send a fresh cache
+					// initializeState() also cleans up temporary files
+
+				initializeUI(); // enables "hard" configuration changes such as number of items per page
+				// reaps a new cache one way or another - but when it does the user can see another screen update
+				new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), 0, 500, 10);
+
+			} catch (Throwable t) {
+				throw new RuntimeException(t);
+			}
+		}
 }

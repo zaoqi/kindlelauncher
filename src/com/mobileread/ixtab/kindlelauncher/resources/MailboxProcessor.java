@@ -39,7 +39,14 @@ public class MailboxProcessor {
 
 		if (0 < countdown) { //backgrounded
 			monitor();
-		} else { //synchronous
+		} else { //foregrounded
+			if (0 < delay) { // this only blocks
+				try {
+					Thread.sleep(delay);
+				} catch(InterruptedException t){
+					//
+				}
+			}
 			if (isRinging()) {
 				if (null != message)
 					process(command);
