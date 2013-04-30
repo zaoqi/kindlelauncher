@@ -6,6 +6,7 @@ import ixtab.jailbreak.SuicidalKindlet;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.EventQueue;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -110,6 +111,9 @@ private Component prevLevelButton = getUI().newLabel(PATH_SEP);
 		 */
 		// https://kdk-javadocs.s3.amazonaws.com/2.0/com/amazon/kindle/kindlet/Kindlet.html
 
+		// Go as quickly as possible through here.
+		// The kindlet is given 5000 ms maximum to start.
+
 		if (started) {
 			return;
 		}
@@ -121,29 +125,37 @@ private Component prevLevelButton = getUI().newLabel(PATH_SEP);
 			displayErrorMessage(error);
 			return;
 		}
+
+		// postpone longer initialization for quicker return
+		Runnable runnable = new Runnable() {
+		    public void run() { 
+			LauncherKindlet.this.longStart();
+		    }
+		};
+		EventQueue.invokeLater(runnable);
+	}
+
+	private void longStart() {
 /*
  * High-level description of KUAL flow
  *
- * 1. kindlet: spawn the parser and block waiting for input from the parser
- * 2. parser: send cached data so the kindlet can quickly move on to initialize the UI
- * 3. kindlet: set a 10-time 1-second repeat timer - each time through will check a mailbox from the parser
- * 4. kindlet: initialize UI
- * 5. parser: (while kindlet is initializing UI) parse menu files and refresh the cache
- * 6: parser: if cache changed post a message to mailbox
- * 7: parser: exit
- * 8: kindlet: if the timer found a message in the mailbox then tell user, "Hey, new menu, restart to refresh!"
- * 9: kindlet: wait for user interaction; handle interaction
+ * 1. kindlet: spawn the parser then block waiting for input from the parser.
+ * 2. parser:  send the kindlet cached data so the kindlet can quickly move on to initialize the UI.
+ * 3. kindlet: initialize UI and display the menu.
+ * 4. kindlet: schedule a 10-time-repeat 1-second timer task which checks for messages from the parser.
+ * 5. parser:  (while the kindlet is initializing the UI) parse menu files and refresh the cache.
+ * 6: parser:  if the fresh cache differs from the cache sent in step 2 then post the kindlet a message
+ * 7: parser:  exit
+ * 8: kindlet: if the timer found a message in the mailbox update the menu from the fresh cache and re-display UI.
+ * 9: kindlet: loop: wait for user interaction; handle interaction.
  *
 */
 		try {
-			initializeState();
-			// initializeState() has set menu structure and getPageSize() for UI()
-			initializeUI();
-
-			// monitor messages from backgrounded script (monitoring ends
-			// after a fixed time, thereafter mailbox checking is repeated
-			// after handling each button event in actionPerformed()
-			new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), 1000, 1000, 10);
+			initializeState(); // step 1
+			initializeUI(); // step 3
+			// Monitor messages from backgrounded script. Monitoring ends in 10 s.
+			// Thereafter check the mailbox on each button event in actionPerformed().
+			new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), 1000, 1000, 10); // steps 4,8
 		} catch (Throwable t) {
 			throw new RuntimeException(t);
 		}
@@ -188,7 +200,7 @@ private Component prevLevelButton = getUI().newLabel(PATH_SEP);
 
 		root.setLayout(new BorderLayout(gap,gap));
 		Container main = getUI().newPanel(new BorderLayout(gap,gap));
-		
+
 		// this is a horrible workaround to simulate adding a border around
 		// the main container. It has to be done this way because we have
 		// to support different framework versions.
@@ -225,8 +237,6 @@ private Component prevLevelButton = getUI().newLabel(PATH_SEP);
 	}
 
 	private void initializeState() throws IOException, InterruptedException, Exception {
-		// Go as quickly as possible through here.
-		// The kindlet is given 5000 ms maximum to initializeUI()
 
 		cleanupTemporaryDirectory();
 		runParser();
@@ -404,11 +414,11 @@ handleLevel(LEVEL_PREVIOUS);
 			viewOffset = offset[level];
 			viewList.clear();
 			if (0 == level) {
-				viewList.addAll(kualMenu.getLevel(0).keySet()); //WAS viewList.addAll(levelMap[0].keySet());
+				viewList.addAll(kualMenu.getLevel(0).keySet());
 			} else {
 				KualEntry ke  = keTrail[level - 1];
 				String  parentLink = ke.getParentLink();
-				Iterator it = kualMenu.getLevel(level).entrySet().iterator(); //WAS Iterator it = levelMap[level].entrySet().iterator();
+				Iterator it = kualMenu.getLevel(level).entrySet().iterator();
 				while (it.hasNext()) {
 					Map.Entry entry = (Entry) it.next();
 					ke = (KualEntry) entry.getValue();
@@ -440,8 +450,9 @@ handleLevel(LEVEL_PREVIOUS);
 			//Component button = nullButton; // shortens column after last entry
 			Component button = 0 == level ? quitButton : toTopButton;
 			if (it.hasNext()) {
-				KualEntry ke = kualMenu.getEntry(level, it.next()); //WAS (KualEntry) levelMap[level].get(it.next());
+				KualEntry ke = kualMenu.getEntry(level, it.next());
 				button = getUI().newButton(ke.label, this, ke); //then getUI().getKualEntry(button) => ke
+
 				++end;
 			}
 			entriesPanel.add(button);
@@ -471,7 +482,7 @@ prevPageButton.setEnabled(level>0);
 	}
 
 	private int getEntriesCount(int level) {
-		return viewList.size() > 0 ? viewList.size() : kualMenu.getLevel(level).size(); //WAS levelMap[level].size();
+		return viewList.size() > 0 ? viewList.size() : kualMenu.getLevel(level).size();
 	}
 
 	private static int onStartPageSize = -1; // tracks onStart() size, so ReloadMenuFromCache can't interfere

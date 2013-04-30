@@ -1,4 +1,6 @@
 CHANGE LOG
+20130429,a
+# More robust, possibly faster, kindlet start.
 
 20130428,a
 - Fix: spurious message 'cannot update cached menu' in KUAL.log
