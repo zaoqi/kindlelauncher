@@ -11,7 +11,7 @@ public class KualLog {
 	// constructor
 
 	// methods
-	public void append(String line) throws IOException {
+	public void append(String line) {
 		try {
 			BufferedWriter bw = new BufferedWriter(new FileWriter(logfilePath, true));
 			bw.write("KUAL: " + line);

@@ -1,4 +1,7 @@
 CHANGE LOG
+20130430,a
+- Fixed: no button focused on 5-way controller devices!
+
 20130429,a
 # More robust, possibly faster, kindlet start.
 

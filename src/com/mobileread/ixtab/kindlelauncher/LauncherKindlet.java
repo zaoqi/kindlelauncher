@@ -233,7 +233,7 @@ private Component prevLevelButton = getUI().newLabel(PATH_SEP);
 		// leveleMap[depth].put("TEST-" + i, "touch /tmp/test-" + i + ".tmp");
 		// }
 
-		updateDisplayedLaunchers(depth = 0, true);
+		updateDisplayedLaunchers(depth = 0, true, null);
 	}
 
 	private void initializeState() throws IOException, InterruptedException, Exception {
@@ -377,7 +377,8 @@ handleLevel(LEVEL_PREVIOUS);
 			return;
 		}
 		offset[level] = newOffset;
-		updateDisplayedLaunchers(level, false);
+		updateDisplayedLaunchers(level, false,
+			-1 == direction ? prevPageButton : nextPageButton);
 	}
 
 	private void handleLevel(int direction) {
@@ -393,13 +394,15 @@ handleLevel(LEVEL_PREVIOUS);
 		}
 		depth = goToLevel;
 		offset[depth] = goToOffset;
-		updateDisplayedLaunchers(depth, false);
+		updateDisplayedLaunchers(depth, false,
+			-1 == direction ? (0 >= depth? null : prevLevelButton) : null);
 	}
 
 	private static int viewLevel = -1;
 	private static int viewOffset = -1;
 
-	private void updateDisplayedLaunchers(int level, boolean resetViewport) {
+	private void updateDisplayedLaunchers(int level, boolean resetViewport,
+			Component focusRequestor) {
 
 		if (resetViewport) {
 			viewLevel = viewOffset = -1;
@@ -444,6 +447,7 @@ handleLevel(LEVEL_PREVIOUS);
 		//nullButton.setEnabled(false);
 		toTopButton.setEnabled(true);
 		quitButton.setEnabled(true);
+			//FIXME button isn't appended when the number of entries is a multiple of the page size.
 
 		for (int i = getPageSize(); i > 0; --i) {
 			//Component button = getUI().newButton("", null, null); // fills whole column
@@ -452,7 +456,9 @@ handleLevel(LEVEL_PREVIOUS);
 			if (it.hasNext()) {
 				KualEntry ke = kualMenu.getEntry(level, it.next());
 				button = getUI().newButton(ke.label, this, ke); //then getUI().getKualEntry(button) => ke
-
+				if (null == focusRequestor) {
+					focusRequestor = button;
+				}
 				++end;
 			}
 			entriesPanel.add(button);
@@ -479,6 +485,12 @@ prevPageButton.setEnabled(level>0);
 		entriesPanel.repaint();
 		context.getRootContainer().invalidate();
 		context.getRootContainer().repaint();
+
+		// This is for 5-way controller devices.
+		// It is essential to request focus _after_ the button has been displayed!
+		if (null != focusRequestor) {
+			focusRequestor.requestFocus();
+		}
 	}
 
 	private int getEntriesCount(int level) {
@@ -639,7 +651,7 @@ int afterAction = 0;
 			setStatus("Reloading...");
 			try {
 				readParser((BufferedReader) data);
-				updateDisplayedLaunchers(depth = 0, true);
+				updateDisplayedLaunchers(depth = 0, true, null);
 				setStatus("Reloading complete. Please go to the top menu");
 			} catch (Throwable t) {
 				setStatus(t.getMessage());
