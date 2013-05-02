@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
-# aloop-v2.awk - version 20130430,a stepk
+# aloop-v2.awk - version 20130502,a stepk
 BEGIN { 
-	VERSION="20130430,a"
+	VERSION="20130502,a"
 	ERRORS = BAILOUT = CACHE_SENT = IN_MEMORY_CACHE_INVALID = PARSED_OK_COUNTER = 0
 	SELF_BUTTONS_INSERT = SELF_BUTTONS_FILTER = SELF_BUTTONS_APPEND = ""
 	if (1 < ARGC) {
@@ -109,8 +109,10 @@ VALID_KEYS["params"]=K_params=0x02
 VALID_KEYS["exitmenu"]=K_exitmenu=0x03
 VALID_KEYS["checked"]=K_checked=0x04
 VALID_KEYS["refresh"]=K_refresh=0x05
-VALID_KEYS["hidden"]=K_hidden=0x06 
-VALID_KEYS["name"]=K_name=0x07 
+VALID_KEYS["status"]=K_status=0x06
+VALID_KEYS["date"]=K_date=0x07
+VALID_KEYS["hidden"]=K_hidden=0x08 
+VALID_KEYS["name"]=K_name=0x09 
 VALID_KEYS["items"]=K_items=0xff 
 VALID_KEYS["ERROR"]="??"
 sK_name=sprintf("%02x", K_name)
@@ -375,7 +377,7 @@ show = "0 " show
 				json = json "," json_self_menu_button( \
 				     XenNoExtensionsFound, \
 				     "TRAIL", "help @ http://bit.ly/UW3v8V", \
-				     -200, "false")
+				     -200, "e")
   			}
   		}
 	}
@@ -391,38 +393,34 @@ x = "[ -r '"CONFIGPATH"' ] || echo \\\"# "CONFIGPATH" - created on `date`\\\" >'
 				json=json "," json_self_menu_button( \
 					"Sort menu "verb" on restart", \
 					x, \
-					"", 2, "false", "true")
+					"", 2, "ecsd")
 			} else if (3 == ary[b]) {
 x = "mv '"SCREAM_LOG"' \\\"/mnt/us/documents/"PRODUCTNAME"-`date -u -Iminutes | sed s/:/./g`.txt\\\";dbus-send --system /default com.lab126.powerd.resuming int32:1"
 				json=json "," json_self_menu_button( \
 					"Save and reset "PRODUCTNAME" log", \
 					x, \
-					"", 3, "false", "true")
+					"", 3, "ecsd")
 			} else if (99 == ary[b]) {
 				json=json "," json_self_menu_button( \
 					CROSS" Quit", \
 					":", \
 					"", 99)
 			}
-			else if (0 == ary[b]) {
-				json=json "," json_self_menu_button( \
-					"Clear cache on restart (temp)", \
-					"rm -f '"CACHEPATH"'", \
-					"", 0, "false", "true")
-			}
 		}
 	}
 	return json
 }
-function json_self_menu_button(name, action, params, priority, exitmenu, checked, refresh, hidden) { 
+function json_self_menu_button(name, action, params, priority, non_default_options) { 
 	return "{\"name\": \"" name "\"" \
 	", \"action\": \"" action "\"" \
 	("" != params ? ", \"params\": \"" params "\"" : "") \
 	("" != priority ? ", \"priority\": " priority : "") \
-	("" != exitmenu ? ", \"exitmenu\": " exitmenu : "") \
-	("" != checked ? ", \"checked\": " checked : "") \
-	("" != refresh ? ", \"refresh\": " refresh : "") \
-	("" != hidden ? ", \"hidden\": " hidden : "") \
+	(index(non_default_options, "e") ? ", \"exitmenu\": false" : "") \
+	(index(non_default_options, "c") ? ", \"checked\": true" : "") \
+	(index(non_default_options, "r") ? ", \"refresh\": true" : "") \
+	(index(non_default_options, "s") ? ", \"status\": false" : "") \
+	(index(non_default_options, "d") ? ", \"date\": true" : "") \
+	(index(non_default_options, "h") ? ", \"hidden\": true" : "") \
 	"}"
 }
 function jp2np(ary, size, serial, menufilepathname,   
@@ -438,7 +436,7 @@ function jp2np(ary, size, serial, menufilepathname,
 		jpath=substr(line, 1, x-1)
 		value=substr(line, x+1)
 		key = match(jpath, /"[^"]+"]$/) ? substr(jpath, 1+RSTART,RLENGTH-3) : "ERROR"
-		if (key !~ /^(name|action|params|priority|exitmenu|hidden|checked|refresh)$/) {
+		if (key !~ /^(name|action|params|priority|exitmenu|hidden|checked|refresh|status|date)$/) {
 			continue
 		}
 		key=VALID_KEYS[key]
@@ -509,7 +507,7 @@ function np2mn(ary, size,
 							format_action_submenu(level, npath_s_this_items))
 						new_submenu()
 					}
-				} else if (K_priority == key || K_params == key || K_exitmenu == key || K_checked == key || K_refresh == key || K_hidden == key) {
+				} else if (K_priority == key || K_params == key || K_exitmenu == key || K_checked == key || K_refresh == key || K_status == key || K_date == key || K_hidden == key) {
 					ITEM[key] = value
 				} else {
 					scream("unexpected key <"key"> (np2mu)")
@@ -531,6 +529,8 @@ function kindlet_options(   x) {  # {{{
 	x = (ITEM[K_exitmenu] ~ /^(0|false)$/ ? "e" : "") \
 		(ITEM[K_checked] ~ /^(1|true)$/ ? "c" : "") \
 		(ITEM[K_refresh] ~ /^(1|true)$/ ? "r" : "") \
+		(ITEM[K_status] ~ /^(0|false)$/ ? "s" : "") \
+		(ITEM[K_date] ~ /^(1|true)$/ ? "d" : "") \
 		(ITEM[K_hidden] ~ /^(1|true)$/ ? "h" : "")
 	return "" == x ? "" : x SEP
 }
@@ -545,7 +545,7 @@ function menu_children(matcher, ary, nary,
 	return substr(list, 2)
 }
 function new_item() { 
-	ITEM[K_name] = ITEM[K_action] = ITEM[K_params] =  ITEM[K_exitmenu] = ITEM[K_checked] = ITEM[K_refresh] = ITEM[K_hidden] = ""; ITEM[K_priority] = 0;
+	ITEM[K_name] = ITEM[K_action] = ITEM[K_params] =  ITEM[K_exitmenu] = ITEM[K_checked] = ITEM[K_refresh] = ITEM[K_status] = ITEM[K_date] = ITEM[K_hidden] = ""; ITEM[K_priority] = 0;
 }
 function new_submenu() { 
 	ITEM[K_name] = ITEM[K_hidden] = ""; ITEM[K_priority] = 0;
@@ -743,7 +743,7 @@ function formatter(ary, nary, fmt_name, outfile,   # {{{
 			}
 		}
 	} else if ("tbl" == fmt_name) {
-		fmt="%-3.3s|%-20.20s|%-20.20s|%-33.33s\n"
+		fmt="%-4.4s|%-24.24s|%-20.20s|%-33.33s\n"
 		for (i = 1; i <= nary; i++) {
 		       	if (rec = ary[i]) {
 				n = split(rec, x, SEP)

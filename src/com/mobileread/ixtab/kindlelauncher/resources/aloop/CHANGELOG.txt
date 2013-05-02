@@ -1,4 +1,11 @@
 CHANGE LOG
+20130502,a
++ Added: JSON "status":false disables displaying the contents of JSON
+  "action":"commands" in the status line prior to launching action.
+# Added: JSON "date":true displays the current date/time in the
+  status line after having launched an action.
+. Removed: temporary button 'Clear cache on restart (temp)'
+
 20130430,a
 - Fixed: no button focused on 5-way controller devices!
 

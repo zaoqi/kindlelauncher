@@ -23,7 +23,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+//import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -555,7 +557,10 @@ prevPageButton.setEnabled(level>0);
 		} else { // run cmd
 			// now is the right time to get rid of known offenders
 			killKnownOffenders(Runtime.getRuntime());
-			setStatus(ke.action);
+			if (! ke.hasOption('s')) {
+				// JSON "status":false
+				setStatus(ke.action);
+			}
 			try {
 int beforeAction = 0;
 			if (0 < beforeAction)
@@ -588,6 +593,13 @@ int afterAction = 0;
 		if (ke.hasOption('r')) {
 			// JSON "refresh":true - refresh and reload the menu
 			refreshMenu(500L, 1500L);
+		}
+		if (ke.hasOption('d')) {
+			// JSON "date":true - show date/time in status line
+			Date now = new Date();
+			setStatus(now.toString());
+			//SimpleDateFormatter fmt = new SimpleDateFormatter();
+			//setStatus(fmt.format("HH:mm:ss", now));
 		}
 		if (ke.hasOption('h')) {
 			// "hidden" not implemented
