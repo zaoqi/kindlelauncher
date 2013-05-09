@@ -1,13 +1,22 @@
 #!/bin/awk -f
 
-function prnt(txt,pre,cmp)
-# local pre,cmp
+function kprint(txt,      pre,cmp)
 {
 #debug#	if(pre) printf ("%4d::%s::\t%s\n\t\t", NR, pre, cmp)
-	print txt
+	if (pre ~ /^kp/) {
+		print txt
+		sub(/^\s+/, "", txt)
+		printf "%3d to be safe didn't change %4d: %s\n",++TOBESAFE, NR, txt >"/dev/stderr"
+	} else {
+		sprint(txt)
+	}
+}
 
-	sub(/^\s+/, "", txt)
-	if (pre ~ /^kp/) printf "%3d to be safe didn't change %4d: %s\n",++TOBESAFE, NR, txt >"/dev/stderr"
+function sprint(txt)
+{
+	if (AWK)
+		sub(/^\s+/, "", txt) # safe in AWK only - sh syntax supports multiline string literals
+	print txt
 }
 
 BEGIN	{
@@ -31,7 +40,8 @@ WARNING="=== Non-greedy shell/AWK script comment stripper ==="\
 	}
 
 	if ("" == PROMPT || 0 != PROMPT) {
-PROMPT="Usage: strip.awk [-v WARN=0] [-v PROMPT=0] script.sh > new_script.sh"\
+PROMPT="Usage: strip.awk [-v AWK=1] [-v WARN=0] [-v PROMPT=0] script.sh > new_script.sh"\
+"\tAWK=1 further optimizes AWK input"\
 "\nPress any key to strip '"ARGV[1]"' to stdout ..."
 		printf PROMPT >"/dev/stderr"
 		getline <"/dev/stdin"
@@ -44,7 +54,7 @@ PROMPT="Usage: strip.awk [-v WARN=0] [-v PROMPT=0] script.sh > new_script.sh"\
 {
 	if ($0 ~ /^\s*#?: RSTR\>/) { SUSPENDED=0; next }
 	else if ($0 ~ /^\s*#?: SSTR\>/) { SUSPENDED=1; next }
-	else if (SUSPENDED) { print; next }
+	else if (SUSPENDED) { sprint($0); next }
 }
 # forced stripping
 /^\s*#?: BSTR\>/,/^\s*#?: ESTR\>/ {
@@ -57,12 +67,12 @@ PROMPT="Usage: strip.awk [-v WARN=0] [-v PROMPT=0] script.sh > new_script.sh"\
 # continuation line
 /\\$/ {
 	CONTINUATION=1
-	print; next
+	sprint($0); next
 }
 # white line
 /^\s*$/	{
 	if (CONTINUATION) { # unless after continuation
-		print
+		sprint($0)
 		CONTINUATION=0
 	}
 	next
@@ -83,22 +93,10 @@ PROMPT="Usage: strip.awk [-v WARN=0] [-v PROMPT=0] script.sh > new_script.sh"\
 	t=substr($0,RSTART+1,RLENGTH-1) # $0 == s"#"t
 	r1=substr(s,length(s),1)
 	if (r1 == "$") {
-		prnt($0,"kp0",$0); # $#
+		kprint($0,"kp0",$0); # $#
 		next
 	}
-	prnt(s,"not",$0);
-	next
-}
-/was-#-above/ && ! ( /["']/ || /\${/ ) { # UNMATCHED, greedy => unsafe
-	match($0,/^[^#]+/)
-	s=substr($0,RSTART,RLENGTH)
-	t=substr($0,RSTART+RLENGTH+1) # $0 == s"#"t
-	r1=substr(s,RLENGTH,1)
-	if (r1 == "$") {
-		prnt($0,"kp0",$0); # $#
-		next
-	}
-	prnt(s,"not",$0);
+	kprint(s,"not",$0);
 	next
 }
 # in-line comment possibly in string or in variable substitution
@@ -108,41 +106,18 @@ PROMPT="Usage: strip.awk [-v WARN=0] [-v PROMPT=0] script.sh > new_script.sh"\
 	t=substr($0,RSTART+1,RLENGTH-1) # $0 == s"#"t
 	r1=substr(s,length(s),1)
 	if (r1 == "$") {
-		prnt($0,"kp1",$0); # $#
+		kprint($0,"kp1",$0); # $#
 		next
 	}
 	if (t !~ /["'}]/) {
 		# tail comment is free from str and var
-		prnt(s,"tai",$0)
+		kprint(s,"tai",$0)
 		next
 	}
-	prnt($0,"kp2",$0)
-	next
-}
-/was-#-above/ { # UNMATCHED greedy => unsafe
-	match($0,/^[^#]+/)
-	s=substr($0,RSTART,RLENGTH)
-	t=substr($0,RSTART+RLENGTH+1) # $0 == s"#"t
-	if (s ~ /["']/ && t ~ /["']/ || s ~ /\${/ && t ~ /}/) {
-		# first sharp could be in a str or var
-		# keep s"#" at least, if not the whole $0
-	} else { # $0's sharp free from str and var
-		prnt(s,"fre",$0)
-		next
-	}
-	if (match(t,/#[^#]+$/)) { # t could include a tail comment
-		s1=substr(t,1,RSTART-1)
-		t1=substr(t,RSTART+1,RLENGTH-1) # $0 == s"#"s1"#"t1
-		if (t1 !~ /["'}]/) { # (naive test)
-			# t's sharp free from str and var
-			prnt(s"#"s1,"tai",$0)
-			next
-		}
-		prnt($0,"kp1",$0)
-		next
-	}
-	prnt($0,"kp2",$0)
+	kprint($0,"kp2",$0)
 	next
 }
 # all remaining lines
-{print}
+{
+	sprint($0)
+}

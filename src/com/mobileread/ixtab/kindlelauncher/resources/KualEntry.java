@@ -7,7 +7,7 @@ public class KualEntry {
 	public boolean isSubmenu = false;
 	public boolean isInternalAction = false;
 	public int internalAction;
-	public String internalArgs;
+	public String internalArgs = null;
 	public int level;
 	private String levelSnpath;
 	public String action;
@@ -27,24 +27,31 @@ public class KualEntry {
 			p = levelSnpath.indexOf(":");
 			this.level = Integer.parseInt((String) levelSnpath.substring(0,p));
 			this.snpath = levelSnpath.substring(p+1);
-			this.action = action; // [ "/dir" ';' ] ('^'|'#') "xyz"
-			this.isSubmenu = action.startsWith("^");
-			this.isInternalAction = action.startsWith("#");
-			if (this.isSubmenu) {
+			// action ::= '^' "matcher" | [ '#' "internal action and args" ] "/dir" ';' "xyz"
+			if (action.startsWith("^")) {
+				this.isSubmenu = true;
 				this.label = label + " \u25BD"; // 25B6 > ; 25BC V  25BD v
+				this.action = action;
 				this.dir = null;
 			} else {
 				this.label = label;
-				// split dir';'action
-				p = this.action.indexOf(";");
-				this.dir = this.action.substring(0, p);
-				this.action = this.action.substring(p + 1);
-			}
-			if (this.isInternalAction) {
-				// split '#' int_id ';' String_args
-				p = this.action.indexOf(";");
-				this.internalAction = Integer.parseInt(this.action.substring(1,p));
-				this.internalArgs = this.action.substring(p + 1);
+				// action ::= [ '#' <internal id char> <length> '#' [ <args> ] ] <apath> ';' <shell cmd> [' ' <params>]
+				if (action.startsWith("#") ) {
+					this.isInternalAction = true;
+					this.internalAction = action.charAt(1);
+					p = 2 + action.substring(2).indexOf("#");
+					int len = Integer.parseInt(action.substring(2, p));
+					p += 1;
+					if (0 < len) {
+						this.internalArgs = action.substring(p, p + len);
+					}
+					action = action.substring(p + len);
+				}
+				// action ::= <apath> ';' <shell cmd> [' ' <params>]
+				// split "/dir" ';' "xyz"
+				p = action.indexOf(";");
+				this.action = action.substring(p + 1);
+				this.dir = action.substring(0, p);
 			}
 		} catch (Throwable t) {
 			throw new Exception("invalid entry " + t.getMessage());
@@ -52,37 +59,39 @@ public class KualEntry {
 	}
 
 	public KualEntry(int instanceId, String label) {
+		this.action = null; // normally these entries don't run shell commands (but they may).
+		this.dir = null;
+
+		//internalAction = [0..32] reserved for this, and implemented by handleLauncherButton()
+
 		switch (instanceId) {
 		case 0: // error button displayed upon reading corrupted menu records
 			this.options = "e";
 			this.levelSnpath = this.id = "0:ff";
 			this.level = 0;
 			this.snpath = "ff";
-			this.action = "#1;Try restarting \u266B"; // trail message
-			this.dir = "";
 			this.isSubmenu = false;
 			this.isInternalAction = true;
-			this.internalAction = 1;
+			this.internalAction = 0; // breadcrumb message
 			this.internalArgs = "Try restarting \u266B";
 			this.label = label;
 			break;
-		case 3: // toTopButton
+		case 1: // toTopButton
 			this.options = "e";
 			this.levelSnpath = this.id = ""; // doesn't matter since this one never gets stored in levelMap[]
 			this.level = 0;
-			this.dir = "";
 			this.isSubmenu = false;
 			this.isInternalAction = true;
-			this.internalAction = 3;
+			this.internalAction = 1;
 			break;
-		case 4: // quitButton
+		case 2: // quitButton
 			this.levelSnpath = this.id = ""; // doesn't matter since this one never gets stored in levelMap[]
 			this.level = 0;
-			this.action = ":";
-			this.dir = "/var/tmp";
 			this.isSubmenu = false;
 			this.isInternalAction = true;
-			this.internalAction = 4;
+			this.internalAction = 2;
+			this.action = ":";
+			this.dir = "/var/tmp";
 			this.label = label;
 			break;
 		default:
@@ -90,11 +99,9 @@ public class KualEntry {
 			this.levelSnpath = this.id = "0:ff";
 			this.level = 0;
 			this.snpath = "ff";
-			this.action = "#1;Error \u266B"; // trail message
-			this.dir = "/var/tmp";
 			this.isSubmenu = false;
 			this.isInternalAction = true;
-			this.internalAction = 1; // trail message
+			this.internalAction = 0; // breadcrumb message
 			this.internalArgs = "Error \u266B";
 			this.label = label;
 			break;

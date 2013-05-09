@@ -75,22 +75,14 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private final String PATH_SEP = "/";
 
 	private Container entriesPanel;
-	private Component status;
+	private Component status = null;
 	private Component nextPageButton = getUI().newButton("  " + RARROW + "  ", this, null);
-// Fiddling with UI concepts.
-// Abandoned GUI1 - it placed the up-button in the trail area, and the left-button on the left
-// - on K3 clicking to select the up-button was tedious
-// Current UI (unlabelled) - it places the up-button left, no left-button nor an active button in the trail area.
-// I find that this solution works better - up-button is larger and easier to click on KT; K3 needs fewer clicks to select it
-// TODO (nice to have) wrapping around up/down press on 5-way controller
-//GUI1//	private Component prevPageButton = getUI().newButton("  " + LARROW + "  ", this, null);
-private Component prevPageButton = getUI().newButton("  " + UARROW + "  ", this, null);
-//GUI1//	private Component prevLevelButton = getUI().newButton(UARROW, this, null);
-private Component prevLevelButton = getUI().newLabel(PATH_SEP);
+	private Component prevPageButton = getUI().newButton("  " + UARROW + "  ", this, null);
+	private Component breadcrumb = getUI().newLabel(PATH_SEP);
 
-	private final KualEntry toTopEntry = new KualEntry(3, PATH_SEP);
+	private final KualEntry toTopEntry = new KualEntry(1, PATH_SEP);
 	private final Component toTopButton = getUI().newButton(PATH_SEP, this, toTopEntry);
-	private final KualEntry quitEntry = new KualEntry(4, CROSS + " Quit");
+	private final KualEntry quitEntry = new KualEntry(2, CROSS + " Quit");
 	private final Component quitButton = getUI().newButton(CROSS + " Quit", this, quitEntry);
 
 	private int[] offset = {0,0,0,0,0,0,0,0,0,0}; //10
@@ -165,12 +157,12 @@ private Component prevLevelButton = getUI().newLabel(PATH_SEP);
 
 	private void setStatus(String text) {
 		if(null == status)
-			setTrail(text,null);
+			setBreadcrumb(text,null);
 		else
 			getUI().setText(status, text);
 	}
 
-	private void setTrail(String left, String center) {
+	private void setBreadcrumb(String left, String center) {
 		String text = null == left ? "" : left + " ";
 		if (null != center) {
 			text += center;
@@ -188,7 +180,7 @@ private Component prevLevelButton = getUI().newLabel(PATH_SEP);
 				label = "..." + label.substring(len - width + 3);
 			text += label;
 		}
-		getUI().setText(prevLevelButton, text);
+		getUI().setText(breadcrumb, text);
 	}
 
 	private static UIAdapter getUI() {
@@ -223,7 +215,7 @@ private Component prevLevelButton = getUI().newLabel(PATH_SEP);
 			status = getUI().newLabel("Status");
 			main.add(status, BorderLayout.SOUTH);
 		}
-		main.add(prevLevelButton, BorderLayout.NORTH);
+		main.add(breadcrumb, BorderLayout.NORTH);
 
 		GridLayout grid = new GridLayout(getPageSize(), 1, gap, gap); 
 		entriesPanel = getUI().newPanel(grid);
@@ -342,15 +334,11 @@ private Component prevLevelButton = getUI().newLabel(PATH_SEP);
 	public void actionPerformed(ActionEvent e) {
 		Component button = (Component) e.getSource();
 		if (button == prevPageButton) {
-//GUI1//			handlePaging(PAGING_PREVIOUS, depth);
-handleLevel(LEVEL_PREVIOUS);
-			//changes offset[]
+			handleLevel(LEVEL_PREVIOUS);
+			//changes offset[] and depth
 		} else if (button == nextPageButton) {
 			handlePaging(PAGING_NEXT, depth);
 			//changes offset[]
-//GUI1//		} else if (button == prevLevelButton) {
-//GUI1//			handleLevel(LEVEL_PREVIOUS);
-			//changes offset[] and depth
 		} else {
 			handleLauncherButton(button, depth);
 			//on submenu button it calls handleLevel()
@@ -363,7 +351,7 @@ handleLevel(LEVEL_PREVIOUS);
 	private void handlePaging(int direction, int level) {
 		// direction is supposed to be -1 (backward) or +1 (forward),
 		int newOffset = offset[level] + getPageSize() * direction;
-//DEBUG del//setTrail("olv("+offset[level]+")new("+newOffset+")");
+//DEBUG del//setBreadcrumb("olv("+offset[level]+")new("+newOffset+")");
 		if (newOffset < 0) {
 			// the largest possible multiple of the page size.
 			newOffset = getEntriesCount(level);
@@ -389,7 +377,7 @@ handleLevel(LEVEL_PREVIOUS);
 		if (-1 == direction) { // return from submenu
 			goToLevel = depth > 0 ? depth - 1 : 0;
 			goToOffset = offset[goToLevel];
-		} else { // dive into submenu
+		} else { // drill into sub-menu
 			KualEntry ke = keTrail[depth]; // origin
 			goToLevel = ke.getGoToLevel();
 			goToOffset = 0;
@@ -397,7 +385,7 @@ handleLevel(LEVEL_PREVIOUS);
 		depth = goToLevel;
 		offset[depth] = goToOffset;
 		updateDisplayedLaunchers(depth, false,
-			-1 == direction ? (0 >= depth? null : prevLevelButton) : null);
+			-1 == direction ? (0 >= depth? null : prevPageButton) : null);
 	}
 
 	private static int viewLevel = -1;
@@ -413,7 +401,7 @@ handleLevel(LEVEL_PREVIOUS);
 			viewList.clear();
 		}
 
-		// view entries at the end of the trail
+		// load entries of the current level into the viewport
 		if (viewLevel != level || viewOffset != offset[level]) {
 			viewLevel = level;
 			viewOffset = offset[level];
@@ -474,13 +462,11 @@ handleLevel(LEVEL_PREVIOUS);
 				+ viewList.size()
 				+ " build " + kualMenu.getVersion());
 		}
-		setTrail(null == status && enableButtons
+		setBreadcrumb(null == status && enableButtons
 				? (viewOffset+1)+"-"+end+"/"+viewList.size()
 				: null, null);
-//GUI1//		prevPageButton.setEnabled(enableButtons);
-prevPageButton.setEnabled(level>0);
+		prevPageButton.setEnabled(level>0);
 		nextPageButton.setEnabled(enableButtons);
-//GUI1//		prevLevelButton.setEnabled(level>0);
 
 		// just to be on the safe side
 		entriesPanel.invalidate();
@@ -523,8 +509,7 @@ prevPageButton.setEnabled(level>0);
 
 	private void handleLauncherButton(Component button, int level) {
 		KualEntry ke = getUI().getKualEntry(button);
-		setTrail(null, null); // TODO refresh trail area to make cmd(#1) message more visible
-		if (ke.isSubmenu) { // dive into sub-menu
+		if (ke.isSubmenu) { // drill into sub-menu
 			keTrail[level] = ke;
 			try {
 				handleLevel(LEVEL_NEXT);
@@ -532,57 +517,65 @@ prevPageButton.setEnabled(level>0);
 				String report = ex.getMessage();
 				setStatus(report);
 			}
-		} else if (ke.isInternalAction) {
-			switch (ke.internalAction) {
-				case 1: // extension displays message in trail area
-					setTrail(ke.internalArgs + " | ", null);
-					break;
-				case 2: // extension displays message in status area
-					setStatus(ke.internalArgs);
-					break;
-				case 3: // go to top menu
-					depth = 0;
-					handleLevel(LEVEL_PREVIOUS);
-					break;
-				case 4: // quit
-					// falls into ! option 'e'
-					break;
-			}
-			if (! ke.hasOption('e')) {
-				// suicide
-				commandToRunOnExit = ":";
-				dirToChangeToOnExit = ke.dir;
-				getUI().suicide(context);
-			}
-		} else { // run cmd
-			// now is the right time to get rid of known offenders
-			killKnownOffenders(Runtime.getRuntime());
-			if (! ke.hasOption('s')) {
-				// JSON "status":false
-				setStatus(ke.action);
-			}
-			try {
-int beforeAction = 0;
-			if (0 < beforeAction)
-				Thread.sleep(beforeAction);
-
-				if (! ke.hasOption('e')) {
-					// JSON  "exitmenu":true
-					// suicide
-					commandToRunOnExit = ke.action;
-					dirToChangeToOnExit = ke.dir;
-					getUI().suicide(context);
-				} else {
-					// survive
-					execute(ke.action, ke.dir, true);
-int afterAction = 0;
-					if (0 < afterAction)
-						Thread.sleep(afterAction);
+		} else {
+		// run internal action, if any, then action, if any
+			if (ke.isInternalAction) {
+				switch (ke.internalAction) {
+					// 0-32 reserved for KualEntry(int, String) constructor 
+					// 'A', etc. defined in parser script
+					case 0:
+					case 'A': // extension displays message in breadcrumb line
+						setBreadcrumb(ke.internalArgs + " | ", null);
+						break;
+					case 'B': // extension displays message in status line
+						setStatus(ke.internalArgs);
+						break;
+					case 1: // go to top menu
+						depth = 0;
+						handleLevel(LEVEL_PREVIOUS);
+						break;
+					case 2: // quit
+						// falls into ! option 'e'
+						break;
 				}
-			} catch (Exception ex) {
-				setStatus(ex.getMessage());
+			}
+			if (null != ke.action) {
+			// run shell cmd. null may come from KualEntry(int, String) constructor only
+				// now is the right time to get rid of known offenders
+				killKnownOffenders(Runtime.getRuntime());
+				if (! ke.hasOption('s')) {
+					// JSON "status":false
+					setStatus(ke.action);
+				}
+				try {
+int beforeAction = 0; //TODO
+					if (0 < beforeAction)
+						Thread.sleep(beforeAction);
+
+					if (! ke.hasOption('e')) {
+						// JSON  "exitmenu":true
+						// suicide
+						commandToRunOnExit = ke.action;
+						dirToChangeToOnExit = ke.dir;
+						getUI().suicide(context);
+					} else {
+						// survive
+						execute(ke.action, ke.dir, true);
+int afterAction = 0; //TODO
+						if (0 < afterAction)
+							Thread.sleep(afterAction);
+					}
+				} catch (Exception ex) {
+					setStatus(ex.getMessage());
+				}
 			}
 		}
+
+		//
+		// placeholder for post-action internal actions
+		//
+
+		// process post-action options
 		if (ke.hasOption('c')) {
 			// JSON "checked":true - add checkmark to button label
 			ke.setChecked(true);
@@ -659,7 +652,7 @@ int afterAction = 0;
 
 	public class ReloadMenuFromCache implements MailboxCommand {
 		public void execute(Object data) {
-			setTrail("About to reload new menu " + ATTN +" Please wait...", "");
+			setBreadcrumb("About to reload new menu " + ATTN +" Please wait...", "");
 			setStatus("Reloading...");
 			try {
 				readParser((BufferedReader) data);
@@ -672,8 +665,8 @@ int afterAction = 0;
 	}
 
 	public void refreshMenu (long beforeParser, long afterParser) throws RuntimeException {
-			// FIXME unsure as to why trail and status lines don't get updated immediately
-			setTrail("Extension about to refresh the menu" + ATTN +" Please wait...", "");
+			// FIXME unsure as to why breadcrumb and status lines don't get updated immediately
+			setBreadcrumb("Extension about to refresh the menu" + ATTN +" Please wait...", "");
 			setStatus("Refreshing...");
 
 			// Here we *refresh* the menu by instantiating the parser then reloading a

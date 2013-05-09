@@ -1,4 +1,11 @@
 CHANGE LOG
+20130509,a
+- Fixed bitbucket issue #4.
+# Added JSON key/value "internal":"internal command" to replace
+  and expand the now unsupported special commands "TRAIL" and "STATUS".
+  See mobileread Wiki page for details.
++ Tool updates.
+
 20130502,a
 + Added: JSON "status":false disables displaying the contents of JSON
   "action":"commands" in the status line prior to launching action.
