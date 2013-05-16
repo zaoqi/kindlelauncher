@@ -299,9 +299,9 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		try {
 			rtime.exec("/usr/bin/killall " + offenders, null); // gently
 			rtime.exec("/usr/bin/killall -9 " + offenders, null); // forcefully
-		} catch (Throwable ex) {
-			String report = ex.getMessage();
-			setStatus(report);
+		} catch (Throwable t) {
+			new KualLog().append(t.toString());
+			setStatus("Exception logged.");
 		}
 	}
 
@@ -460,7 +460,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		if (null != status) {
 			setStatus("Entries " + (viewOffset + 1) + " - " + end + " of "
 				+ viewList.size()
-				+ " build " + kualMenu.getVersion());
+				+ " build " + kualMenu.getVersion() + " " + kualMenu.getConfig("model"));
 		}
 		setBreadcrumb(null == status && enableButtons
 				? (viewOffset+1)+"-"+end+"/"+viewList.size()
@@ -494,7 +494,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		String size = kualMenu.getConfig("page_size");
 		if (null != size) try {
 			onStartPageSize = Integer.parseInt((String) size);
-		} catch (Throwable ex) {};
+		} catch (Throwable ignored) {};
 		if (0 == onStartPageSize) {
 			onStartPageSize = getUI().getDefaultPageSize();
 		}
@@ -513,9 +513,9 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			keTrail[level] = ke;
 			try {
 				handleLevel(LEVEL_NEXT);
-			} catch (Throwable ex) {
-				String report = ex.getMessage();
-				setStatus(report);
+			} catch (Throwable t) {
+				new KualLog().append(t.toString());
+				setStatus("Exception logged.");
 			}
 		} else {
 		// run internal action, if any, then action, if any
@@ -565,8 +565,9 @@ int afterAction = 0; //TODO
 						if (0 < afterAction)
 							Thread.sleep(afterAction);
 					}
-				} catch (Exception ex) {
-					setStatus(ex.getMessage());
+				} catch (Throwable t) {
+					new KualLog().append(t.toString());
+					setStatus("Exception logged.");
 				}
 			}
 		}
@@ -585,7 +586,7 @@ int afterAction = 0; //TODO
 		}
 		if (ke.hasOption('r')) {
 			// JSON "refresh":true - refresh and reload the menu
-			refreshMenu(500L, 1500L);
+			refreshMenu(500L, 1500L, ke.label);
 		}
 		if (ke.hasOption('d')) {
 			// JSON "date":true - show date/time in status line
@@ -624,7 +625,7 @@ int afterAction = 0; //TODO
 		if (commandToRunOnExit != null) {
 			try {
 				execute(commandToRunOnExit, dirToChangeToOnExit, true);
-			} catch (Exception e) {
+			} catch (Exception ignored) {
 				// can't do much, really. Too late for that :-)
 			}
 			commandToRunOnExit = dirToChangeToOnExit = null;
@@ -652,63 +653,70 @@ int afterAction = 0; //TODO
 
 	public class ReloadMenuFromCache implements MailboxCommand {
 		public void execute(Object data) {
-			setBreadcrumb("About to reload new menu " + ATTN +" Please wait...", "");
-			setStatus("Reloading...");
+			setBreadcrumb("Loading new menu " + ATTN +" Please wait...", "");
+			setStatus("Loading...");
 			try {
 				readParser((BufferedReader) data);
 				updateDisplayedLaunchers(depth = 0, true, null);
-				setStatus("Reloading complete. Please go to the top menu");
+				setStatus("New menu loaded. Please go to top.");
 			} catch (Throwable t) {
-				setStatus(t.getMessage());
+				new KualLog().append(t.toString());
+				setStatus("Exception logged.");
 			}
 		}
 	}
 
-	public void refreshMenu (long beforeParser, long afterParser) throws RuntimeException {
-			// FIXME unsure as to why breadcrumb and status lines don't get updated immediately
-			setBreadcrumb("Extension about to refresh the menu" + ATTN +" Please wait...", "");
-			setStatus("Refreshing...");
+	public void refreshMenu(final long beforeParser, final long afterParser, String requestor)
+		throws RuntimeException {
+		setBreadcrumb("Refreshing the menu " + ATTN +" Please wait...", "");
+		if (null != requestor)
+			setStatus(requestor);
+		//FIXME run this method outside the EDT
 
-			// Here we *refresh* the menu by instantiating the parser then reloading a
-			// fresh cache. This enables extensions to dynamically change the menu.
-			try {
-				// An extension that needs some time to stage the new menu may set JSON
-				//    TODO JSON sleep:"after_action,before_action,after_refresh,before_refresh"
-				// in milliseconds, where
-				// before_action/after_action refer to the time KUAL *backgrounds* the user's action
-				// before_refresh/refresh (default 500 ms) it's the delay before tearing down the
-				// current menu (a <500 value is allowed but not recommended)
-				// after_refresh (default 1500 ms) is the time that the parser takes to
-				// build a new cache (1500 ms is an average value)
+		// Here we *refresh* the menu by instantiating the parser then reloading a
+		// fresh cache. This enables extensions to dynamically change the menu.
+		try {
+			// An extension that needs some time to stage the new menu may set JSON
+			//    TODO JSON sleep:"after_action,before_action,after_refresh,before_refresh"
+			// in milliseconds, where
+			// before_action/after_action refer to the time KUAL *backgrounds* the user's action
+			// before_refresh/refresh (default 500 ms) it's the delay before tearing down the
+			// current menu (a <500 value is allowed but not recommended)
+			// after_refresh (default 1500 ms) is the time that the parser takes to
+			// build a new cache (1500 ms is an average value)
 
-				/*
-				 * Goal: display a fresh menu with just one screen update.
-				 * If we allowed more screen updates it would be enough to just say:
-				 *   initializeState(); іnitializeUI(): new MailboxProcessor(..., 1000, 1000, 10).
-				 * But since we aim at a single screen update more steps are involved.
-				*/
+			/*
+			 * Goal: display a fresh menu with just one screen update.
+			 * If we allowed more screen updates it would be enough to just say:
+			 *   initializeState(); іnitializeUI(): new MailboxProcessor(..., 1000, 1000, 10).
+			 * But since we aim at a single screen update more steps are involved.
+			*/
 
-				// Yield 500 ms to allow an extension to stage its menu change.
-				// Extension developers may set beforeParser to achieve a longer pause.
-				Thread.sleep(beforeParser > 0 ? beforeParser : 500);
+			// Yield 500 ms to allow an extension to stage its menu change.
+			// Extension developers may set beforeParser to achieve a longer pause.
+			Thread.sleep(beforeParser > 0 ? beforeParser : 500);
 
-				runParser(); // still sends the old cache while background-building a new one
+			runParser(); // still sends the old cache while background-building a new one
 
-				// Wait long enough for the parser to complete building the new cache then consume it.
-				// Since we can't know how long that will take, we delay consuming data from the parser
-				// by afterParser ms (default 1500).  That's long enough for a medium-sized extension folder.
-				// Users with very large folders may need to increase afterParser.
-				new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), afterParser, 0, 0);
+			// Wait long enough for the parser to complete building the new cache then consume it.
+			// Since we can't know how long that will take, we delay consuming data from the parser
+			// by afterParser ms (default 1500).  That's long enough for a medium-sized extension folder.
+			// Users with very large folders may need to increase afterParser.
+			new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), afterParser, 0, 0);
 
-				initializeState(); // now the parser is even more likely to send a fresh cache
-					// initializeState() also cleans up temporary files
+			initializeState(); // now the parser is even more likely to send a fresh cache
+				// initializeState() also cleans up temporary files
 
-				initializeUI(); // enables "hard" configuration changes such as number of items per page
-				// reaps a new cache one way or another - but when it does the user can see another screen update
-				new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), 0, 500, 10);
-
-			} catch (Throwable t) {
-				throw new RuntimeException(t);
-			}
+			initializeUI(); // enables "hard" configuration changes such as number of items per page
+			// reaps a new cache one way or another - but when it does the user can see another screen update
+			new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), 0, 500, 10);
+		} catch (Throwable t) {
+			new KualLog().append(t.toString());
+			setStatus("Exception logged.");
+			throw new RuntimeException(t);
 		}
+		String text = "Menu refreshed.";
+		setStatus(text);
+		setBreadcrumb(text, null);
+	}
 }

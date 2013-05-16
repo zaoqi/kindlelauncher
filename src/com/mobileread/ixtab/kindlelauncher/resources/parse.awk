@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
-# aloop-v2.awk - version 20130509,a stepk
+# aloop-v2.awk - version 20130515,a stepk
 BEGIN { 
-VERSION="20130509,a"
+VERSION="20130515,a"
 ERRORS = BAILOUT = CACHE_SENT = IN_MEMORY_CACHE_INVALID = PARSED_OK_COUNTER = 0
 SELF_BUTTONS_INSERT = SELF_BUTTONS_FILTER = SELF_BUTTONS_APPEND = ""
 if (1 < ARGC) {
@@ -43,6 +43,9 @@ tokenize($0)
 if (0 == (status = parse())) { 
 ++VALID_PARSED_FILES 
 status = jp2np(JPATHS, NJPATHS, VALID_PARSED_FILES, FILENAME) 
+match(FILENAME, /(\/[^\/]+){2,2}$/)
+x = substr(FILENAME, RSTART+1, RLENGTH)
+LOADED_EXTENSIONS[substr(x, 1, index(x, "/") - 1)] = 1 
 } else { 
 while(NJPATHS > SVNJPATHS) {
 delete JPATHS[NJPATHS--]
@@ -88,6 +91,7 @@ if ("" == PRODUCTNAME) PRODUCTNAME="KUAL"
 if ("" == CONFIGFILE) CONFIGFILE=PRODUCTNAME".cfg" 
 if ("" == (CONFIGPATH = config_full_path())) CONFIGPATH = "/dev/null" 
 config_read(CONFIGPATH)
+CONFIG["model"] = get_model()
 x = "/bin/busybox "
 CONFIG["NCbbawk"] = x"awk"
 CONFIG["NCbbfind"] = x"find"
@@ -108,13 +112,14 @@ VALID_KEYS["action"]=K_action=0x00
 VALID_KEYS["internal"]=K_internal=0x01
 VALID_KEYS["params"]=K_params=0x02
 VALID_KEYS["priority"]=K_priority=0x03 
-VALID_KEYS["exitmenu"]=K_exitmenu=0x04
-VALID_KEYS["checked"]=K_checked=0x05
-VALID_KEYS["refresh"]=K_refresh=0x06
-VALID_KEYS["status"]=K_status=0x07
-VALID_KEYS["date"]=K_date=0x08
-VALID_KEYS["hidden"]=K_hidden=0x09 
-VALID_KEYS["name"]=K_name=0x0a 
+VALID_KEYS["if"]=K_if=0x04
+VALID_KEYS["exitmenu"]=K_exitmenu=0x05
+VALID_KEYS["checked"]=K_checked=0x06
+VALID_KEYS["refresh"]=K_refresh=0x07
+VALID_KEYS["status"]=K_status=0x08
+VALID_KEYS["date"]=K_date=0x09
+VALID_KEYS["hidden"]=K_hidden=0x0a 
+VALID_KEYS["name"]=K_name=0x0b 
 VALID_KEYS["items"]=K_items=0xff 
 VALID_KEYS["ERROR"]="??"
 sK_name=sprintf("%02x", K_name)
@@ -273,6 +278,177 @@ for (k in CONFIG)
 if(k !~ /^NC/)
 print k"="CONFIG[k] >>outfile
 }
+function collate(ary, nary,   
+maxdepth,depth,i,saved_self_menu_name,
+rec_lvlsnpath,rec_level,rec_snpath,rec_name,rec_type,
+key,seen,seenary,new_root,
+childrenary,nchildrenary,
+x,xary,nxary,y,z,trace) {
+maxdepth = menu2Dsplit(0, ary, nary)
+saved_self_menu_name = ary[1"nm"]
+ary[1"nm"] = SELF_MENU_NAME
+menu2Dimplode(1, ary, nary)
+nchildrenary = children_map(ary, nary, 0, childrenary)
+for (depth = 0; depth <= maxdepth; depth++) {
+for (i = 1; i <= nary; i++) if (i"ls" in ary) {
+rec_level = ary[i"lv"]
+if (depth != rec_level)
+continue
+rec_lvlsnpath = x = ary[i"ls"]
+rec_snpath = ary[i"sn"]
+rec_type = ary[i"ty"]
+if (1 == rec_type) { 
+rec_name = ary[i"nm"]
+key = rec_level "_" rec_name
+if (! (key in seenary)) {
+seenary[key] = i 
+continue
+}
+new_root = 0
+nxary = split(seenary[key], xary, " ")
+for (z = 1; z <= nxary; z++) {
+seen = xary[z]
+seen_lvlsnpath = ary[seen"ls"]
+seen_level = ary[seen"lv"]
+seen_snpath = ary[seen"sn"]
+if ((x = substr(substr(rec_snpath, 1, length(rec_snpath)-6), 5)) \
+!= (y = substr(substr(seen_snpath, 1, length(seen_snpath)-6), 5))) {
+seenary[key] = seenary[key]" "i 
+} else {
+new_root = seen
+}
+}
+if (0 == new_root) {
+continue
+}
+move_node(i, new_root, "", ary, nary, childrenary , key ~ trace)
+childrenary[new_root] = childrenary[new_root] " " childrenary[i]
+x = ary[new_root"nm"]
+y = substr(x, length(x))
+if ("+" != y) {
+ary[new_root"nm"] = x "+"
+menu2Dimplode(seen, ary, nary)
+}
+ary[i] = ary[i"sn"] = childrenary[i] = 0
+}
+}
+}
+x = ary[1"nm"]
+y = substr(x, length(x))
+ary[1"nm"] = (saved_self_menu_name) ("+" == y ? "+" : "")
+menu2Dimplode(1, ary, nary)
+}
+function move_node(src_i, dst_i, dst_path, ary, nary, childrenary, trace,   
+offset,sst,dst_snpath, ncary,cary,child, c,x,y,to,len, dbgind) {
+offset = calc_snpath_offset(childrenary[dst_i], ary)
+sst =	npath_s_this_(K_items, ary[dst_i"sn"]) 
+ncary = split(childrenary[src_i], cary, " ")
+for (c = 1; c <= ncary; c++) {
+child = cary[c]
+dst_snpath = dst_path ? dst_path : ary[dst_i"sn"]
+x = substr(dst_snpath, 1, length(dst_snpath) - 2) 
+to = x sK_items sprintf("%02x", offset + c) 
+len = length(to)
+if (0 == ary[child"ty"]) { 
+ary[child"st"] = sst substr(ary[child"st"], length(sst) + 1) 
+ary[child"ls"] = ary[child"lv"] ":" (ary[child"sn"] = to substr(ary[child"sn"], len + 1)) 
+menu2Dimplode(child, ary, nary)
+} else { 
+move_node(child, dst_i, to sK_name, ary, nary, childrenary, trace)
+}
+}
+if (dst_path) {
+to = substr(dst_snpath, 1, length(dst_snpath) - 2) 
+len = length(to)
+sst = substr(sst, 1, length(sst) - 4) 
+ary[src_i"st"] = sst substr(ary[src_i"st"], length(sst) + 1) 
+ary[src_i"ls"] = ary[src_i"lv"] ":" (ary[src_i"sn"] = to substr(ary[src_i"sn"], len + 1)) 
+if (1 == ary[src_i"ty"]) { 
+y = ary[src_i"ac"]
+ary[src_i"ac"] = substr(y, 1, x = index(y,":")) to substr(y, x + len + 1) 
+}
+menu2Dimplode(src_i, ary, nary)
+}
+}
+function menu2Dsplit(idx, ary, nary,   
+imin,imax,i,x,y,z,lump,rec,xary,nxary,maxlevel) {
+if (idx) {
+imin = imax = idx
+} else {
+imin = 1; imax = nary
+}
+maxlevel = 0
+for (i = imin; i <= imax; i++) if (i in ary) {
+nxary = split(ary[i], xary, SEP)
+ary[i"st"] = xary[1] 
+lump = xary[2] 
+lump = (lump SEP) (x = xary[3]) 
+lump = (lump) (x == 3 ? "" : SEP xary[4]) 
+ary[i"l1"] = lump
+ary[i"ls"] = x = xary[nxary - 2] 
+ary[i"lv"] = z = substr(x, 1, (y = index(x, ":")) - 1) 
+if (z > maxlevel) maxlevel = z
+ary[i"sn"] = substr(x, y + 1) 
+ary[i"nm"] = xary[nxary - 1] 
+ary[i"ac"] = x = xary[nxary] 
+ary[i"ty"] = submenu_actionQ(x) ? 1 : 0 
+}
+return maxlevel
+}
+function menu2Dimplode(idx, ary, nary,   
+imin,imax,i) {
+if (idx) {
+imin = imax = idx
+} else {
+imin = 1; imax = nary
+}
+for (i = imin; i <= imax; i++) if (ary[i"sn"]) {
+ary[i] = ary[i"st"] SEP ary[i"l1"] SEP ary[i"lv"] ":" ary[i"sn"] SEP ary[i"nm"] SEP ary[i"ac"]
+}
+return imax
+}
+function children_map(ary, nary, idx, map, 
+i,min,max) {
+if (0 == idx) {
+min = 1
+max = nary
+} else {
+mix = max = idx
+}
+for (i = min; i <= max; i++) if (i"lv" in ary) {
+if (1 == ary[i"ty"])
+map[i] = menu_children(ary[i"ac"], ary, nary)
+}
+return nary
+}
+function menu_children(matcher, ary, nary,  
+i,list) {
+for (j = 1; j <= nary; j++) {
+if (ary[j"ls"] ~ matcher) {
+list = list " " j
+}
+}
+return substr(list, 2)
+}
+function calc_snpath_offset(list, ary,  # {{{ 
+x,nxary,xary) {
+if (list) {
+nxary = split(list, xary, " ")
+x = get_items_index(xary[nxary], ary)
+} else {
+x = -1
+}
+return x
+}
+function get_items_index(i, ary,  # {{{ 
+x,y) {
+if (! i in ary)
+return -1 
+y = ary[i"ls"] 
+x = length(y)
+x = 0 + ("0x" substr(y, x-3, 2))
+return x
+}
 function escs2chars(s) { 
 if (!match(s,/\\/)) return s
 gsub(/\\\\/,"\x01",s) 
@@ -391,7 +567,7 @@ if ("+add_ext" == ary[b]) {
 json = json "," json_self_menu_button( \
 XenNoExtensionsFound, \
 ":", "", "breadcrumb help @ http://bit.ly/UW3v8V", \
--200, "e")
+-200, "", "e")
 }
 }
 }
@@ -407,13 +583,13 @@ x = "[ -r '"CONFIGPATH"' ] || echo \\\"# "CONFIGPATH" - created on `date`\\\" >'
 json=json "," json_self_menu_button( \
 "Sort menu "verb" on restart", \
 x, "", \
-"", 2, "ecsd")
+"", 2, "", "ecsd")
 } else if (3 == ary[b]) {
 x = "mv '"SCREAM_LOG"' \\\"/mnt/us/documents/"PRODUCTNAME"-`date -u -Iminutes | sed s/:/./g`.txt\\\";dbus-send --system /default com.lab126.powerd.resuming int32:1"
 json=json "," json_self_menu_button( \
 "Save and reset "PRODUCTNAME" log", \
 x, "", \
-"", 3, "ecsd")
+"", 3, "\"\\\""SCREAM_LOG"\\\" -z!\"", "ecsd")
 } else if (99 == ary[b]) {
 json=json "," json_self_menu_button( \
 CROSS" Quit", \
@@ -424,12 +600,13 @@ CROSS" Quit", \
 }
 return json
 }
-function json_self_menu_button(name, action, params, internal, priority, non_default_options) { 
+function json_self_menu_button(name, action, params, internal, priority, xif, non_default_options) { 
 return "{\"name\": \"" name "\"" \
 ", \"action\": \"" action "\"" \
 ("" != params ? ", \"params\": \"" params "\"" : "") \
 ("" != internal ? ", \"internal\": \"" internal "\"" : "") \
 ("" != priority ? ", \"priority\": " priority : "") \
+("" != xif ? ", \"if\": " xif : "") \
 (index(non_default_options, "e") ? ", \"exitmenu\": false" : "") \
 (index(non_default_options, "c") ? ", \"checked\": true" : "") \
 (index(non_default_options, "r") ? ", \"refresh\": true" : "") \
@@ -451,7 +628,7 @@ x=index(line,"\t")
 jpath=substr(line, 1, x-1)
 value=substr(line, x+1)
 key = match(jpath, /"[^"]+"]$/) ? substr(jpath, 1+RSTART,RLENGTH-3) : "ERROR"
-if (key !~ /^(name|action|params|internal|priority|exitmenu|hidden|checked|refresh|status|date)$/) {
+if (key !~ /^(name|action|params|internal|priority|if|exitmenu|hidden|checked|refresh|status|date)$/) {
 continue
 }
 key=VALID_KEYS[key]
@@ -475,7 +652,7 @@ NPATHS[++NNPATHS]=level SEP npath SEP key SEP value
 return errors
 }
 function np2mn(ary, size,    
-i,slurp,lines,nlines,iline,errors,
+i,x,slurp,lines,nlines,iline,errors,
 npary,level,npath,key,value,options,
 npath_s_this_items,select_level,needle,snpath,last_action  ) {
 errors=0
@@ -501,6 +678,8 @@ if ("" == value)
 value = "??"(++COUNTER["nameNull"])
 if (submenu_pathQ(snpath, last_action)) { 
 ITEM[key]=value 
+x = substr(ITEM[K_action], 1, index(ITEM[K_action],";")-1) 
+if (RPN_if(ITEM[K_if], x)) {
 sortable_tag=select_level[level] 
 MENUS[++NMENUS] = work_record( \
 sortable_record(sortable_tag, OPT_SORT),
@@ -508,6 +687,7 @@ kindlet_options(),
 level,npath_s_this_(K_name, snpath), 
 ITEM[K_name],
 format_action_item(ITEM[K_action], ITEM[K_params], ITEM[K_internal]))
+}
 new_item()
 } else { 
 ITEM[key]=value MMRK 
@@ -522,7 +702,7 @@ ITEM[K_name],
 format_action_submenu(level, npath_s_this_items))
 new_submenu()
 }
-} else if (K_priority == key || K_params == key || K_internal == key || K_exitmenu == key || K_checked == key || K_refresh == key || K_status == key || K_date == key || K_hidden == key) {
+} else if (K_priority == key || K_params == key || K_internal == key || K_if == key || K_exitmenu == key || K_checked == key || K_refresh == key || K_status == key || K_date == key || K_hidden == key) {
 ITEM[key] = value
 } else {
 scream("unexpected key <"key"> (np2mu)")
@@ -531,6 +711,8 @@ scream("unexpected key <"key"> (np2mu)")
 }
 }
 }
+if ("false" != config_get("collate"))
+collate(MENUS, NMENUS)
 sort_for_user(MENUS, NMENUS, OPT_SORT)
 if ("" == SORTED_DATA) {
 scream("np2mn can't sort 2")
@@ -550,10 +732,10 @@ x = (ITEM[K_exitmenu] ~ /^(0|false)$/ ? "e" : "") \
 return "" == x ? "" : x SEP
 }
 function new_item() { 
-ITEM[K_name] = ITEM[K_action] = ITEM[K_params] = ITEM[K_internal] =  ITEM[K_exitmenu] = ITEM[K_checked] = ITEM[K_refresh] = ITEM[K_status] = ITEM[K_date] = ITEM[K_hidden] = ""; ITEM[K_priority] = 0;
+ITEM[K_name] = ITEM[K_action] = ITEM[K_params] = ITEM[K_internal] =  ITEM[K_if] = ITEM[K_exitmenu] = ITEM[K_checked] = ITEM[K_refresh] = ITEM[K_status] = ITEM[K_date] = ITEM[K_hidden] = ""; ITEM[K_priority] = 0;
 }
 function new_submenu() { 
-ITEM[K_name] = ITEM[K_hidden] = ""; ITEM[K_priority] = 0;
+ITEM[K_name] = ITEM[K_if] = ITEM[K_hidden] = ""; ITEM[K_priority] = 0;
 }
 function npath_from_jpath(jpath, serial,   
 items,key,snpath,ary,nary,i) {
@@ -609,6 +791,109 @@ return npath_get_short(npath_new("[\"[items\",0,\"items\",0,\"name\"]", 0))
 }
 function npath_s_this_(key, snpath) { 
 return substr(snpath,1,length(snpath)-2) sprintf("%02x", key) 
+}
+function RPN_if(expr, source,   
+x,token,nxary,xary) {
+if ("" == expr) return 1 
+RPN_sp = 0
+RPN_err = ""
+nxary = RPN_tokenize(expr, xary)
+for(x = 1; x <= nxary; x++) {
+token = xary[x]
+if (match(token, /^\".*\"$/))
+token = substr(token, 2, RLENGTH - 2) 
+RPN_eval_bool(token)
+if(RPN_err) {
+scream(RPN_msg(expr, source, RPN_err))
+return 1
+}
+}
+if (1 != RPN_sp) {
+scream(RPN_msg(expr, source, "invalid expression"))
+return 1
+}
+return RPN_top()
+}
+function RPN_eval_bool(token,   
+x,y,z) {
+if (token !~ /^(-e|-ext|-f|-gg?!?|-o|-z!|!|&&|\|\|)$/) { 
+RPN_push(token)
+} else {
+x = RPN_stack[RPN_sp]
+RPN_pop();
+if (token == "!") {
+RPN_push(! x)
+} else if (token == "-f" || token == "-z!") { 
+z = isRegularFileEmpty(x)
+RPN_push(token == "-f" && -1 != z || token == "-z!" && 0 < z)
+} else if (token == "-e") { 
+RPN_push(!system("test -e \""x"\""))
+} else if (token == "-ext") {
+RPN_push(x in LOADED_EXTENSIONS)
+} else {
+y = RPN_stack[RPN_sp]
+RPN_pop()
+if (token == "&&") {
+RPN_push(x && y)
+} else if (token == "||") {
+RPN_push(x || y)
+} else if (token ~ "-gg?!?") {
+if ( -1 == (z = RPN_grep(x, y, index(token, "!")))) {
+if (index(token, "gg")) {
+RPN_push(0)
+} else {
+RPN_err = "not found: \""y"\""
+}
+} else {
+RPN_push(z)
+}
+} else if (token == "-o") {
+RPN_push((z = config_get(y)) == x)
+} else {
+RPN_err = "invalid operator: " + token
+}
+}
+}
+}
+function RPN_push(x) { RPN_stack[++RPN_sp] = x }
+function RPN_pop() { if(RPN_sp > 0) {RPN_sp--} else {RPN_err = "Stack underflow"} }
+function RPN_top() { return RPN_sp > 0 ? RPN_stack[RPN_sp] : "--empty stack--" }
+function RPN_grep(pattern, file, vflag,   
+x, xary, nxary, found) {
+if (0 < (getline x < file)) {
+close(file)
+nxary = split(x, xary, /\n/)
+if (vflag) {
+found = 0
+for (x = 1; x <= nxary; x++) {
+if (xary[x] ~ pattern) {
+found = 1
+}
+}
+return ! found
+} else {
+for (x = 1; x <= nxary; x++) {
+if (xary[x] ~ pattern) {
+return 1
+}
+}
+return 0
+}
+} else {
+return -1
+}
+return split(a1, ary, /\n/)
+}
+function RPN_msg(expr, source, text) {  
+return "\""source"\": JSON \"if\": "expr" : "text
+}
+function RPN_tokenize(a1, ary,   
+SPACE) {
+SPACE="[[:space:]]+"
+gsub(/\"[^[:cntrl:]\"\\]*((\\[^u[:cntrl:]]|\\u[0-9a-fA-F]{4})[^[:cntrl:]\"\\]*)*\"|-?(0|[1-9][0-9]*)([.][0-9]*)?([eE][+-]?[0-9]*)?|-e|-ext|-f|-gg?!?|-o|-z!|!|&&|\|\||[[:space:]]+|./, "\n&", a1)
+gsub("\n" SPACE, "\n", a1)
+sub(/^\n/, "", a1)
+return split(a1, ary, /\n/)
 }
 function sort(ary, nary, sort_options,   
 tfl,i,cmd,rec) {
@@ -787,21 +1072,47 @@ function shortpathname(pathname,   ary,nary) {
 return (nary = split(pathname, ary, /\//)) \
 ? ary[nary-1] "/" ary[nary] : pathname
 }
-function store_button_filepath(   KT532,ret) { 
-if ("-" == FILEPATH_STORE_BUTTON) {
-return ""
-} else if ("" != FILEPATH_STORE_BUTTON) {
-return FILEPATH_STORE_BUTTON
+function get_model(    x, 
+y,z,xary,nxary,cpu_mod) {
+if (MODEL) return MODEL
+MODEL = "Unknown"
+cpu_mod = ""
+y = "/proc/cpuinfo"
+if (0 <= (getline x < y)) {
+close(y)
+if (nxary = split(x, xary, /\n/)) {
+for (x = 1; x <= nxary; x++) {
+z = xary[x]
+if (match(z, /MX[0-9]+/)) {
+cpu_mod = substr(z, RSTART, RLENGTH)
+break
 }
-KT532="/usr/share/webkit-1.0/pillow/javascripts/search_bar.js"
-if (0 <= (getline < KT532)) {
-ret = FILEPATH_STORE_BUTTON = KT532
-close(KT532)
-} else {
-FILEPATH_STORE_BUTTON = "-"
-ret = ""
+if (z ~ "Hardware : Mario Platform") {
+MODEL = "KindleDXG"
+break
 }
-return ret
+}
+}
+}
+if (cpu_mod == "MX50") {
+if (! system("test -e \"/sys/devices/system/fl_tps6116x/fl_tps6116x0/fl_intensity\""))
+MODEL = "KindlePaperWhite"
+else if (! system("test -e \"/sys/devices/platform/whitney-button\""))
+MODEL = "KindleTouch"
+else
+MODEL = "Kindle4"
+} else if (cpu_mod == "MX35") {
+MODEL = "Kindle3"
+} else if (cpu_mod == "MX3") {
+MODEL = "Kindle2"
+}
+return MODEL
+}
+function isRegularFileEmpty (x,   
+y,z) {
+z = (getline y < x)
+if (0 <= z) close(x)
+return z
 }
 function get_token() { 
 TOKEN = TOKENS[++ITOKENS] 

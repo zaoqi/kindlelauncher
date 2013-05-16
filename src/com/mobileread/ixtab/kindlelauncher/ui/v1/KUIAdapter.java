@@ -21,7 +21,7 @@ public class KUIAdapter extends UIAdapter {
 	}
 
 	public Component newLabel(String text) {
-		return new KLabel(text);
+		return new KualLabel(text);
 	}
 
 	public Component newButton(String text, ActionListener listener, KualEntry kualEntry) {

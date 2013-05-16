@@ -73,7 +73,7 @@ public class MailboxProcessor {
 			}
 		};
 
-		// Monitoring ends on finding a message in the mailbox
+		// Monitoring ends upon finding a message in the mailbox
 		// or when the mailbox check countdown runs to zero.
 		Object task = tmi.newTimerTask(runnable);
 		tmi.schedule(timer, task, delay, period);

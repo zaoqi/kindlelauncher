@@ -1,4 +1,23 @@
 CHANGE LOG
+20130314,a
++ Now "if":"expression" can grep a file, test loaded extensions, test device
+  model, compare KUAL option values, test file existence and size.
+# Now KUAL self menu hides "save log" button when the log file is empty.
+
+20130513,a
++ Added: menu collation feature merges same-name sub-menus together.
+  Same-name plain items, if any, are left unchanged.
+  Can even merge user menus named "KUAL" with the KUAL self menu.
++ New KUAL.cfg setting: KUAL_collate=false disables collation (default enabled).
+
+20130312,a
+Internal changes:
++ Added KualLog().printStackTrace().
+
+20130511,a
++ Added JSON key/value "if":"conditional expression" to conditionally
+  display a menu item.
+
 20130509,a
 - Fixed bitbucket issue #4.
 # Added JSON key/value "internal":"internal command" to replace
