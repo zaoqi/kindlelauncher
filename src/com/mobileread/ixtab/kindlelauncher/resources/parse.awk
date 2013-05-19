@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
-# aloop-v2.awk - version 20130515,a stepk
+# aloop-v2.awk - version 20130519,a stepk
 BEGIN { 
-VERSION="20130515,a"
+VERSION="20130519,a"
 ERRORS = BAILOUT = CACHE_SENT = IN_MEMORY_CACHE_INVALID = PARSED_OK_COUNTER = 0
 SELF_BUTTONS_INSERT = SELF_BUTTONS_FILTER = SELF_BUTTONS_APPEND = ""
 if (1 < ARGC) {
@@ -566,7 +566,7 @@ for (b = 1; b <= nary; b++) {
 if ("+add_ext" == ary[b]) {
 json = json "," json_self_menu_button( \
 XenNoExtensionsFound, \
-":", "", "breadcrumb help @ http://bit.ly/UW3v8V", \
+":", "", "breadcrumb help @ http://bit.ly/kualit", \
 -200, "", "e")
 }
 }

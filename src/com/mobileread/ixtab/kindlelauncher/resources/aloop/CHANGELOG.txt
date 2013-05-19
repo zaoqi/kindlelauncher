@@ -1,4 +1,7 @@
 CHANGE LOG
+20130519,a
+# Changed support link to bit.ly/kualit.
+
 20130314,a
 + Now "if":"expression" can grep a file, test loaded extensions, test device
   model, compare KUAL option values, test file existence and size.
