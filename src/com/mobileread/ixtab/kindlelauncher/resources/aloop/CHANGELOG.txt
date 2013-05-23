@@ -1,4 +1,7 @@
 CHANGE LOG
+20130523,a
++ Improved status messages when the menu gets reloaded.
+
 20130519,a
 # Changed support link to bit.ly/kualit.
 

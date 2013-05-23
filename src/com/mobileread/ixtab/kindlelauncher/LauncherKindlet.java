@@ -671,52 +671,61 @@ int afterAction = 0; //TODO
 		setBreadcrumb("Refreshing the menu " + ATTN +" Please wait...", "");
 		if (null != requestor)
 			setStatus(requestor);
-		//FIXME run this method outside the EDT
 
-		// Here we *refresh* the menu by instantiating the parser then reloading a
-		// fresh cache. This enables extensions to dynamically change the menu.
-		try {
-			// An extension that needs some time to stage the new menu may set JSON
-			//    TODO JSON sleep:"after_action,before_action,after_refresh,before_refresh"
-			// in milliseconds, where
-			// before_action/after_action refer to the time KUAL *backgrounds* the user's action
-			// before_refresh/refresh (default 500 ms) it's the delay before tearing down the
-			// current menu (a <500 value is allowed but not recommended)
-			// after_refresh (default 1500 ms) is the time that the parser takes to
-			// build a new cache (1500 ms is an average value)
+		final TimerAdapter tmi =  TimerAdapter.INSTANCE;
+		final Object timer = tmi.newTimer();
+		Runnable runnable = new Runnable() {
+			public void run() {
 
-			/*
-			 * Goal: display a fresh menu with just one screen update.
-			 * If we allowed more screen updates it would be enough to just say:
-			 *   initializeState(); іnitializeUI(): new MailboxProcessor(..., 1000, 1000, 10).
-			 * But since we aim at a single screen update more steps are involved.
-			*/
+				// Here we *refresh* the menu by instantiating the parser then reloading a
+				// fresh cache. This enables extensions to dynamically change the menu.
+				try {
+					// An extension that needs some time to stage the new menu may set JSON
+					//    TODO JSON sleep:"after_action,before_action,after_refresh,before_refresh"
+					// in milliseconds, where
+					// before_action/after_action refer to the time KUAL *backgrounds* the user's action
+					// before_refresh/refresh (default 500 ms) it's the delay before tearing down the
+					// current menu (a <500 value is allowed but not recommended)
+					// after_refresh (default 1500 ms) is the time that the parser takes to
+					// build a new cache (1500 ms is an average value)
 
-			// Yield 500 ms to allow an extension to stage its menu change.
-			// Extension developers may set beforeParser to achieve a longer pause.
-			Thread.sleep(beforeParser > 0 ? beforeParser : 500);
+					/*
+					 * Goal: display a fresh menu with just one screen update.
+					 * If we allowed more screen updates it would be enough to just say:
+					 *   initializeState(); initializeUI(): new MailboxProcessor(..., 1000, 1000, 10).
+					 * But since we aim at a single screen update more steps are involved.
+					*/
 
-			runParser(); // still sends the old cache while background-building a new one
+					// Yield 500 ms to allow an extension to stage its menu change.
+					// Extension developers may set beforeParser to achieve a longer pause.
+					Thread.sleep(beforeParser > 0 ? beforeParser : 500);
 
-			// Wait long enough for the parser to complete building the new cache then consume it.
-			// Since we can't know how long that will take, we delay consuming data from the parser
-			// by afterParser ms (default 1500).  That's long enough for a medium-sized extension folder.
-			// Users with very large folders may need to increase afterParser.
-			new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), afterParser, 0, 0);
+					runParser(); // still sends the old cache while background-building a new one
 
-			initializeState(); // now the parser is even more likely to send a fresh cache
-				// initializeState() also cleans up temporary files
+					// Wait long enough for the parser to complete building the new cache then consume it.
+					// Since we can't know how long that will take, we delay consuming data from the parser
+					// by afterParser ms (default 1500).  That's long enough for a medium-sized extension folder.
+					// Users with very large folders may need to increase afterParser.
+					new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), afterParser, 0, 0);
 
-			initializeUI(); // enables "hard" configuration changes such as number of items per page
-			// reaps a new cache one way or another - but when it does the user can see another screen update
-			new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), 0, 500, 10);
-		} catch (Throwable t) {
-			new KualLog().append(t.toString());
-			setStatus("Exception logged.");
-			throw new RuntimeException(t);
-		}
-		String text = "Menu refreshed.";
-		setStatus(text);
-		setBreadcrumb(text, null);
+					initializeState(); // now the parser is even more likely to send a fresh cache
+						// initializeState() also cleans up temporary files
+
+					initializeUI(); // enables "hard" configuration changes such as number of items per page
+					// reaps a new cache one way or another - when it does the user sees another screen update
+					new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), 0, 500, 10);
+				} catch (Throwable t) {
+					new KualLog().append(t.toString());
+					setStatus("Exception logged.");
+					throw new RuntimeException(t);
+				}
+				String text = "Menu refreshed.";
+				setStatus(text);
+				setBreadcrumb(text, null);
+				tmi.cancel(timer);
+			}
+		};
+		Object task = tmi.newTimerTask(runnable);
+		tmi.schedule(timer, task, 0L, 500L);
 	}
 }
