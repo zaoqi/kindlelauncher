@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
-# aloop-v2.awk - version 20130523,a stepk
+# aloop-v2.awk - version 20130701,a stepk
 BEGIN { 
-VERSION="20130523,a"
+VERSION="20130701,a"
 ERRORS = BAILOUT = CACHE_SENT = IN_MEMORY_CACHE_INVALID = PARSED_OK_COUNTER = 0
 SELF_BUTTONS_INSERT = SELF_BUTTONS_FILTER = SELF_BUTTONS_APPEND = ""
 if (1 < ARGC) {
@@ -816,7 +816,7 @@ return RPN_top()
 }
 function RPN_eval_bool(token,   
 x,y,z) {
-if (token !~ /^(-e|-ext|-f|-gg?!?|-o|-z!|!|&&|\|\|)$/) { 
+if (token !~ /^(-e|-ext|-f|-gg?!?|-m|-o|-z!|!|&&|\|\|)$/) { 
 RPN_push(token)
 } else {
 x = RPN_stack[RPN_sp]
@@ -830,6 +830,10 @@ RPN_push(token == "-f" && -1 != z || token == "-z!" && 0 < z)
 RPN_push(!system("test -e \""x"\""))
 } else if (token == "-ext") {
 RPN_push(x in LOADED_EXTENSIONS)
+} else if (token == "-m") {
+RPN_push((z = config_get("model")) == x)
+} else if (token == "-o") {
+RPN_push((z = config_get(y)) == x)
 } else {
 y = RPN_stack[RPN_sp]
 RPN_pop()
@@ -847,8 +851,6 @@ RPN_err = "not found: \""y"\""
 } else {
 RPN_push(z)
 }
-} else if (token == "-o") {
-RPN_push((z = config_get(y)) == x)
 } else {
 RPN_err = "invalid operator: " + token
 }
@@ -890,7 +892,7 @@ return "\""source"\": JSON \"if\": "expr" : "text
 function RPN_tokenize(a1, ary,   
 SPACE) {
 SPACE="[[:space:]]+"
-gsub(/\"[^[:cntrl:]\"\\]*((\\[^u[:cntrl:]]|\\u[0-9a-fA-F]{4})[^[:cntrl:]\"\\]*)*\"|-?(0|[1-9][0-9]*)([.][0-9]*)?([eE][+-]?[0-9]*)?|-e|-ext|-f|-gg?!?|-o|-z!|!|&&|\|\||[[:space:]]+|./, "\n&", a1)
+gsub(/\"[^[:cntrl:]\"\\]*((\\[^u[:cntrl:]]|\\u[0-9a-fA-F]{4})[^[:cntrl:]\"\\]*)*\"|-?(0|[1-9][0-9]*)([.][0-9]*)?([eE][+-]?[0-9]*)?|-e|-ext|-f|-gg?!?|-m|-o|-z!|!|&&|\|\||[[:space:]]+|./, "\n&", a1)
 gsub("\n" SPACE, "\n", a1)
 sub(/^\n/, "", a1)
 return split(a1, ary, /\n/)

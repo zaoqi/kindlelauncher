@@ -1,4 +1,7 @@
 CHANGE LOG
+20130701,a
+- Fix: add missing -m RPN operator (reported by NiLuJe)
+
 20130523,a
 + Improved status messages when the menu gets reloaded.
 
