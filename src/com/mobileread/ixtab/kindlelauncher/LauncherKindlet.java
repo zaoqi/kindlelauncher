@@ -445,6 +445,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			}
 		}
 
+		new KualLog().append("getEntriesCount(level): " + getEntriesCount(viewLevel) + " vs. viewList.size(): " + viewList.size());
+
 		Iterator it = viewList.iterator();
 
 		// skip entries up to offset
@@ -455,6 +457,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		}
 		entriesPanel.removeAll();
 		int end = viewOffset;
+		new KualLog().append("viewOffset: " + viewOffset);
 
 		// This button is appended at the end of the list.
 		//Component nullButton = getUI().newButton("", null, null);
@@ -463,13 +466,14 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		toTopButton.addKeyListener(keyListener);
 		quitButton.setEnabled(true);
 		quitButton.addKeyListener(keyListener);
-			//FIXME button isn't appended when the number of entries is a multiple of the page size.
+			//FIXME button isn't appended when the number of entries is a multiple of the page size. (More like when said button would end up in a different page (ie. 5/10 buttons on the last page of a menu))
 
+		new KualLog().append("getPageSize: " + getPageSize());
 		for (int i = getPageSize(); i > 0; --i) {
-			//Component button = getUI().newButton("", null, null); // fills whole column
-			//Component button = nullButton; // shortens column after last entry
-			Component button = 0 == level ? quitButton : toTopButton;
+			new KualLog().append("i: " + i);
+			Component button;
 			if (it.hasNext()) {
+				new KualLog().append("hasNext :)");
 				KualEntry ke = kualMenu.getEntry(level, it.next());
 				button = getUI().newButton(ke.label, this, ke); //then getUI().getKualEntry(button) => ke
 				button.addKeyListener(keyListener);
@@ -477,8 +481,35 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 					focusRequestor = button;
 				}
 				++end;
+				new KualLog().append("Adding button: " + button.getName());
+				entriesPanel.add(button);
+
+				// If we're at the bottom of the last page, and we still haven't added our last button, do eeet!
+				new KualLog().append("viewOffset: " + viewOffset + " end: " + end);
+				if (i == 1 && end == viewList.size()) {
+					new KualLog().append("Hu oh, should have added last button!");
+					//entriesPanel.add(button);
+					// The viewlist will need an extra entry in a new page to fit the button
+					viewList.add("last_button");
+				}
+			} else {
+				new KualLog().append("!hasNext :(");
+				//Component button = getUI().newButton("", null, null); // fills whole column
+				//Component button = nullButton; // shortens column after last entry
+				button = 0 == level ? quitButton : toTopButton;
+				new KualLog().append("level: " + level + " => last button: " + button.getName());
+				// Don't needlessly add the last button 'till the bottom of the page.
+				new KualLog().append("Adding button: " + button.getName());
+				entriesPanel.add(button);
+				// If we're the first item on a page, add crap the the viewList to make the pagination & breadcrumb counters sane.
+				// We're still standing out from the crowd because that means the last button is part of the entry count, whereas it's usually not when we don't inject it on a new page...
+				if (i == getPageSize()) {
+					new KualLog().append("Breadcrumb fix!");
+					viewList.add("foo_last_button");
+					++end;
+				}
+				break;
 			}
-			entriesPanel.add(button);
 		}
 
 		// weird shit: it's actually the setStatus() which prevents the Kindle
@@ -494,6 +525,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 				: null, null);
 		prevPageButton.setEnabled(level>0);
 		nextPageButton.setEnabled(enableButtons);
+		new KualLog().append("is nextPageButton enabled? " + enableButtons);
 
 		// just to be on the safe side
 		entriesPanel.invalidate();
