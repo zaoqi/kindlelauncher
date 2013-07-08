@@ -13,6 +13,9 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.Label;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -33,6 +36,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.amazon.kindle.kindlet.KindletContext;
+import com.amazon.kindle.kindlet.event.KindleKeyCodes;
 import com.mobileread.ixtab.kindlelauncher.resources.KualEntry;
 import com.mobileread.ixtab.kindlelauncher.resources.KualLog;
 import com.mobileread.ixtab.kindlelauncher.resources.KualMenu;
@@ -52,8 +56,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private static final String EXEC_EXTENSION_AWK = ".awk";
 	private static final long serialVersionUID = 1L;
 
-	private static final int PAGING_PREVIOUS = -1;
-	private static final int PAGING_NEXT = 1;
+	public static final int PAGING_PREVIOUS = -1;
+	public static final int PAGING_NEXT = 1;
 	private static final int LEVEL_PREVIOUS = -1;
 	private static final int LEVEL_NEXT = 1;
 	private KualMenu kualMenu;
@@ -122,9 +126,9 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
 		// postpone longer initialization for quicker return
 		Runnable runnable = new Runnable() {
-		    public void run() { 
-			LauncherKindlet.this.longStart();
-		    }
+			public void run() {
+				LauncherKindlet.this.longStart();
+			}
 		};
 		EventQueue.invokeLater(runnable);
 	}
@@ -205,6 +209,9 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		root.add(new GapComponent(0), BorderLayout.SOUTH);
 		root.add(new GapComponent(0), BorderLayout.WEST);
 
+		prevPageButton.addKeyListener(keyListener);
+		nextPageButton.addKeyListener(keyListener);
+
 		main.add(prevPageButton, BorderLayout.WEST);
 		main.add(nextPageButton, BorderLayout.EAST);
 
@@ -217,7 +224,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		}
 		main.add(breadcrumb, BorderLayout.NORTH);
 
-		GridLayout grid = new GridLayout(getPageSize(), 1, gap, gap); 
+		GridLayout grid = new GridLayout(getPageSize(), 1, gap, gap);
 		entriesPanel = getUI().newPanel(grid);
 
 		main.add(entriesPanel, BorderLayout.CENTER);
@@ -348,6 +355,24 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), 0, 0, 0);
 	}
 
+	private KeyListener keyListener = new KeyAdapter() {
+		public void keyPressed(KeyEvent e) {
+			Component button = (Component) e.getSource();
+			switch (e.getKeyCode()) {
+				case KindleKeyCodes.VK_RIGHT_HAND_SIDE_TURN_PAGE:
+				case KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE:
+					handlePaging(PAGING_NEXT, depth);
+					break;
+				case KindleKeyCodes.VK_RIGHT_HAND_SIDE_TURN_PAGE_BACK:
+				case KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE_BACK:
+				// Apparently, Amazon was smart enough to use the same keycode as the K3 TURN_PAGE_BACK for one of the K4 TURN_PAGE_BACK button, so this one's a dup.
+				// case KindleKeyCodes.VK_TURN_PAGE_BACK:
+					handleLevel(LEVEL_PREVIOUS);
+					break;
+			}
+		}
+	};
+
 	private void handlePaging(int direction, int level) {
 		// direction is supposed to be -1 (backward) or +1 (forward),
 		int newOffset = offset[level] + getPageSize() * direction;
@@ -436,7 +461,9 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		//Component nullButton = getUI().newButton("", null, null);
 		//nullButton.setEnabled(false);
 		toTopButton.setEnabled(true);
+		toTopButton.addKeyListener(keyListener);
 		quitButton.setEnabled(true);
+		quitButton.addKeyListener(keyListener);
 			//FIXME button isn't appended when the number of entries is a multiple of the page size.
 
 		for (int i = getPageSize(); i > 0; --i) {
@@ -446,6 +473,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			if (it.hasNext()) {
 				KualEntry ke = kualMenu.getEntry(level, it.next());
 				button = getUI().newButton(ke.label, this, ke); //then getUI().getKualEntry(button) => ke
+				button.addKeyListener(keyListener);
 				if (null == focusRequestor) {
 					focusRequestor = button;
 				}
@@ -521,7 +549,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		// run internal action, if any, then action, if any
 			if (ke.isInternalAction) {
 				switch (ke.internalAction) {
-					// 0-32 reserved for KualEntry(int, String) constructor 
+					// 0-32 reserved for KualEntry(int, String) constructor
 					// 'A', etc. defined in parser script
 					case 0:
 					case 'A': // extension displays message in breadcrumb line

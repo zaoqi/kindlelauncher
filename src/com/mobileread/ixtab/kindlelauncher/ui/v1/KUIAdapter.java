@@ -15,7 +15,6 @@ import com.mobileread.ixtab.kindlelauncher.ui.UIAdapter;
 import com.mobileread.ixtab.kindlelauncher.resources.KualEntry;
 
 public class KUIAdapter extends UIAdapter {
-
 	public Container newPanel(LayoutManager layout) {
 		return layout != null ? new KPanel(layout) : new KPanel();
 	}
