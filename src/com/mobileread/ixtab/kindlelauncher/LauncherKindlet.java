@@ -501,13 +501,9 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 				// Don't needlessly add the last button 'till the bottom of the page.
 				new KualLog().append("Adding button: " + button.getName());
 				entriesPanel.add(button);
-				// If we're the first item on a page, add crap the the viewList to make the pagination & breadcrumb counters sane.
-				// We're still standing out from the crowd because that means the last button is part of the entry count, whereas it's usually not when we don't inject it on a new page...
-				if (i == getPageSize()) {
-					new KualLog().append("Breadcrumb fix!");
-					viewList.add("foo_last_button");
-					++end;
-				}
+				// Keep the breadcrumb counters consistent between this and our injected button in a new page by always counting said buttons...
+				viewList.add("foo_last_button");
+				++end;
 				break;
 			}
 		}
