@@ -357,7 +357,6 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
 	private KeyListener keyListener = new KeyAdapter() {
 		public void keyPressed(KeyEvent e) {
-			Component button = (Component) e.getSource();
 			switch (e.getKeyCode()) {
 				case KindleKeyCodes.VK_RIGHT_HAND_SIDE_TURN_PAGE:
 				case KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE:
