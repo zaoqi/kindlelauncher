@@ -430,6 +430,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			viewLevel = level;
 			viewOffset = offset[level];
 			viewList.clear();
+			int viewListItemCount = 0;
 			if (0 == level) {
 				viewList.addAll(kualMenu.getLevel(0).keySet());
 			} else {
@@ -440,7 +441,19 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 					Map.Entry entry = (Entry) it.next();
 					ke = (KualEntry) entry.getValue();
 					if (ke.isLinkedUnder(parentLink))
+					{
 						viewList.add(entry.getKey());
+						viewListItemCount++;
+					}
+				}
+				if (viewListItemCount % getPageSize() == 0)
+				{
+					// Our toTop/quit button will fall on a new page all on its own, take it into account
+					viewList.add("inject_last_button");
+					new KualLog().append("inject_last_button");
+				} else {
+					viewList.add("last_button");
+					new KualLog().append("last_button");
 				}
 			}
 		}
@@ -468,29 +481,42 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		for (int i = getPageSize(); i > 0; --i) {
 			if (it.hasNext()) {
 				KualEntry ke = kualMenu.getEntry(level, it.next());
-				button = getUI().newButton(ke.label, this, ke); //then getUI().getKualEntry(button) => ke
-				button.addKeyListener(keyListener);
+				// Handle our fake injected last button...
+				if (ke == null) {
+					button = 0 == level ? quitButton : toTopButton;
+				} else {
+					button = getUI().newButton(ke.label, this, ke); //then getUI().getKualEntry(button) => ke
+					button.addKeyListener(keyListener);
+				}
 				if (null == focusRequestor) {
 					focusRequestor = button;
 				}
 				++end;
 				entriesPanel.add(button);
 
-				// If we're at the bottom of the last page, and we still haven't added our last button, do eeet!
-				if (i == 1 && end == viewList.size()) {
-					// The viewlist will need an extra entry in a new page to fit the button
-					viewList.add("last_button");
+				// If we added our 'fake' injected last button, we're done.
+				if (ke == null) {
+					break;
 				}
+
+				// If we're at the bottom of the last page, and we still haven't added our last button, do eeet!
+				//if (i == 1 && end == viewList.size()) {
+				//	// The viewlist will need an extra entry in a new page to fit the button
+				//	viewList.add("last_button");
+				//}
 			} else {
 				//Component button = getUI().newButton("", null, null); // fills whole column
 				//Component button = nullButton; // shortens column after last entry
 				button = 0 == level ? quitButton : toTopButton;
+				++end;
+				// Add a dummy entry to the list to make viewList.size() consistent...
+				viewList.add("foo_last_button");
+				new KualLog().append("foo_last_button");
 				entriesPanel.add(button);
 				// Keep the breadcrumb counters consistent between this and our injected button in a new page by always counting said buttons...
 				// NOTE: We still get an EXTRA! bonus entry accounted when we add a last button on a page that's not the first of a menu,
 				// because when we show it, the first/previous page isn't yet aware that the next/last page will get an extra entry...
-				viewList.add("foo_last_button");
-				++end;
+				//viewList.add("foo_last_button");
 				// Don't needlessly add the last button 'til the bottom of the page.
 				break;
 			}
