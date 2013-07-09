@@ -1,5 +1,7 @@
 package com.mobileread.ixtab.kindlelauncher.ui.v1;
 
+import java.io.File;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -117,9 +119,15 @@ public class KualButton extends KButton {
 		defaultFontMetrics = getFontMetrics(defaultFont);
 
 		try {
-			// FIXME: FW 2.x doesn't ship with code2000. Use symbol instead, or we lose the pretty unicode arrows. (Same thing for KualLabel)
-			unicodeFont = new Font("code2000", defaultFont.getStyle(),
-					defaultFont.getSize());
+			// NOTE: FW 2.x doesn't ship with code2000. Use symbol instead, or we lose the pretty unicode arrows.
+			// Freakishly ugly workarond ahead (see #11 for my failed attempts at doing it in a saner way).
+			if (new File("/usr/java/lib/fonts/code2000.ttf").exists()) {
+				unicodeFont = new Font("code2000", defaultFont.getStyle(),
+						defaultFont.getSize());
+			} else {
+				unicodeFont = new Font("symbol", defaultFont.getStyle(),
+						defaultFont.getSize());
+			}
 			unicodeFontMetrics = getFontMetrics(unicodeFont);
 		} catch (Throwable t) {
 		}

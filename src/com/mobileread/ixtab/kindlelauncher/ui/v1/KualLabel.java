@@ -1,5 +1,7 @@
 package com.mobileread.ixtab.kindlelauncher.ui.v1;
 
+import java.io.File;
+
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -30,15 +32,15 @@ public class KualLabel extends KLabel {
 
 		int width = getWidth();
 		int height = getHeight();
-		
+
 		// paint the text:
 		g.setColor(foreground);
-		
+
 		String text = getText();
 		char[] chars = text.toCharArray();
-		
+
 		int ty;
-		
+
 		if (unicodeFontMetrics == null || isAsciiText(chars)) {
 			// http://stackoverflow.com/questions/1055851/how-do-you-draw-a-string-centered-vertically-in-java
 			ty = height+((0+1-height)/2) - 1
@@ -57,7 +59,7 @@ public class KualLabel extends KLabel {
 		ty = height+((0+1-height)/2) - 1
 			- (unicodeFontMetrics.getAscent() + unicodeFontMetrics.getDescent())/2
 			+ unicodeFontMetrics.getAscent();
-		
+
 		int[] offsets = calculateOffsets(chars);
 		int tx = 0; //(width / 2) - (offsets[chars.length] / 2);
 		for (int i=0; i < chars.length; ++i) {
@@ -65,7 +67,7 @@ public class KualLabel extends KLabel {
 			g.drawChars(chars, i, 1, tx + offsets[i], ty);
 		}
 	}
-	
+
 	private boolean isAsciiText(char[] chars) {
 		for (int i=0; i < chars.length; ++i) {
 			if (isUnicode(chars[i])) {
@@ -74,7 +76,7 @@ public class KualLabel extends KLabel {
 		}
 		return true;
 	}
-	
+
 	private boolean isUnicode(char c) {
 		return c > 256;
 	}
@@ -99,8 +101,15 @@ public class KualLabel extends KLabel {
 		defaultFontMetrics = getFontMetrics(defaultFont);
 
 		try {
-			unicodeFont = new Font("code2000", defaultFont.getStyle(),
-					defaultFont.getSize());
+			// NOTE: FW 2.x doesn't ship with code2000. Use symbol instead, or we lose the pretty unicode arrows.
+			// Freakishly ugly workarond ahead (see #11 for my failed attempts at doing it in a saner way).
+			if (new File("/usr/java/lib/fonts/code2000.ttf").exists()) {
+				unicodeFont = new Font("code2000", defaultFont.getStyle(),
+						defaultFont.getSize());
+			} else {
+				unicodeFont = new Font("symbol", defaultFont.getStyle(),
+						defaultFont.getSize());
+			}
 			unicodeFontMetrics = getFontMetrics(unicodeFont);
 		} catch (Throwable t) {
 		}
