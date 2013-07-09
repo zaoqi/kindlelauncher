@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.LayoutManager;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyListener;
 
 import com.amazon.kindle.kindlet.KindletContext;
 import com.mobileread.ixtab.kindlelauncher.resources.KualEntry;
@@ -16,7 +17,7 @@ import com.mobileread.ixtab.kindlelauncher.ui.v2.JUIAdapter;
  * Java Swing components, while version 1.x uses home-brew substitutes for some
  * - and by far not all - components), this is the only way to create software
  * which runs on all devices.
- * 
+ *
  * Fortunately, for this project, we don't need all that many types of UI
  * components. The idea of the methods in this class is to initialize the
  * components with everything that is required, so that standard AWT methods can
@@ -38,7 +39,7 @@ public abstract class UIAdapter {
 	/**
 	 * creates a new Panel with the given LayoutManager. The layout manager may
 	 * be <tt>null</tt>, in which case the parameter is ignored.
-	 * 
+	 *
 	 * @param layout
 	 *            the LayoutManager to use, or <tt>null</tt> if no layout
 	 *            manager is to be used.
@@ -49,7 +50,7 @@ public abstract class UIAdapter {
 
 	public abstract Component newLabel(String text);
 
-	public abstract Component newButton(String text, ActionListener listener, KualEntry kualEntry);
+	public abstract Component newButton(String text, ActionListener listener, KeyListener keyListener, KualEntry kualEntry);
 
 	public abstract void setText(Component component, String text);
 

@@ -4,6 +4,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.LayoutManager;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyListener;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -23,12 +24,13 @@ public class JUIAdapter extends UIAdapter {
 		return new JLabel(text);
 	}
 
-	public Component newButton(String text, ActionListener listener, KualEntry kualEntry) {
+	public Component newButton(String text, ActionListener listener, KeyListener keyListener, KualEntry kualEntry) {
 		JButton button = new KualButton(text, kualEntry);
 		if (listener != null) {
 			button.setName(text);
 			button.addActionListener(listener);
 		}
+		// No physical keys on these devices, don't do anything with the KeyListener...
 		return button;
 	}
 

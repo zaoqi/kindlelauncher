@@ -5,6 +5,7 @@ import java.awt.Container;
 import java.awt.LayoutManager;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 import com.amazon.kindle.kindlet.KindletContext;
 import com.amazon.kindle.kindlet.event.KindleKeyCodes;
@@ -23,12 +24,14 @@ public class KUIAdapter extends UIAdapter {
 		return new KualLabel(text);
 	}
 
-	public Component newButton(String text, ActionListener listener, KualEntry kualEntry) {
+	public Component newButton(String text, ActionListener listener, KeyListener keyListener, KualEntry kualEntry) {
 		KButton button = new KualButton(text, kualEntry);
 		if (listener != null) {
 			button.setName(text);
 			button.addActionListener(listener);
 		}
+		if (keyListener != null)
+			button.addKeyListener(keyListener);
 		return button;
 	}
 

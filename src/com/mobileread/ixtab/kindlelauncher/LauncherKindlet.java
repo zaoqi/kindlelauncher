@@ -78,16 +78,33 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private final String UARROW = "\u25B2";
 	private final String PATH_SEP = "/";
 
+	private KeyListener keyListener = new KeyAdapter() {
+		public void keyPressed(KeyEvent e) {
+			switch (e.getKeyCode()) {
+				case KindleKeyCodes.VK_RIGHT_HAND_SIDE_TURN_PAGE:
+				case KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE:
+					handlePaging(PAGING_NEXT, depth);
+					break;
+				case KindleKeyCodes.VK_RIGHT_HAND_SIDE_TURN_PAGE_BACK:
+				case KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE_BACK:
+				// Apparently, Amazon was smart enough to use the same keycode as the K3 TURN_PAGE_BACK for one of the K4 TURN_PAGE_BACK button, so this one's a dup.
+				// case KindleKeyCodes.VK_TURN_PAGE_BACK:
+					handleLevel(LEVEL_PREVIOUS);
+					break;
+			}
+		}
+	};
+
 	private Container entriesPanel;
 	private Component status = null;
-	private Component nextPageButton = getUI().newButton("  " + RARROW + "  ", this, null);
-	private Component prevPageButton = getUI().newButton("  " + UARROW + "  ", this, null);
+	private Component nextPageButton = getUI().newButton("  " + RARROW + "  ", this, keyListener, null);
+	private Component prevPageButton = getUI().newButton("  " + UARROW + "  ", this, keyListener, null);
 	private Component breadcrumb = getUI().newLabel(PATH_SEP);
 
 	private final KualEntry toTopEntry = new KualEntry(1, PATH_SEP);
-	private final Component toTopButton = getUI().newButton(PATH_SEP, this, toTopEntry);
+	private final Component toTopButton = getUI().newButton(PATH_SEP, this, keyListener, toTopEntry);
 	private final KualEntry quitEntry = new KualEntry(2, CROSS + " Quit");
-	private final Component quitButton = getUI().newButton(CROSS + " Quit", this, quitEntry);
+	private final Component quitButton = getUI().newButton(CROSS + " Quit", this, keyListener, quitEntry);
 
 	private int[] offset = {0,0,0,0,0,0,0,0,0,0}; //10
 	private KualEntry[] keTrail = {null,null,null,null,null,null,null,null,null,null}; //10
@@ -208,9 +225,6 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		root.add(new GapComponent(0), BorderLayout.EAST);
 		root.add(new GapComponent(0), BorderLayout.SOUTH);
 		root.add(new GapComponent(0), BorderLayout.WEST);
-
-		prevPageButton.addKeyListener(keyListener);
-		nextPageButton.addKeyListener(keyListener);
 
 		main.add(prevPageButton, BorderLayout.WEST);
 		main.add(nextPageButton, BorderLayout.EAST);
@@ -355,23 +369,6 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), 0, 0, 0);
 	}
 
-	private KeyListener keyListener = new KeyAdapter() {
-		public void keyPressed(KeyEvent e) {
-			switch (e.getKeyCode()) {
-				case KindleKeyCodes.VK_RIGHT_HAND_SIDE_TURN_PAGE:
-				case KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE:
-					handlePaging(PAGING_NEXT, depth);
-					break;
-				case KindleKeyCodes.VK_RIGHT_HAND_SIDE_TURN_PAGE_BACK:
-				case KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE_BACK:
-				// Apparently, Amazon was smart enough to use the same keycode as the K3 TURN_PAGE_BACK for one of the K4 TURN_PAGE_BACK button, so this one's a dup.
-				// case KindleKeyCodes.VK_TURN_PAGE_BACK:
-					handleLevel(LEVEL_PREVIOUS);
-					break;
-			}
-		}
-	};
-
 	private void handlePaging(int direction, int level) {
 		// direction is supposed to be -1 (backward) or +1 (forward),
 		int newOffset = offset[level] + getPageSize() * direction;
@@ -462,9 +459,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		//Component nullButton = getUI().newButton("", null, null);
 		//nullButton.setEnabled(false);
 		toTopButton.setEnabled(true);
-		toTopButton.addKeyListener(keyListener);
 		quitButton.setEnabled(true);
-		quitButton.addKeyListener(keyListener);
 
 		Component button;
 		for (int i = getPageSize(); i > 0; --i) {
@@ -474,8 +469,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 				if (ke == null) {
 					button = 0 == level ? quitButton : toTopButton;
 				} else {
-					button = getUI().newButton(ke.label, this, ke); //then getUI().getKualEntry(button) => ke
-					button.addKeyListener(keyListener);
+					button = getUI().newButton(ke.label, this, keyListener, ke); //then getUI().getKualEntry(button) => ke
 				}
 				if (null == focusRequestor) {
 					focusRequestor = button;
@@ -488,7 +482,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 					break;
 				}
 			} else {
-				//Component button = getUI().newButton("", null, null); // fills whole column
+				//Component button = getUI().newButton("", null, null, null); // fills whole column
 				//Component button = nullButton; // shortens column after last entry
 				button = 0 == level ? quitButton : toTopButton;
 				++end;
