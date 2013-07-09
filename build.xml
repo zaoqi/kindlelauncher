@@ -4,7 +4,7 @@
 	<property file="build.properties"/>
 	<!-- local properties which are not committed to git. See build.properties for the keys which are expected to be found in there. -->
 	<property file="build-local.properties"/>
-	
+
 	<path id="classpath.jdk14">
 		<fileset dir="${build.classpath.jdk14}" includes="**/*.jar" />
 	</path>
@@ -12,22 +12,22 @@
 	<path id="classpath.lib">
 		<fileset dir="lib" includes="**/*.jar" />
 	</path>
-	
+
 	<target name="clean">
 		<delete dir="${build.dir}" />
 	</target>
-	
+
 	<target name="prepare">
 		<delete dir="${build.dir}" />
 		<mkdir dir="${build.dir}"/>
 	</target>
-	
+
 	<target name="compile" depends="prepare">
 		<javac source="1.4" target="1.4" includeantruntime="false" bootclasspathref="classpath.jdk14" classpathref="classpath.lib" srcdir="src" destdir="${build.dir}" >
 			<include name="**/*.java"/>
    		</javac>
 	</target>
-	
+
 	<target name="build" depends="compile">
 		<antcall target="build-kdk">
 		        <param name="kdk-version" value="1.0"/>
@@ -36,7 +36,7 @@
 	        <param name="kdk-version" value="2.0"/>
 	    </antcall>
 	</target>
-	
+
 	<target name="build-kdk" depends="compile">
 		<property name="file" value="${product.filename}-${kdk-version}.${product.extension}"/>
 		<delete file="${file}" />
@@ -55,12 +55,12 @@
 				<attribute name="Font-Size-Mode" value="point"/>
 
 			</manifest>
-			
-			<!-- actual program logic files --> 
+
+			<!-- actual program logic files -->
 			<fileset dir="${build.dir}">
 				<include name="**/*.class" />
 			</fileset>
-			
+
 			<!-- jailbreak frontend, required -->
 			<zipfileset src="lib/jailbreak.jar">
 				<include name="**/*.class"/>
@@ -70,6 +70,9 @@
 			<fileset dir="src/">
 				<include name="**/resources/*"/>
 				<exclude name="**/resources/*.java"/>
+				<exclude name="**/resources/aloop"/>
+				<exclude name="**/resources/old"/>
+				<exclude name="**/resources/verbose"/>
 			</fileset>
 			<!-- "cover" icon -->
 			<fileset dir=".">
@@ -80,6 +83,6 @@
 		<signjar jar="${file}" keystore="${sign.keystore.file}" storepass="${sign.keystore.password}" alias="di${sign.aliases}"/>
 		<signjar jar="${file}" keystore="${sign.keystore.file}" storepass="${sign.keystore.password}" alias="dn${sign.aliases}"/>
 	</target>
-	
+
 	<target name="dist" depends="build, clean" />
 </project>
