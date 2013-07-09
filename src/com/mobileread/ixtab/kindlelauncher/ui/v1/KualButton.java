@@ -42,7 +42,7 @@ public class KualButton extends KButton {
 
 		int width = getWidth();
 		int height = getHeight();
-		
+
 		// paint border and adjust colors if needed:
 
 		g.setColor(foreground);
@@ -61,12 +61,12 @@ public class KualButton extends KButton {
 
 		// now paint the text:
 		g.setColor(foreground);
-		
+
 		String text = getLabel();
 		char[] chars = text.toCharArray();
-		
+
 		int ty = (height / 2) + (defaultFontMetrics.getHeight() / 2);
-		
+
 		if (unicodeFontMetrics == null || isAsciiText(chars)) {
 			// simple case: no Unicode, so we just do with the default font.
 			int tx = (width / 2) - (defaultFontMetrics.stringWidth(text) / 2);
@@ -75,7 +75,7 @@ public class KualButton extends KButton {
 			g.drawString(text, tx, ty);
 			return;
 		}
-		
+
 		int[] offsets = calculateOffsets(chars);
 		int tx = (width / 2) - (offsets[chars.length] / 2);
 		for (int i=0; i < chars.length; ++i) {
@@ -83,7 +83,7 @@ public class KualButton extends KButton {
 			g.drawChars(chars, i, 1, tx + offsets[i], ty);
 		}
 	}
-	
+
 	private boolean isAsciiText(char[] chars) {
 		for (int i=0; i < chars.length; ++i) {
 			if (isUnicode(chars[i])) {
@@ -92,7 +92,7 @@ public class KualButton extends KButton {
 		}
 		return true;
 	}
-	
+
 	private boolean isUnicode(char c) {
 		return c > 256;
 	}
@@ -117,6 +117,7 @@ public class KualButton extends KButton {
 		defaultFontMetrics = getFontMetrics(defaultFont);
 
 		try {
+			// FIXME: FW 2.x doesn't ship with code2000. Use symbol instead, or we lose the pretty unicode arrows. (Same thing for KualEntry)
 			unicodeFont = new Font("code2000", defaultFont.getStyle(),
 					defaultFont.getSize());
 			unicodeFontMetrics = getFontMetrics(unicodeFont);
