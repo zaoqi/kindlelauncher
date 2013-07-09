@@ -117,7 +117,7 @@ public class KualButton extends KButton {
 		defaultFontMetrics = getFontMetrics(defaultFont);
 
 		try {
-			// FIXME: FW 2.x doesn't ship with code2000. Use symbol instead, or we lose the pretty unicode arrows. (Same thing for KualEntry)
+			// FIXME: FW 2.x doesn't ship with code2000. Use symbol instead, or we lose the pretty unicode arrows. (Same thing for KualLabel)
 			unicodeFont = new Font("code2000", defaultFont.getStyle(),
 					defaultFont.getSize());
 			unicodeFontMetrics = getFontMetrics(unicodeFont);
