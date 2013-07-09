@@ -56,8 +56,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private static final String EXEC_EXTENSION_AWK = ".awk";
 	private static final long serialVersionUID = 1L;
 
-	public static final int PAGING_PREVIOUS = -1;
-	public static final int PAGING_NEXT = 1;
+	private static final int PAGING_PREVIOUS = -1;
+	private static final int PAGING_NEXT = 1;
 	private static final int LEVEL_PREVIOUS = -1;
 	private static final int LEVEL_NEXT = 1;
 	private KualMenu kualMenu;
