@@ -464,8 +464,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		quitButton.setEnabled(true);
 		quitButton.addKeyListener(keyListener);
 
+		Component button;
 		for (int i = getPageSize(); i > 0; --i) {
-			Component button;
 			if (it.hasNext()) {
 				KualEntry ke = kualMenu.getEntry(level, it.next());
 				button = getUI().newButton(ke.label, this, ke); //then getUI().getKualEntry(button) => ke
