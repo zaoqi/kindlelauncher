@@ -1,40 +1,36 @@
-function get_model(file, line, serial) {
+function get_model(file, line, device) {
 	if (MODEL) return MODEL
 	MODEL = "Unknown"
 	# Devise the model from the device code, which we get from the S/N. See KindleTool's kindle_tool.h for the list of device codes.
 	file = "/proc/usid"
 	while ((getline line < file) > 0) {
 		# Strips the B0 (leading 2 chars), that should help with those weird K4 starting in 90 instead of B0...
-		serial = substr(line, 3, 2)
-		if (serial ~ /^(01)$/) {
-			MODEL = "Kindle1"
-			break
-		}
-		if (serial ~ /^(02)|(03)$/) {
+		device = substr(line, 3, 2)
+		if (device == "02" || device == "03") {
 			MODEL = "Kindle2"
 			break
 		}
-		if (serial ~ /^(04)|(05)$/) {
+		else if (device == "04" || device == "05") {
 			MODEL = "KindleDX"
 			break
 		}
-		if (serial ~ /^(09)$/) {
+		else if (device == "09") {
 			MODEL = "KindleDXG"
 			break
 		}
-		if (serial ~ /^(08)|(06)|(0A)$/) {
+		else if (device == "08" || device == "06" || device == "0A") {
 			MODEL = "Kindle3"
 			break
 		}
-		if (serial ~ /^(0E)|(23)$/) {
+		else if (device == "0E" || device == "23") {
 			MODEL = "Kindle4"
 			break
 		}
-		if (serial ~ /^(0F)|(11)|(10)|(12)$/) {
+		else if (device == "0F" || device == "11" || device == "10" || device == "12") {
 			MODEL = "KindleTouch"
 			break
 		}
-		if (serial ~ /^(24)|(1B)|(1D)|(1F)|(1C)|(20)$/) {
+		else if (device == "24" || device == "1B" || device == "1D" || device == "1F" || device == "1C" || device == "20") {
 			MODEL = "KindlePaperWhite"
 			break
 		}
