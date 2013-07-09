@@ -439,9 +439,9 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 					if (ke.isLinkedUnder(parentLink))
 						viewList.add(entry.getKey());
 				}
-				// Hacky workaround to always count the extra toTop/quit button we add at the end...
-				viewList.add("inject_last_button");
 			}
+			// Hacky workaround to always count the extra toTop/quit button we add at the end...
+			viewList.add("inject_last_button");
 		}
 
 		Iterator it = viewList.iterator();
