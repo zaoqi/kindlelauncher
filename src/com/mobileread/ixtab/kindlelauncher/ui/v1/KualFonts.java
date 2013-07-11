@@ -4,6 +4,8 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 public class KualFonts {
 
@@ -12,7 +14,7 @@ public class KualFonts {
 	public final Font unicodeFont;
 	public final FontMetrics unicodeFontMetrics;
 
-	private static KualFonts INSTANCE = null;
+	private static final Map INSTANCES = new HashMap();
 
 	private KualFonts(Font defaultFont, FontMetrics defaultFontMetrics,
 			Font unicodeFont, FontMetrics unicodeFontMetrics) {
@@ -24,48 +26,43 @@ public class KualFonts {
 	}
 
 	public static KualFonts getInstance(Component caller) {
-		/*
-		 * Note: this works regardless of the caller because Kindles all use the
-		 * same code for Labels and Buttons anyway. If this changes at any time,
-		 * or if we need it to be more fancy, we can extend this class
-		 * accordingly.
-		 */
-		if (INSTANCE == null) {
+		
+		KualFonts result = (KualFonts) INSTANCES.get(caller.getClass());
+		if (result == null) {
 			synchronized (KualFonts.class) {
-				if (INSTANCE == null) {
-					Font defaultFont = caller.getFont();
-					FontMetrics defaultFontMetrics = caller
-							.getFontMetrics(defaultFont);
-					Font unicodeFont = null;
-					FontMetrics unicodeFontMetrics = null;
+				Font defaultFont = caller.getFont();
+				FontMetrics defaultFontMetrics = caller
+						.getFontMetrics(defaultFont);
+				Font unicodeFont = null;
+				FontMetrics unicodeFontMetrics = null;
 
-					try {
-						/*
-						 * FW 2.x doesn't ship with code2000. Use symbol
-						 * instead, or we lose the pretty unicode arrows.
-						 */
-						if (new File("/usr/java/lib/fonts/code2000.ttf")
-								.exists()) {
-							unicodeFont = new Font("code2000",
-									defaultFont.getStyle(),
-									defaultFont.getSize());
-						} else {
-							unicodeFont = new Font("symbol",
-									defaultFont.getStyle(),
-									defaultFont.getSize());
-						}
-						unicodeFontMetrics = caller.getFontMetrics(unicodeFont);
-					} catch (Throwable t) {
-						// if anything went wrong, we can't do much about it.
-						unicodeFont = null;
-						unicodeFontMetrics = null;
+				try {
+					/*
+					 * FW 2.x doesn't ship with code2000. Use symbol
+					 * instead, or we lose the pretty unicode arrows.
+					 */
+					if (new File("/usr/java/lib/fonts/code2000.ttf")
+							.exists()) {
+						unicodeFont = new Font("code2000",
+								defaultFont.getStyle(),
+								defaultFont.getSize());
+					} else {
+						unicodeFont = new Font("symbol",
+								defaultFont.getStyle(),
+								defaultFont.getSize());
 					}
-					INSTANCE = new KualFonts(defaultFont, defaultFontMetrics,
-							unicodeFont, unicodeFontMetrics);
+					unicodeFontMetrics = caller.getFontMetrics(unicodeFont);
+				} catch (Throwable t) {
+					// if anything went wrong, we can't do much about it.
+					unicodeFont = null;
+					unicodeFontMetrics = null;
 				}
+				result = new KualFonts(defaultFont, defaultFontMetrics,
+						unicodeFont, unicodeFontMetrics);
+				INSTANCES.put(caller.getClass(), result);
 			}
 		}
-		return INSTANCE;
+		return result;
 	}
 
 	public boolean isNonUnicode(char[] chars) {
