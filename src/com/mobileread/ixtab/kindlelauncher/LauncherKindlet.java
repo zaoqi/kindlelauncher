@@ -16,7 +16,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.Label;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -26,12 +25,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-//import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -49,7 +45,7 @@ import com.mobileread.ixtab.kindlelauncher.ui.UIAdapter;
 
 public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
-	public static final String RESOURCE_PARSER_SCRIPT = "parse.awk"; //"parse.sh";
+	public static final String RESOURCE_PARSER_SCRIPT = "parse.awk"; // "parse.sh";
 	private static final String EXEC_PREFIX_PARSE = "klauncher_parse-";
 	private static final String EXEC_PREFIX_BACKGROUND = "klauncher_background-";
 	private static final String EXEC_EXTENSION_SH = ".sh";
@@ -81,33 +77,36 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private KeyListener keyListener = new KeyAdapter() {
 		public void keyPressed(KeyEvent e) {
 			switch (e.getKeyCode()) {
-				case KindleKeyCodes.VK_RIGHT_HAND_SIDE_TURN_PAGE:
-				case KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE:
-					handlePaging(PAGING_NEXT, depth);
-					break;
-				case KindleKeyCodes.VK_RIGHT_HAND_SIDE_TURN_PAGE_BACK:
-				case KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE_BACK:
-				// Apparently, Amazon was smart enough to use the same keycode as the K3 TURN_PAGE_BACK for one of the K4 TURN_PAGE_BACK button, so this one's a dup.
-				// case KindleKeyCodes.VK_TURN_PAGE_BACK:
-					handleLevel(LEVEL_PREVIOUS);
-					break;
+			case KindleKeyCodes.VK_RIGHT_HAND_SIDE_TURN_PAGE:
+			case KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE:
+				handlePaging(PAGING_NEXT, depth);
+				break;
+			 case KindleKeyCodes.VK_TURN_PAGE_BACK: /* 61450 */
+			 case 61452: /* K4: KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE_BACK , but not defined in kindlet-1.2.jar */
+				handleLevel(LEVEL_PREVIOUS);
+				break;
 			}
 		}
 	};
 
 	private Container entriesPanel;
 	private Component status = null;
-	private Component nextPageButton = getUI().newButton("  " + RARROW + "  ", this, keyListener, null);
-	private Component prevPageButton = getUI().newButton("  " + UARROW + "  ", this, keyListener, null);
+	private Component nextPageButton = getUI().newButton("  " + RARROW + "  ",
+			this, keyListener, null);
+	private Component prevPageButton = getUI().newButton("  " + UARROW + "  ",
+			this, keyListener, null);
 	private Component breadcrumb = getUI().newLabel(PATH_SEP);
 
 	private final KualEntry toTopEntry = new KualEntry(1, PATH_SEP);
-	private final Component toTopButton = getUI().newButton(PATH_SEP, this, keyListener, toTopEntry);
+	private final Component toTopButton = getUI().newButton(PATH_SEP, this,
+			keyListener, toTopEntry);
 	private final KualEntry quitEntry = new KualEntry(2, CROSS + " Quit");
-	private final Component quitButton = getUI().newButton(CROSS + " Quit", this, keyListener, quitEntry);
+	private final Component quitButton = getUI().newButton(CROSS + " Quit",
+			this, keyListener, quitEntry);
 
-	private int[] offset = {0,0,0,0,0,0,0,0,0,0}; //10
-	private KualEntry[] keTrail = {null,null,null,null,null,null,null,null,null,null}; //10
+	private int[] offset = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // 10
+	private KualEntry[] keTrail = { null, null, null, null, null, null, null,
+			null, null, null }; // 10
 	private int depth = 0;
 
 	protected Jailbreak instantiateJailbreak() {
@@ -151,34 +150,38 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	}
 
 	private void longStart() {
-/*
- * High-level description of KUAL flow
- *
- * 1. kindlet: spawn the parser then block waiting for input from the parser.
- * 2. parser:  send the kindlet cached data so the kindlet can quickly move on to initialize the UI.
- * 3. kindlet: initialize UI and display the menu.
- * 4. kindlet: schedule a 10-time-repeat 1-second timer task which checks for messages from the parser.
- * 5. parser:  (while the kindlet is initializing the UI) parse menu files and refresh the cache.
- * 6: parser:  if the fresh cache differs from the cache sent in step 2 then post the kindlet a message
- * 7: parser:  exit
- * 8: kindlet: if the timer found a message in the mailbox update the menu from the fresh cache and re-display UI.
- * 9: kindlet: loop: wait for user interaction; handle interaction.
- *
-*/
+		/*
+		 * High-level description of KUAL flow
+		 * 
+		 * 1. kindlet: spawn the parser then block waiting for input from the
+		 * parser. 2. parser: send the kindlet cached data so the kindlet can
+		 * quickly move on to initialize the UI. 3. kindlet: initialize UI and
+		 * display the menu. 4. kindlet: schedule a 10-time-repeat 1-second
+		 * timer task which checks for messages from the parser. 5. parser:
+		 * (while the kindlet is initializing the UI) parse menu files and
+		 * refresh the cache. 6: parser: if the fresh cache differs from the
+		 * cache sent in step 2 then post the kindlet a message 7: parser: exit
+		 * 8: kindlet: if the timer found a message in the mailbox update the
+		 * menu from the fresh cache and re-display UI. 9: kindlet: loop: wait
+		 * for user interaction; handle interaction.
+		 */
 		try {
 			initializeState(); // step 1
 			initializeUI(); // step 3
-			// Monitor messages from backgrounded script. Monitoring ends in 10 s.
-			// Thereafter check the mailbox on each button event in actionPerformed().
-			new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), 1000, 1000, 10); // steps 4,8
+			// Monitor messages from backgrounded script. Monitoring ends in 10
+			// s.
+			// Thereafter check the mailbox on each button event in
+			// actionPerformed().
+			new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(),
+					1000, 1000, 10); // steps 4,8
 		} catch (Throwable t) {
 			throw new RuntimeException(t);
 		}
 	}
 
 	private void setStatus(String text) {
-		if(null == status)
-			setBreadcrumb(text,null);
+		if (null == status)
+			setBreadcrumb(text, null);
 		else
 			getUI().setText(status, text);
 	}
@@ -191,7 +194,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			text += PATH_SEP;
 		} else {
 			String label = keTrail[depth - 1].getBareLabel();
-			int width = getTrailMaxWidth() - text.length() ;
+			int width = getTrailMaxWidth() - text.length();
 			for (int i = depth - 2; i >= 0 && label.length() <= width; i--) {
 				label = keTrail[i].getBareLabel() + PATH_SEP + label;
 			}
@@ -213,8 +216,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		int gap = getUI().getGap();
 		root.removeAll();
 
-		root.setLayout(new BorderLayout(gap,gap));
-		Container main = getUI().newPanel(new BorderLayout(gap,gap));
+		root.setLayout(new BorderLayout(gap, gap));
+		Container main = getUI().newPanel(new BorderLayout(gap, gap));
 
 		// this is a horrible workaround to simulate adding a border around
 		// the main container. It has to be done this way because we have
@@ -251,13 +254,15 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		updateDisplayedLaunchers(depth = 0, true, null);
 	}
 
-	private void initializeState() throws IOException, InterruptedException, Exception {
+	private void initializeState() throws IOException, InterruptedException,
+			Exception {
 
 		cleanupTemporaryDirectory();
 		runParser();
 	}
 
-	private void runParser() throws IOException, InterruptedException, Exception {
+	private void runParser() throws IOException, InterruptedException,
+			Exception {
 		// run the parser script and read its output (we may get cached data)
 		File parseFile = extractParseFile();
 		BufferedReader reader = Util.execute(parseFile.getAbsolutePath());
@@ -276,7 +281,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		kualMenu = new KualMenu(reader);
 
 		// Reset navigation helpers.
-		// keTrail[] - stack of menu entries, one for each node of the current menu path
+		// keTrail[] - stack of menu entries, one for each node of the current
+		// menu path
 		// depth - keTrail top index
 		for (int i = 0; i < 10; i++) {
 			keTrail[i] = null;
@@ -287,7 +293,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private File extractParseFile() throws IOException, FileNotFoundException {
 		InputStream script = ResourceLoader.load(RESOURCE_PARSER_SCRIPT);
 		File parseInput = File.createTempFile(EXEC_PREFIX_PARSE,
-				EXEC_EXTENSION_AWK);//EXEC_EXTENSION_SH);
+				EXEC_EXTENSION_AWK);// EXEC_EXTENSION_SH);
 
 		OutputStream cmd = new FileOutputStream(parseInput);
 		Util.copy(script, cmd);
@@ -316,7 +322,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private void killKnownOffenders(Runtime rtime) {
 		// Let's tidy up some known offenders...
 		// Call this right before executing a menu action
-		String offenders="matchbox-keyboard kterm skipstone cr3";
+		String offenders = "matchbox-keyboard kterm skipstone cr3";
 		try {
 			rtime.exec("/usr/bin/killall " + offenders, null); // gently
 			rtime.exec("/usr/bin/killall -9 " + offenders, null); // forcefully
@@ -335,7 +341,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			if (files[i].isFile()) {
 				String file = files[i].getName();
 				if (file.startsWith(EXEC_PREFIX_BACKGROUND)
-					|| file.startsWith(EXEC_PREFIX_PARSE)) {
+						|| file.startsWith(EXEC_PREFIX_PARSE)) {
 					files[i].delete();
 				}
 			}
@@ -356,13 +362,13 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		Component button = (Component) e.getSource();
 		if (button == prevPageButton) {
 			handleLevel(LEVEL_PREVIOUS);
-			//changes offset[] and depth
+			// changes offset[] and depth
 		} else if (button == nextPageButton) {
 			handlePaging(PAGING_NEXT, depth);
-			//changes offset[]
+			// changes offset[]
 		} else {
 			handleLauncherButton(button, depth);
-			//on submenu button it calls handleLevel()
+			// on submenu button it calls handleLevel()
 		}
 
 		// foreground, non-blocking check for background menu updates
@@ -372,7 +378,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private void handlePaging(int direction, int level) {
 		// direction is supposed to be -1 (backward) or +1 (forward),
 		int newOffset = offset[level] + getPageSize() * direction;
-//DEBUG del//setBreadcrumb("olv("+offset[level]+")new("+newOffset+")");
+		// DEBUG del//setBreadcrumb("olv("+offset[level]+")new("+newOffset+")");
 		if (newOffset < 0) {
 			// the largest possible multiple of the page size.
 			newOffset = getEntriesCount(level);
@@ -388,8 +394,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			return;
 		}
 		offset[level] = newOffset;
-		updateDisplayedLaunchers(level, false,
-			-1 == direction ? prevPageButton : nextPageButton);
+		updateDisplayedLaunchers(level, false, -1 == direction ? prevPageButton
+				: nextPageButton);
 	}
 
 	private void handleLevel(int direction) {
@@ -406,7 +412,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		depth = goToLevel;
 		offset[depth] = goToOffset;
 		updateDisplayedLaunchers(depth, false,
-			-1 == direction ? (0 >= depth? null : prevPageButton) : null);
+				-1 == direction ? (0 >= depth ? null : prevPageButton) : null);
 	}
 
 	private static int viewLevel = -1;
@@ -430,8 +436,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			if (0 == level) {
 				viewList.addAll(kualMenu.getLevel(0).keySet());
 			} else {
-				KualEntry ke  = keTrail[level - 1];
-				String  parentLink = ke.getParentLink();
+				KualEntry ke = keTrail[level - 1];
+				String parentLink = ke.getParentLink();
 				Iterator it = kualMenu.getLevel(level).entrySet().iterator();
 				while (it.hasNext()) {
 					Map.Entry entry = (Entry) it.next();
@@ -440,7 +446,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 						viewList.add(entry.getKey());
 				}
 			}
-			// Hacky workaround to always count the extra toTop/quit button we add at the end...
+			// Hacky workaround to always count the extra toTop/quit button we
+			// add at the end...
 			viewList.add("inject_last_button");
 		}
 
@@ -456,8 +463,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		int end = viewOffset;
 
 		// This button is appended at the end of the list.
-		//Component nullButton = getUI().newButton("", null, null);
-		//nullButton.setEnabled(false);
+		// Component nullButton = getUI().newButton("", null, null);
+		// nullButton.setEnabled(false);
 		toTopButton.setEnabled(true);
 		quitButton.setEnabled(true);
 
@@ -469,7 +476,10 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 				if (ke == null) {
 					button = 0 == level ? quitButton : toTopButton;
 				} else {
-					button = getUI().newButton(ke.label, this, keyListener, ke); //then getUI().getKualEntry(button) => ke
+					button = getUI().newButton(ke.label, this, keyListener, ke); // then
+																					// getUI().getKualEntry(button)
+																					// =>
+																					// ke
 				}
 				if (null == focusRequestor) {
 					focusRequestor = button;
@@ -482,16 +492,20 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 					break;
 				}
 			} else {
-				//Component button = getUI().newButton("", null, null, null); // fills whole column
-				//Component button = nullButton; // shortens column after last entry
+				// Component button = getUI().newButton("", null, null, null);
+				// // fills whole column
+				// Component button = nullButton; // shortens column after last
+				// entry
 				button = 0 == level ? quitButton : toTopButton;
 				++end;
 				entriesPanel.add(button);
 
-				// Add a dummy entry to the list to make viewList.size() consistent...
+				// Add a dummy entry to the list to make viewList.size()
+				// consistent...
 				viewList.add("foo_last_button");
 
-				// Don't needlessly add the last button 'til the bottom of the page.
+				// Don't needlessly add the last button 'til the bottom of the
+				// page.
 				break;
 			}
 		}
@@ -501,13 +515,12 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		boolean enableButtons = getPageSize() < viewList.size();
 		if (null != status) {
 			setStatus("Entries " + (viewOffset + 1) + " - " + end + " of "
-				+ viewList.size()
-				+ " build " + kualMenu.getVersion() + " " + kualMenu.getConfig("model"));
+					+ viewList.size() + " build " + kualMenu.getVersion() + " "
+					+ kualMenu.getConfig("model"));
 		}
-		setBreadcrumb(null == status && enableButtons
-				? (viewOffset+1)+"-"+end+"/"+viewList.size()
-				: null, null);
-		prevPageButton.setEnabled(level>0);
+		setBreadcrumb(null == status && enableButtons ? (viewOffset + 1) + "-"
+				+ end + "/" + viewList.size() : null, null);
+		prevPageButton.setEnabled(level > 0);
 		nextPageButton.setEnabled(enableButtons);
 
 		// just to be on the safe side
@@ -517,26 +530,34 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		context.getRootContainer().repaint();
 
 		// This is for 5-way controller devices.
-		// It is essential to request focus _after_ the button has been displayed!
+		// It is essential to request focus _after_ the button has been
+		// displayed!
 		if (null != focusRequestor) {
 			focusRequestor.requestFocus();
 		}
 	}
 
 	private int getEntriesCount(int level) {
-		return viewList.size() > 0 ? viewList.size() : kualMenu.getLevel(level).size();
+		return viewList.size() > 0 ? viewList.size() : kualMenu.getLevel(level)
+				.size();
 	}
 
-	private static int onStartPageSize = -1; // tracks onStart() size, so ReloadMenuFromCache can't interfere
+	private static int onStartPageSize = -1; // tracks onStart() size, so
+												// ReloadMenuFromCache can't
+												// interfere
+
 	private int getPageSize() {
 		if (0 < onStartPageSize) {
 			return onStartPageSize;
 		}
 		onStartPageSize = 0;
 		String size = kualMenu.getConfig("page_size");
-		if (null != size) try {
-			onStartPageSize = Integer.parseInt((String) size);
-		} catch (Throwable ignored) {};
+		if (null != size)
+			try {
+				onStartPageSize = Integer.parseInt((String) size);
+			} catch (Throwable ignored) {
+			}
+		;
 		if (0 == onStartPageSize) {
 			onStartPageSize = getUI().getDefaultPageSize();
 		}
@@ -546,7 +567,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private int getTrailMaxWidth() {
 		// A fixed value will never work in all situations because kindle uses
 		// a proportional font; this is a best guess
-		return 60; //FIXME
+		return 60; // FIXME
 	}
 
 	private void handleLauncherButton(Component button, int level) {
@@ -560,42 +581,44 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 				setStatus("Exception logged.");
 			}
 		} else {
-		// run internal action, if any, then action, if any
+			// run internal action, if any, then action, if any
 			if (ke.isInternalAction) {
 				switch (ke.internalAction) {
-					// 0-32 reserved for KualEntry(int, String) constructor
-					// 'A', etc. defined in parser script
-					case 0:
-					case 'A': // extension displays message in breadcrumb line
-						setBreadcrumb(ke.internalArgs + " | ", null);
-						break;
-					case 'B': // extension displays message in status line
-						setStatus(ke.internalArgs);
-						break;
-					case 1: // go to top menu
-						depth = 0;
-						handleLevel(LEVEL_PREVIOUS);
-						break;
-					case 2: // quit
-						// falls into ! option 'e'
-						break;
+				// 0-32 reserved for KualEntry(int, String) constructor
+				// 'A', etc. defined in parser script
+				case 0:
+				case 'A': // extension displays message in breadcrumb line
+					setBreadcrumb(ke.internalArgs + " | ", null);
+					break;
+				case 'B': // extension displays message in status line
+					setStatus(ke.internalArgs);
+					break;
+				case 1: // go to top menu
+					depth = 0;
+					handleLevel(LEVEL_PREVIOUS);
+					break;
+				case 2: // quit
+					// falls into ! option 'e'
+					break;
 				}
 			}
 			if (null != ke.action) {
-			// run shell cmd. null may come from KualEntry(int, String) constructor only
+				// run shell cmd. null may come from KualEntry(int, String)
+				// constructor only
 				// now is the right time to get rid of known offenders
 				killKnownOffenders(Runtime.getRuntime());
-				if (! ke.hasOption('s')) {
+				if (!ke.hasOption('s')) {
 					// JSON "status":false
 					setStatus(ke.action);
 				}
 				try {
-int beforeAction = 0; //TODO
-					if (0 < beforeAction)
+					int beforeAction = 0; // TODO
+					if (0 < beforeAction) {
 						Thread.sleep(beforeAction);
+					}
 
-					if (! ke.hasOption('e')) {
-						// JSON  "exitmenu":true
+					if (!ke.hasOption('e')) {
+						// JSON "exitmenu":true
 						// suicide
 						commandToRunOnExit = ke.action;
 						dirToChangeToOnExit = ke.dir;
@@ -603,9 +626,10 @@ int beforeAction = 0; //TODO
 					} else {
 						// survive
 						execute(ke.action, ke.dir, true);
-int afterAction = 0; //TODO
-						if (0 < afterAction)
+						int afterAction = 0; // TODO
+						if (0 < afterAction) {
 							Thread.sleep(afterAction);
+						}
 					}
 				} catch (Throwable t) {
 					new KualLog().append(t.toString());
@@ -634,26 +658,26 @@ int afterAction = 0; //TODO
 			// JSON "date":true - show date/time in status line
 			Date now = new Date();
 			setStatus(now.toString());
-			//SimpleDateFormatter fmt = new SimpleDateFormatter();
-			//setStatus(fmt.format("HH:mm:ss", now));
+			// SimpleDateFormatter fmt = new SimpleDateFormatter();
+			// setStatus(fmt.format("HH:mm:ss", now));
 		}
 		if (ke.hasOption('h')) {
 			// "hidden" not implemented
 		}
 	}
 
-	private Process execute(String cmd, String dir, boolean background) throws IOException,
-			InterruptedException {
+	private Process execute(String cmd, String dir, boolean background)
+			throws IOException, InterruptedException {
 
 		File workingDir = new File(dir);
-		if (! workingDir.isDirectory()) {
+		if (!workingDir.isDirectory()) {
 			new KualLog().append("directory '" + dir + "' not found");
 			return null;
 		}
 		File launcher = createLauncherScript(cmd, background, "");
 		return Runtime.getRuntime().exec(
-				new String[] { "/bin/sh", launcher.getAbsolutePath() },
-					null, workingDir);
+				new String[] { "/bin/sh", launcher.getAbsolutePath() }, null,
+				workingDir);
 	}
 
 	protected void onStop() {
@@ -675,8 +699,8 @@ int afterAction = 0; //TODO
 		super.onStop();
 	}
 
-	private File createLauncherScript(String cmd, boolean background, String init)
-			throws IOException {
+	private File createLauncherScript(String cmd, boolean background,
+			String init) throws IOException {
 		File tempFile = java.io.File.createTempFile(EXEC_PREFIX_BACKGROUND,
 				EXEC_EXTENSION_SH);
 
@@ -684,7 +708,8 @@ int afterAction = 0; //TODO
 		bw.write("#!/bin/ash");
 		bw.newLine();
 
-		// wrap cmd inside {} to support backgrounding multiple commands and redirecting stderr
+		// wrap cmd inside {} to support backgrounding multiple commands and
+		// redirecting stderr
 		bw.write("{ " + init + cmd + " ; } 2>>/var/tmp/KUAL.log"
 				+ (background ? " &" : ""));
 
@@ -695,7 +720,7 @@ int afterAction = 0; //TODO
 
 	public class ReloadMenuFromCache implements MailboxCommand {
 		public void execute(Object data) {
-			setBreadcrumb("Loading new menu " + ATTN +" Please wait...", "");
+			setBreadcrumb("Loading new menu " + ATTN + " Please wait...", "");
 			setStatus("Loading...");
 			try {
 				readParser((BufferedReader) data);
@@ -708,54 +733,75 @@ int afterAction = 0; //TODO
 		}
 	}
 
-	public void refreshMenu(final long beforeParser, final long afterParser, String requestor)
-		throws RuntimeException {
-		setBreadcrumb("Refreshing the menu " + ATTN +" Please wait...", "");
+	public void refreshMenu(final long beforeParser, final long afterParser,
+			String requestor) throws RuntimeException {
+		setBreadcrumb("Refreshing the menu " + ATTN + " Please wait...", "");
 		if (null != requestor)
 			setStatus(requestor);
 
-		final TimerAdapter tmi =  TimerAdapter.INSTANCE;
+		final TimerAdapter tmi = TimerAdapter.INSTANCE;
 		final Object timer = tmi.newTimer();
 		Runnable runnable = new Runnable() {
 			public void run() {
 
-				// Here we *refresh* the menu by instantiating the parser then reloading a
-				// fresh cache. This enables extensions to dynamically change the menu.
+				// Here we *refresh* the menu by instantiating the parser then
+				// reloading a
+				// fresh cache. This enables extensions to dynamically change
+				// the menu.
 				try {
-					// An extension that needs some time to stage the new menu may set JSON
-					//    TODO JSON sleep:"after_action,before_action,after_refresh,before_refresh"
+					// An extension that needs some time to stage the new menu
+					// may set JSON
+					// TODO JSON
+					// sleep:"after_action,before_action,after_refresh,before_refresh"
 					// in milliseconds, where
-					// before_action/after_action refer to the time KUAL *backgrounds* the user's action
-					// before_refresh/refresh (default 500 ms) it's the delay before tearing down the
-					// current menu (a <500 value is allowed but not recommended)
-					// after_refresh (default 1500 ms) is the time that the parser takes to
+					// before_action/after_action refer to the time KUAL
+					// *backgrounds* the user's action
+					// before_refresh/refresh (default 500 ms) it's the delay
+					// before tearing down the
+					// current menu (a <500 value is allowed but not
+					// recommended)
+					// after_refresh (default 1500 ms) is the time that the
+					// parser takes to
 					// build a new cache (1500 ms is an average value)
 
 					/*
 					 * Goal: display a fresh menu with just one screen update.
-					 * If we allowed more screen updates it would be enough to just say:
-					 *   initializeState(); initializeUI(): new MailboxProcessor(..., 1000, 1000, 10).
-					 * But since we aim at a single screen update more steps are involved.
-					*/
+					 * If we allowed more screen updates it would be enough to
+					 * just say: initializeState(); initializeUI(): new
+					 * MailboxProcessor(..., 1000, 1000, 10). But since we aim
+					 * at a single screen update more steps are involved.
+					 */
 
-					// Yield 500 ms to allow an extension to stage its menu change.
-					// Extension developers may set beforeParser to achieve a longer pause.
+					// Yield 500 ms to allow an extension to stage its menu
+					// change.
+					// Extension developers may set beforeParser to achieve a
+					// longer pause.
 					Thread.sleep(beforeParser > 0 ? beforeParser : 500);
 
-					runParser(); // still sends the old cache while background-building a new one
+					runParser(); // still sends the old cache while
+									// background-building a new one
 
-					// Wait long enough for the parser to complete building the new cache then consume it.
-					// Since we can't know how long that will take, we delay consuming data from the parser
-					// by afterParser ms (default 1500).  That's long enough for a medium-sized extension folder.
-					// Users with very large folders may need to increase afterParser.
-					new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), afterParser, 0, 0);
+					// Wait long enough for the parser to complete building the
+					// new cache then consume it.
+					// Since we can't know how long that will take, we delay
+					// consuming data from the parser
+					// by afterParser ms (default 1500). That's long enough for
+					// a medium-sized extension folder.
+					// Users with very large folders may need to increase
+					// afterParser.
+					new MailboxProcessor(kualMenu, '1',
+							new ReloadMenuFromCache(), afterParser, 0, 0);
 
-					initializeState(); // now the parser is even more likely to send a fresh cache
-						// initializeState() also cleans up temporary files
+					initializeState(); // now the parser is even more likely to
+										// send a fresh cache
+					// initializeState() also cleans up temporary files
 
-					initializeUI(); // enables "hard" configuration changes such as number of items per page
-					// reaps a new cache one way or another - when it does the user sees another screen update
-					new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), 0, 500, 10);
+					initializeUI(); // enables "hard" configuration changes such
+									// as number of items per page
+					// reaps a new cache one way or another - when it does the
+					// user sees another screen update
+					new MailboxProcessor(kualMenu, '1',
+							new ReloadMenuFromCache(), 0, 500, 10);
 				} catch (Throwable t) {
 					new KualLog().append(t.toString());
 					setStatus("Exception logged.");
