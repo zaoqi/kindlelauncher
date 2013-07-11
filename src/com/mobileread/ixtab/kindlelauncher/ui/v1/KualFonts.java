@@ -1,0 +1,103 @@
+package com.mobileread.ixtab.kindlelauncher.ui.v1;
+
+import java.awt.Component;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.io.File;
+
+public class KualFonts {
+
+	public final Font defaultFont;
+	public final FontMetrics defaultFontMetrics;
+	public final Font unicodeFont;
+	public final FontMetrics unicodeFontMetrics;
+
+	private static KualFonts INSTANCE = null;
+
+	private KualFonts(Font defaultFont, FontMetrics defaultFontMetrics,
+			Font unicodeFont, FontMetrics unicodeFontMetrics) {
+		super();
+		this.defaultFont = defaultFont;
+		this.defaultFontMetrics = defaultFontMetrics;
+		this.unicodeFont = unicodeFont;
+		this.unicodeFontMetrics = unicodeFontMetrics;
+	}
+
+	public static KualFonts getInstance(Component caller) {
+		/*
+		 * Note: this works regardless of the caller because Kindles all use the
+		 * same code for Labels and Buttons anyway. If this changes at any time,
+		 * or if we need it to be more fancy, we can extend this class
+		 * accordingly.
+		 */
+		if (INSTANCE == null) {
+			synchronized (KualFonts.class) {
+				if (INSTANCE == null) {
+					Font defaultFont = caller.getFont();
+					FontMetrics defaultFontMetrics = caller
+							.getFontMetrics(defaultFont);
+					Font unicodeFont = null;
+					FontMetrics unicodeFontMetrics = null;
+
+					try {
+						/*
+						 * FW 2.x doesn't ship with code2000. Use symbol
+						 * instead, or we lose the pretty unicode arrows.
+						 */
+						if (new File("/usr/java/lib/fonts/code2000.ttf")
+								.exists()) {
+							unicodeFont = new Font("code2000",
+									defaultFont.getStyle(),
+									defaultFont.getSize());
+						} else {
+							unicodeFont = new Font("symbol",
+									defaultFont.getStyle(),
+									defaultFont.getSize());
+						}
+						unicodeFontMetrics = caller.getFontMetrics(unicodeFont);
+					} catch (Throwable t) {
+						// if anything went wrong, we can't do much about it.
+						unicodeFont = null;
+						unicodeFontMetrics = null;
+					}
+					INSTANCE = new KualFonts(defaultFont, defaultFontMetrics,
+							unicodeFont, unicodeFontMetrics);
+				}
+			}
+		}
+		return INSTANCE;
+	}
+
+	public boolean isNonUnicode(char[] chars) {
+		return unicodeFont == null || isAsciiText(chars);
+	}
+
+	public boolean isAsciiText(char[] chars) {
+		for (int i = 0; i < chars.length; ++i) {
+			if (isUnicode(chars[i])) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	private boolean isUnicode(char c) {
+		return c > 256;
+	}
+
+	public int[] calculateOffsets(char[] chars) {
+		int[] offsets = new int[chars.length + 1];
+		FontMetrics fm;
+		for (int i = 1; i <= chars.length; ++i) {
+			char c = chars[i - 1];
+			fm = isUnicode(c) ? unicodeFontMetrics : defaultFontMetrics;
+			offsets[i] = offsets[i - 1] + fm.charWidth(c);
+		}
+		return offsets;
+	}
+
+	public Font getFontFor(char c) {
+		return isUnicode(c) ? unicodeFont : defaultFont;
+	}
+
+}
