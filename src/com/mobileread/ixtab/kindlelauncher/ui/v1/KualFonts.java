@@ -26,7 +26,7 @@ public class KualFonts {
 	}
 
 	public static KualFonts getInstance(Component caller) {
-		
+
 		KualFonts result = (KualFonts) INSTANCES.get(caller.getClass());
 		if (result == null) {
 			synchronized (KualFonts.class) {
@@ -38,18 +38,15 @@ public class KualFonts {
 
 				try {
 					/*
-					 * FW 2.x doesn't ship with code2000. Use symbol
-					 * instead, or we lose the pretty unicode arrows.
+					 * FW 2.x doesn't ship with code2000. Use symbol instead, or
+					 * we lose the pretty unicode arrows.
 					 */
-					if (new File("/usr/java/lib/fonts/code2000.ttf")
-							.exists()) {
+					if (new File("/usr/java/lib/fonts/code2000.ttf").exists()) {
 						unicodeFont = new Font("code2000",
-								defaultFont.getStyle(),
-								defaultFont.getSize());
+								defaultFont.getStyle(), defaultFont.getSize());
 					} else {
 						unicodeFont = new Font("symbol",
-								defaultFont.getStyle(),
-								defaultFont.getSize());
+								defaultFont.getStyle(), defaultFont.getSize());
 					}
 					unicodeFontMetrics = caller.getFontMetrics(unicodeFont);
 				} catch (Throwable t) {
