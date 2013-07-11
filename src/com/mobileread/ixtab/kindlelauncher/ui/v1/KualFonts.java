@@ -76,7 +76,7 @@ public class KualFonts {
 	}
 
 	private boolean isUnicode(char c) {
-		return c > 256;
+		return c > 255;
 	}
 
 	public int[] calculateOffsets(char[] chars) {
