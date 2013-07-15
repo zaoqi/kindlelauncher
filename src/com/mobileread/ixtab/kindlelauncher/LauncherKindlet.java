@@ -708,8 +708,6 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			// JSON "checked":true - add checkmark to button label
 			ke.setChecked(true);
 			getUI().setText(button, ke.label);
-			// FIXME: Is this needed? (on v1, we already do a repaint in setText)
-			//button.repaint();
 		}
 		if (ke.hasOption('r')) {
 			// JSON "refresh":true - refresh and reload the menu
