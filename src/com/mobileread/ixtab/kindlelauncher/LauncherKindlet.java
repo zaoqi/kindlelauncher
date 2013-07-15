@@ -81,9 +81,49 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			case KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE:
 				handlePaging(PAGING_NEXT, depth);
 				break;
-			 case KindleKeyCodes.VK_TURN_PAGE_BACK: /* 61450 */
-			 case 61452: /* K4: KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE_BACK , but not defined in kindlet-1.2.jar */
+			case KindleKeyCodes.VK_TURN_PAGE_BACK: /* 61450 */
+			case 61452: /* K4: KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE_BACK , but not defined in kindlet-1.2.jar */
 				handleLevel(LEVEL_PREVIOUS);
+				break;
+			case KeyEvent.VK_1:
+			case KeyEvent.VK_Q:
+				handleButtonSelect(1);
+				break;
+			case KeyEvent.VK_2:
+			case KeyEvent.VK_W:
+				handleButtonSelect(2);
+				break;
+			case KeyEvent.VK_3:
+			case KeyEvent.VK_E:
+				handleButtonSelect(3);
+				break;
+			case KeyEvent.VK_4:
+			case KeyEvent.VK_R:
+				handleButtonSelect(4);
+				break;
+			case KeyEvent.VK_5:
+			case KeyEvent.VK_T:
+				handleButtonSelect(5);
+				break;
+			case KeyEvent.VK_6:
+			case KeyEvent.VK_Y:
+				handleButtonSelect(6);
+				break;
+			case KeyEvent.VK_7:
+			case KeyEvent.VK_U:
+				handleButtonSelect(7);
+				break;
+			case KeyEvent.VK_8:
+			case KeyEvent.VK_I:
+				handleButtonSelect(8);
+				break;
+			case KeyEvent.VK_9:
+			case KeyEvent.VK_O:
+				handleButtonSelect(9);
+				break;
+			case KeyEvent.VK_0:
+			case KeyEvent.VK_P:
+				handleButtonSelect(10);
 				break;
 			}
 		}
@@ -152,7 +192,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private void longStart() {
 		/*
 		 * High-level description of KUAL flow
-		 * 
+		 *
 		 * 1. kindlet: spawn the parser then block waiting for input from the
 		 * parser. 2. parser: send the kindlet cached data so the kindlet can
 		 * quickly move on to initialize the UI. 3. kindlet: initialize UI and
@@ -396,6 +436,24 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		offset[level] = newOffset;
 		updateDisplayedLaunchers(level, false, -1 == direction ? prevPageButton
 				: nextPageButton);
+	}
+
+	private void handleButtonSelect(int button_nr) {
+		// All our shiny buttons!
+		Component[] buttons = entriesPanel.getComponents();
+
+		// Arrays are 0 indexed
+		button_nr--;
+
+		// Clamp to pageSize
+		if ( button_nr < 0 ) {
+			button_nr = 0;
+		}
+		if ( button_nr >= getPageSize()) {
+			button_nr = getPageSize() - 1;
+		}
+
+		handleLauncherButton(buttons[button_nr], depth);
 	}
 
 	private void handleLevel(int direction) {
