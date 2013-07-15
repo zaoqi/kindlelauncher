@@ -453,6 +453,9 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			button_nr = getPageSize() - 1;
 		}
 
+		// Request focus on the selected button
+		buttons[button_nr].requestFocus();
+		// And click it
 		handleLauncherButton(buttons[button_nr], depth);
 	}
 
