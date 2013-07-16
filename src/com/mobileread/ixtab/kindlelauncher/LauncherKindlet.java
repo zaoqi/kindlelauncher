@@ -711,11 +711,17 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		}
 		if (ke.hasOption('r')) {
 			// JSON "refresh":true - refresh and reload the menu
+			// Default value for afterParser, cf. refreshMenu().
+			long afterParser = 1500L;
+			// Add 750ms for legacy devices with slower CPU
+			if ("Kindle2".equals(kualMenu.getConfig("model")) || "KindleDX".equals(kualMenu.getConfig("model")) || "KindleDXG".equals(kualMenu.getConfig("model")) || "Kindle3".equals(kualMenu.getConfig("model"))) {
+				afterParser += 750L;
+			}
 			// If we showed a custom status message, don't overwrite it!
 			if (internalStatus) {
-				refreshMenu(500L, 1500L, null);
+				refreshMenu(500L, afterParser, null);
 			} else {
-				refreshMenu(500L, 1500L, ke.label);
+				refreshMenu(500L, afterParser, ke.label);
 			}
 		}
 		if (ke.hasOption('d')) {
