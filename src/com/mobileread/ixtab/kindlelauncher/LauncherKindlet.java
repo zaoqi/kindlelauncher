@@ -534,7 +534,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			if (it.hasNext()) {
 				KualEntry ke = kualMenu.getEntry(level, it.next());
 				// Handle our injected last button...
-				if (ke == null) {
+				if (null == ke) {
 					button = 0 == level ? quitButton : toTopButton;
 				} else {
 					button = getUI().newButton(ke.label, this, keyListener, ke); // then
@@ -549,7 +549,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 				entriesPanel.add(button);
 
 				// If we just added our injected last button, we're done.
-				if (ke == null) {
+				if (null == ke) {
 					break;
 				}
 			} else {
