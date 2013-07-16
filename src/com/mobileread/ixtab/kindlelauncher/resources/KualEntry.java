@@ -114,9 +114,9 @@ public class KualEntry {
 	}
 
 	public void setChecked(boolean enable) {
-		boolean isChecked = this.label.startsWith("\u2717"); // X
+		boolean isChecked = this.label.startsWith("\u2713"); // ✓
 		if (enable && ! isChecked)
-			this.label = "\u2717 " + this.label;
+			this.label = "\u2713 " + this.label;
 		else if (isChecked)
 			this.label = this.label.substring(2);
 	}
