@@ -691,6 +691,8 @@ format_action_item(ITEM[K_action], ITEM[K_params], ITEM[K_internal]))
 new_item()
 } else {
 ITEM[key]=value MMRK
+x = ITEM[K_name]
+if (RPN_if(ITEM[K_if], x)) {
 npath_s_this_items = npath_s_this_(K_items, snpath)
 select_level[level+1] = npath_wo_reserved(npath_padded(npath_s_this_items))
 sortable_tag = select_level[level]
@@ -700,6 +702,7 @@ kindlet_options(),
 level,snpath,
 ITEM[K_name],
 format_action_submenu(level, npath_s_this_items))
+}
 new_submenu()
 }
 } else if (K_priority == key || K_params == key || K_internal == key || K_if == key || K_exitmenu == key || K_checked == key || K_refresh == key || K_status == key || K_date == key || K_hidden == key) {
