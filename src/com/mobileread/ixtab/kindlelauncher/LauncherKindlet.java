@@ -447,14 +447,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		buttonIndex--;
 		maxButtons--;
 
-		// Should never happen
-		if ( buttonIndex < 0 ) {
-			buttonIndex = 0;
-		}
 		// Clamp to the number of buttons on the current page
-		if ( buttonIndex > maxButtons) {
-			buttonIndex = maxButtons;
-		}
+		buttonIndex = buttonIndex > maxButtons ? maxButtons : (buttonIndex < 0 ? 0 : buttonIndex);
 
 		// Request focus on the selected button
 		buttons[buttonIndex].requestFocus();
