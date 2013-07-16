@@ -635,6 +635,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	}
 
 	private void handleLauncherButton(Component button, int level) {
+		boolean internalStatus = false;
 		KualEntry ke = getUI().getKualEntry(button);
 		if (ke.isSubmenu) { // drill into sub-menu
 			keTrail[level] = ke;
@@ -656,6 +657,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 					break;
 				case 'B': // extension displays message in status line
 					setStatus(ke.internalArgs);
+					// Remember this, so we don't overwrite it if we ask for a refresh later...
+					internalStatus = true;
 					break;
 				case 1: // go to top menu
 					depth = 0;
@@ -714,7 +717,12 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		}
 		if (ke.hasOption('r')) {
 			// JSON "refresh":true - refresh and reload the menu
-			refreshMenu(500L, 1500L, ke.label);
+			// If we showed a custom status message, don't overwrite it!
+			if (internalStatus) {
+				refreshMenu(500L, 1500L, null);
+			} else {
+				refreshMenu(500L, 1500L, ke.label);
+			}
 		}
 		if (ke.hasOption('d')) {
 			// JSON "date":true - show date/time in status line
