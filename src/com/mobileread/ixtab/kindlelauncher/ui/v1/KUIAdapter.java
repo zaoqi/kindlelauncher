@@ -42,7 +42,6 @@ public class KUIAdapter extends UIAdapter {
 		}
 		if (component instanceof KButton) {
 			((KButton) component).setLabel(text);
-			// FIXME: setLabel paints with the default font... We get a broken glyph instead of the cross on FW 2.x ;/
 		}
 	}
 
