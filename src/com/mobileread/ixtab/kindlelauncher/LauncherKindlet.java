@@ -125,6 +125,9 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			case KeyEvent.VK_P:
 				handleButtonSelect(10);
 				break;
+			case KeyEvent.VK_SPACE:
+				handleLauncherButton((Component) e.getSource(), depth);
+				break;
 			}
 		}
 	};
