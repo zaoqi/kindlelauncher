@@ -438,25 +438,28 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 				: nextPageButton);
 	}
 
-	private void handleButtonSelect(int button_nr) {
+	private void handleButtonSelect(int buttonIndex) {
 		// All our shiny buttons!
 		Component[] buttons = entriesPanel.getComponents();
+		int maxButtons = buttons.length;
 
 		// Arrays are 0 indexed
-		button_nr--;
+		buttonIndex--;
+		maxButtons--;
 
-		// Clamp to pageSize
-		if ( button_nr < 0 ) {
-			button_nr = 0;
+		// Should never happen
+		if ( buttonIndex < 0 ) {
+			buttonIndex = 0;
 		}
-		if ( button_nr >= getPageSize()) {
-			button_nr = getPageSize() - 1;
+		// Clamp to the number of buttons on the current page
+		if ( buttonIndex > maxButtons) {
+			buttonIndex = maxButtons;
 		}
 
 		// Request focus on the selected button
-		buttons[button_nr].requestFocus();
+		buttons[buttonIndex].requestFocus();
 		// And click it
-		handleLauncherButton(buttons[button_nr], depth);
+		handleLauncherButton(buttons[buttonIndex], depth);
 	}
 
 	private void handleLevel(int direction) {
