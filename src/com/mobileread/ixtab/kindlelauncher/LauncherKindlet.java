@@ -438,13 +438,9 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			return;
 		}
 		offset[level] = newOffset;
-		updateDisplayedLaunchers(level, false, -1 == direction ? prevPageButton
-				: nextPageButton);
-		// Optionally reset focus to the first button...
-		if (resetFocus) {
-			Component[] buttons = entriesPanel.getComponents();
-			buttons[0].requestFocus();
-		}
+		updateDisplayedLaunchers(level, false, resetFocus ? null
+				: (PAGING_PREVIOUS == direction ? prevPageButton
+					: nextPageButton));
 	}
 
 	private void handleButtonSelect(int buttonIndex) {
@@ -478,13 +474,10 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		}
 		depth = goToLevel;
 		offset[depth] = goToOffset;
-		updateDisplayedLaunchers(depth, false,
-				-1 == direction ? (0 >= depth ? null : prevPageButton) : null);
-		// Optionally reset focus to the first button...
-		if (resetFocus) {
-			Component[] buttons = entriesPanel.getComponents();
-			buttons[0].requestFocus();
-		}
+		updateDisplayedLaunchers(depth, false, resetFocus ? null
+				: (LEVEL_PREVIOUS == direction ? (0 >= depth ? null
+					: prevPageButton)
+						: null));
 	}
 
 	private static int viewLevel = -1;
