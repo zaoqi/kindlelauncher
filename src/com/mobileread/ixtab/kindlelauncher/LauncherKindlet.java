@@ -79,11 +79,11 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			switch (e.getKeyCode()) {
 			case KindleKeyCodes.VK_RIGHT_HAND_SIDE_TURN_PAGE:
 			case KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE:
-				handlePaging(PAGING_NEXT, depth);
+				handlePaging(PAGING_NEXT, depth, true);
 				break;
 			case KindleKeyCodes.VK_TURN_PAGE_BACK: /* 61450 */
 			case 61452: /* K4: KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE_BACK , but not defined in kindlet-1.2.jar */
-				handleLevel(LEVEL_PREVIOUS);
+				handleLevel(LEVEL_PREVIOUS, true);
 				break;
 			case KeyEvent.VK_1:
 			case KeyEvent.VK_Q:
@@ -405,10 +405,10 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	public void actionPerformed(ActionEvent e) {
 		Component button = (Component) e.getSource();
 		if (button == prevPageButton) {
-			handleLevel(LEVEL_PREVIOUS);
+			handleLevel(LEVEL_PREVIOUS, false);
 			// changes offset[] and depth
 		} else if (button == nextPageButton) {
-			handlePaging(PAGING_NEXT, depth);
+			handlePaging(PAGING_NEXT, depth, false);
 			// changes offset[]
 		} else {
 			handleLauncherButton(button, depth);
@@ -419,7 +419,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), 0, 0, 0);
 	}
 
-	private void handlePaging(int direction, int level) {
+	private void handlePaging(int direction, int level, boolean resetFocus) {
 		// direction is supposed to be -1 (backward) or +1 (forward),
 		int newOffset = offset[level] + getPageSize() * direction;
 		// DEBUG del//setBreadcrumb("olv("+offset[level]+")new("+newOffset+")");
@@ -440,6 +440,11 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		offset[level] = newOffset;
 		updateDisplayedLaunchers(level, false, -1 == direction ? prevPageButton
 				: nextPageButton);
+		// Optionally reset focus to the first button...
+		if (resetFocus) {
+			Component[] buttons = entriesPanel.getComponents();
+			buttons[0].requestFocus();
+		}
 	}
 
 	private void handleButtonSelect(int buttonIndex) {
@@ -460,7 +465,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		handleLauncherButton(buttons[buttonIndex], depth);
 	}
 
-	private void handleLevel(int direction) {
+	private void handleLevel(int direction, boolean resetFocus) {
 		int goToLevel;
 		int goToOffset;
 		if (-1 == direction) { // return from submenu
@@ -475,6 +480,11 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		offset[depth] = goToOffset;
 		updateDisplayedLaunchers(depth, false,
 				-1 == direction ? (0 >= depth ? null : prevPageButton) : null);
+		// Optionally reset focus to the first button...
+		if (resetFocus) {
+			Component[] buttons = entriesPanel.getComponents();
+			buttons[0].requestFocus();
+		}
 	}
 
 	private static int viewLevel = -1;
@@ -638,7 +648,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		if (ke.isSubmenu) { // drill into sub-menu
 			keTrail[level] = ke;
 			try {
-				handleLevel(LEVEL_NEXT);
+				handleLevel(LEVEL_NEXT, false);
 			} catch (Throwable t) {
 				new KualLog().append(t.toString());
 				setStatus("Exception logged.");
@@ -660,7 +670,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 					break;
 				case 1: // go to top menu
 					depth = 0;
-					handleLevel(LEVEL_PREVIOUS);
+					handleLevel(LEVEL_PREVIOUS, false);
 					break;
 				case 2: // quit
 					// falls into ! option 'e'
