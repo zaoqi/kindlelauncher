@@ -52,6 +52,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private static final String EXEC_EXTENSION_AWK = ".awk";
 	private static final long serialVersionUID = 1L;
 
+	private static final int VK_KEYBOARD = 17; /* K4: We should be using getKeyboardKeyCode() here, but it's 1.3 only */
+
 	private static final int PAGING_PREVIOUS = -1;
 	private static final int PAGING_NEXT = 1;
 	private static final int LEVEL_PREVIOUS = -1;
@@ -82,52 +84,59 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 				handlePaging(PAGING_NEXT, depth, true);
 				break;
 			case KindleKeyCodes.VK_TURN_PAGE_BACK: /* 61450 */
-			case 61452: /* K4: KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE_BACK , but not defined in kindlet-1.2.jar */
+			case 61452: /* K4: KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE_BACK in 1.3. See also *DistinctTurnPageBackKeyCodes*() */
 				handleLevel(LEVEL_PREVIOUS, true);
 				break;
 			case KeyEvent.VK_1:
 			case KeyEvent.VK_Q:
-				handleButtonSelect(1);
+				handleButtonSelect(1, true);
 				break;
 			case KeyEvent.VK_2:
 			case KeyEvent.VK_W:
-				handleButtonSelect(2);
+				handleButtonSelect(2, true);
 				break;
 			case KeyEvent.VK_3:
 			case KeyEvent.VK_E:
-				handleButtonSelect(3);
+				handleButtonSelect(3, true);
 				break;
 			case KeyEvent.VK_4:
 			case KeyEvent.VK_R:
-				handleButtonSelect(4);
+				handleButtonSelect(4, true);
 				break;
 			case KeyEvent.VK_5:
 			case KeyEvent.VK_T:
-				handleButtonSelect(5);
+				handleButtonSelect(5, true);
 				break;
 			case KeyEvent.VK_6:
 			case KeyEvent.VK_Y:
-				handleButtonSelect(6);
+				handleButtonSelect(6, true);
 				break;
 			case KeyEvent.VK_7:
 			case KeyEvent.VK_U:
-				handleButtonSelect(7);
+				handleButtonSelect(7, true);
 				break;
 			case KeyEvent.VK_8:
 			case KeyEvent.VK_I:
-				handleButtonSelect(8);
+				handleButtonSelect(8, true);
 				break;
 			case KeyEvent.VK_9:
 			case KeyEvent.VK_O:
-				handleButtonSelect(9);
+				handleButtonSelect(9, true);
 				break;
 			case KeyEvent.VK_0:
 			case KeyEvent.VK_P:
-				handleButtonSelect(10);
+				handleButtonSelect(10, true);
 				break;
 			case KeyEvent.VK_ENTER:
 			case KeyEvent.VK_SPACE:
 				handleLauncherButton((Component) e.getSource(), depth);
+				break;
+			case KindleKeyCodes.VK_TEXT:
+			case VK_KEYBOARD:
+				handleButtonSelect(-1, false);
+				break;
+			case KindleKeyCodes.VK_MENU:
+				handleButtonSelect(99, false);
 				break;
 			}
 		}
@@ -443,7 +452,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 					: nextPageButton));
 	}
 
-	private void handleButtonSelect(int buttonIndex) {
+	private void handleButtonSelect(int buttonIndex, boolean clickIt) {
 		// All our shiny buttons!
 		Component[] buttons = entriesPanel.getComponents();
 		int maxButtons = buttons.length;
@@ -457,8 +466,10 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
 		// Request focus on the selected button
 		buttons[buttonIndex].requestFocus();
-		// And click it
-		handleLauncherButton(buttons[buttonIndex], depth);
+		// And click it if we asked
+		if (clickIt) {
+			handleLauncherButton(buttons[buttonIndex], depth);
+		}
 	}
 
 	private void handleLevel(int direction, boolean resetFocus) {
