@@ -56,8 +56,6 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private static final int PAGING_NEXT = 1;
 	private static final int LEVEL_PREVIOUS = -1;
 	private static final int LEVEL_NEXT = 1;
-	private static final int FW_DOWN = 1;
-	private static final int FW_UP = -1;
 	private KualMenu kualMenu;
 	// Viewport on kualMenu at current depth
 	// . set in updateDisplayedLauncher()
@@ -77,14 +75,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private final String PATH_SEP = "/";
 
 	private KeyListener keyListener = new KeyAdapter() {
-		public void keyTyped(KeyEvent e) {
-			new KualLog().append("Typed: " + e.getKeyCode());
-		}
-		public void keyReleased(KeyEvent e) {
-			new KualLog().append("Released: " + e.getKeyCode());
-		}
 		public void keyPressed(KeyEvent e) {
-			new KualLog().append("Pressed: " + e.getKeyCode());
 			switch (e.getKeyCode()) {
 			case KindleKeyCodes.VK_RIGHT_HAND_SIDE_TURN_PAGE:
 			case KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE:
@@ -137,14 +128,6 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			case KeyEvent.VK_ENTER:
 			case KeyEvent.VK_SPACE:
 				handleLauncherButton((Component) e.getSource(), depth);
-				break;
-			case KindleKeyCodes.VK_FIVE_WAY_DOWN:
-				new KualLog().append("Pressed FW DOWN");
-				handleFWUpDown((Component) e.getSource(), FW_DOWN);
-				break;
-			case KindleKeyCodes.VK_FIVE_WAY_UP:
-				new KualLog().append("Pressed FW UP");
-				handleFWUpDown((Component) e.getSource(), FW_UP);
 				break;
 			}
 		}
@@ -476,35 +459,6 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		buttons[buttonIndex].requestFocus();
 		// And click it
 		handleLauncherButton(buttons[buttonIndex], depth);
-	}
-
-	private void handleFWUpDown(Component srcButton, int direction) {
-		new KualLog().append("Hello from inside handleFWUpDown, direction: " + direction + " :)");
-
-		// All our shiny buttons!
-		Component[] buttons = entriesPanel.getComponents();
-		int maxButtons = buttons.length;
-
-		// Arrays are 0 indexed
-		maxButtons--;
-
-		// Loop over all buttons, to find our srcButton index
-		int srcButtonIndex = 0;
-		for (srcButtonIndex = 0; srcButtonIndex < maxButtons; srcButtonIndex++) {
-			// Got it, break!
-			if (srcButton.getName().equals(buttons[srcButtonIndex].getName())) {
-				break;
-			}
-		}
-
-		// Move in the proper direction...
-		int tgtButtonIndex = srcButtonIndex + direction;
-
-		// Sanitize, and handle wrap-around
-		tgtButtonIndex = tgtButtonIndex > maxButtons ? 0 : (tgtButtonIndex < 0 ? maxButtons : tgtButtonIndex );
-
-		// Request focus on the selected button
-		buttons[tgtButtonIndex].requestFocus();
 	}
 
 	private void handleLevel(int direction, boolean resetFocus) {
