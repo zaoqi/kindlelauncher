@@ -1,4 +1,30 @@
 CHANGE LOG
+20130719,a
++ Fix [#6] & [#5]:
+  Implemented a set of keyboard shortcuts on devices without a touchscreen:
+    * the next/prev page buttons do the obvious
+    * the top row of keys (1...0 and Q...P) select the corresponding button
+      (or the last if there are more keys than buttons)
+    * enter & space will click the current focus
+    * the [Aa] & [Keyboard] keys focus the top button
+    * while the [MENU] key focuses the last button (it's tailored for the K4
+      layout, those buttons bracket the five-way controller).
+- Fix [#3]: we always count the extra quit or / button we add as the last item
+  of a menu level, and we don't forget to add even it if it falls at the top of
+  a new page.
+- Fix [#11]: rewrite get_model to properly differentiate the Kindle 2 from the DX
+  (AFAICT, their cpuinfo output is perfectly identical). We get a finer-grained
+  KindleDX model detection in the bargain ;).
+# Don't bundle useless (at runtime) resources in the final jar.
+- Fix [#12]: We now properly draw the shiny unicode glyphs (arrows, checkmarks, ...)
+  on the K2/DX.
+# Refactored duplicated code between KualLabel and KualButton.
+- Fix [#1]: The checkmarks are now drawn properly on non-touch devices
+  (and really is a checkmark, not a cross).
+- Fix [#8]: Don't overwrite a custom status text if the button requested a refresh
+- Fix [#10]: Apply an if clause to a submenu itself, too
+# Tweaked afterParser default value a bit (+50%) on armv6 devices (K2/DX/3).
+
 20130701,a
 - Fix: add missing -m RPN operator (reported by NiLuJe)
 
@@ -8,7 +34,7 @@ CHANGE LOG
 20130519,a
 # Changed support link to bit.ly/kualit.
 
-20130314,a
+20130514,a
 + Now "if":"expression" can grep a file, test loaded extensions, test device
   model, compare KUAL option values, test file existence and size.
 # Now KUAL self menu hides "save log" button when the log file is empty.
@@ -238,9 +264,9 @@ Internal changes
 + KUAL.log file in /mnt/us/extensions (pending bug fix).
 + KUAL menu stays fixed on top. Shows number of error messages, if any.
   Press any error message button => KUAL.log snapshot to /mnt/us/documents.
-+ No suicide json key - "exitmenu":false 
++ No suicide json key - "exitmenu":false
 + KUAL.cfg in /mnt/us/extensions, options to: selectively hide KUAL
-  menu buttons, stop following links when looking for json files, 
+  menu buttons, stop following links when looking for json files,
   hide the status line (sends status info to the trail line).
 + Show version/build number in the status line (if not hidden).
 ! Before starting any extension KUAL changes directory to the
@@ -357,7 +383,7 @@ sys	0m 0.85s
 real	0m 9.65s       ***  O U C H ! ! ! ***
 user	0m 1.58s
 sys	0m 3.91s
- 
+
 20130306,a
 user:
 + set json "exitmenu":0 (goes with "action") to save KUAL from suicide!
@@ -389,7 +415,7 @@ internal:
   sorting by group name; applies to -f=twolevel only. Summary of sort options
   . abc  lexicographic by group, names within each group do not move
   . ABC  lexicographic by group and by action name, same name groups coalesce
-  . 123  by priority, group priority first then action priority within group 
+  . 123  by priority, group priority first then action priority within group
          (and lexicographic by group name within each priority tier)
 + added KUAL menu to apply all three sort options
 + added visual aid debugging option -p=FMT to output by columns, etc.
