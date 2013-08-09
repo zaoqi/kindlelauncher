@@ -72,7 +72,6 @@
 				<exclude name="**/resources/*.java"/>
 				<exclude name="**/resources/aloop"/>
 				<exclude name="**/resources/old"/>
-				<exclude name="**/resources/verbose"/>
 			</fileset>
 			<!-- "cover" icon -->
 			<fileset dir=".">
