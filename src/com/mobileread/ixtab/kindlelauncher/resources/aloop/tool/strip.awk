@@ -33,8 +33,10 @@ WARNING="=== Non-greedy shell/AWK script comment stripper ==="\
 "\n  a block of text"\
 "\n  :#? RSTR ..."\
 "\nYou may force stripping (Begin/End): /:#? BSTR .../,/#?: ESTR .../"\
-"\n\nBest practice:"\
+"\n\nBest practice to get more stripping:"\
+"\n  (definition: an 'in-line comment' line includes some non-white characters before '#')"\
 "\n. In in-line comments replace ' and \" with ` (backtick)"\
+"\n. In in-line comments do not use literal '#' in the text of the comment itself"\
 "\n"
 		print WARNING >"/dev/stderr"
 	}
@@ -88,7 +90,7 @@ PROMPT="Usage: strip.awk [-v AWK=1] [-v WARN=0] [-v PROMPT=0] script.sh > new_sc
 }
 # in-line comment not in string nor in variable substitution
 /#/ && ! ( /["']/ || /\${/ ) {
-	match($0,/#[^#]*$/) # non-greedy => look for tail comment
+	match($0,/\s*#[^#]*$/) # non-greedy => look for tail comment
 	s=substr($0,1,RSTART-1)
 	t=substr($0,RSTART+1,RLENGTH-1) # $0 == s"#"t
 	r1=substr(s,length(s),1)
@@ -101,7 +103,7 @@ PROMPT="Usage: strip.awk [-v AWK=1] [-v WARN=0] [-v PROMPT=0] script.sh > new_sc
 }
 # in-line comment possibly in string or in variable substitution
 /#/ {
-	match($0,/#[^#]*$/) # non-greedy => look for tail comment
+	match($0,/\s*#[^#]*$/) # non-greedy => look for tail comment
 	s=substr($0,1,RSTART-1)
 	t=substr($0,RSTART+1,RLENGTH-1) # $0 == s"#"t
 	r1=substr(s,length(s),1)
