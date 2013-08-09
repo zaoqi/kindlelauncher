@@ -1,5 +1,5 @@
 #!/usr/bin/awk -f
-# aloop-v2.awk - version 20130708,a stepk
+# aloop-v2.awk - version 20130719,a stepk
 BEGIN {
 VERSION="20130719,a"
 ERRORS = BAILOUT = CACHE_SENT = IN_MEMORY_CACHE_INVALID = PARSED_OK_COUNTER = 0
