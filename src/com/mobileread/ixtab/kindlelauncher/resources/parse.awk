@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
-# aloop-v2.awk - version 20130719,a stepk
+# aloop-v2.awk - version 20130809,a stepk
 BEGIN {
-VERSION="20130719,a"
+VERSION="20130809,a"
 ERRORS = BAILOUT = CACHE_SENT = IN_MEMORY_CACHE_INVALID = PARSED_OK_COUNTER = 0
 SELF_BUTTONS_INSERT = SELF_BUTTONS_FILTER = SELF_BUTTONS_APPEND = ""
 if (1 < ARGC) {
@@ -835,8 +835,6 @@ RPN_push(!system("test -e \""x"\""))
 RPN_push(x in LOADED_EXTENSIONS)
 } else if (token == "-m") {
 RPN_push((z = config_get("model")) == x)
-} else if (token == "-o") {
-RPN_push((z = config_get(y)) == x)
 } else {
 y = RPN_stack[RPN_sp]
 RPN_pop()
@@ -854,6 +852,8 @@ RPN_err = "not found: \""y"\""
 } else {
 RPN_push(z)
 }
+} else if (token == "-o") {
+RPN_push((z = config_get(y)) == x)
 } else {
 RPN_err = "invalid operator: " + token
 }
@@ -1077,42 +1077,22 @@ function shortpathname(pathname,   ary,nary) {
 return (nary = split(pathname, ary, /\//)) \
 ? ary[nary-1] "/" ary[nary] : pathname
 }
-function get_model(file, line, device) {
+function get_model(    file,line,device) {
 if (MODEL) return MODEL
 MODEL = "Unknown"
 file = "/proc/usid"
-while ((getline line < file) > 0) {
-device = substr(line, 3, 2)
-if (device ~ /^(02)|(03)$/) {
-MODEL = "Kindle2"
-break
-}
-else if (device ~ /^(04)|(05)$/) {
-MODEL = "KindleDX"
-break
-}
-else if (device ~ /^(09)$/) {
-MODEL = "KindleDXG"
-break
-}
-else if (device ~ /^(08)|(06)|(0A)$/) {
-MODEL = "Kindle3"
-break
-}
-else if (device ~ /^(0E)|(23)$/) {
-MODEL = "Kindle4"
-break
-}
-else if (device ~ /^(0F)|(11)|(10)|(12)$/) {
-MODEL = "KindleTouch"
-break
-}
-else if (device ~ /^(24)|(1B)|(1D)|(1F)|(1C)|(20)$/) {
-MODEL = "KindlePaperWhite"
-break
-}
-}
+if ((getline line < file) > 0) {
 close(file)
+device = substr(line, 3, 2)
+MODEL =   device ~ /^(02)|(03)$/ ? "Kindle2" \
+: device ~ /^(04)|(05)$/ ? "KindleDX" \
+: device ~ /^(09)$/ ? "KindleDXG" \
+: device ~ /^(08)|(06)|(0A)$/ ? "Kindle3" \
+: device ~ /^(0E)|(23)$/ ? "Kindle4" \
+: device ~ /^(0F)|(11)|(10)|(12)$/ ? "KindleTouch" \
+: device ~ /^(24)|(1B)|(1D)|(1F)|(1C)|(20)$/ ? "KindlePaperWhite" \
+: "Unknown"
+}
 return MODEL
 }
 function isRegularFileEmpty (x,

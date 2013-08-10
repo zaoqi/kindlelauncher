@@ -1,4 +1,16 @@
 CHANGE LOG
+20130809,a
+- Fix -o RPN operator, which got broken in 20130701,a
+# Git: changes to make easier dealing with the parser script: **FOR DEVELOPERS**
+  . ignore bitbucket's 'commented' branch from this commit on, and
+  . find the important files in ./resources:
+    . parse-commented.awk (used to be aloop/aloop-v2.awk in commented branch)
+    . CHANGELOG.txt (this file, used to be aloop/CHANGELOG.txt in commented branch)
+  . add resources/README-tool.txt, which explains the main point:
+    1. edit ./resources/parse-commented.awk to change the parser code, then
+    2. in ./resources run ./tool/strip.awk -v AWK=1 parse-commented.awk > parse.awk
+    3. compile the project
+
 20130719,a
 + Fix [#6] & [#5]:
   Implemented a set of keyboard shortcuts on devices without a touchscreen:
@@ -34,7 +46,7 @@ CHANGE LOG
 20130519,a
 # Changed support link to bit.ly/kualit.
 
-20130514,a
+20130314,a
 + Now "if":"expression" can grep a file, test loaded extensions, test device
   model, compare KUAL option values, test file existence and size.
 # Now KUAL self menu hides "save log" button when the log file is empty.
@@ -264,9 +276,9 @@ Internal changes
 + KUAL.log file in /mnt/us/extensions (pending bug fix).
 + KUAL menu stays fixed on top. Shows number of error messages, if any.
   Press any error message button => KUAL.log snapshot to /mnt/us/documents.
-+ No suicide json key - "exitmenu":false
++ No suicide json key - "exitmenu":false 
 + KUAL.cfg in /mnt/us/extensions, options to: selectively hide KUAL
-  menu buttons, stop following links when looking for json files,
+  menu buttons, stop following links when looking for json files, 
   hide the status line (sends status info to the trail line).
 + Show version/build number in the status line (if not hidden).
 ! Before starting any extension KUAL changes directory to the
@@ -383,7 +395,7 @@ sys	0m 0.85s
 real	0m 9.65s       ***  O U C H ! ! ! ***
 user	0m 1.58s
 sys	0m 3.91s
-
+ 
 20130306,a
 user:
 + set json "exitmenu":0 (goes with "action") to save KUAL from suicide!
@@ -415,7 +427,7 @@ internal:
   sorting by group name; applies to -f=twolevel only. Summary of sort options
   . abc  lexicographic by group, names within each group do not move
   . ABC  lexicographic by group and by action name, same name groups coalesce
-  . 123  by priority, group priority first then action priority within group
+  . 123  by priority, group priority first then action priority within group 
          (and lexicographic by group name within each priority tier)
 + added KUAL menu to apply all three sort options
 + added visual aid debugging option -p=FMT to output by columns, etc.
