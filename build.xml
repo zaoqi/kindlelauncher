@@ -75,6 +75,7 @@
 				<exclude name="**/resources/tool"/>
 				<exclude name="**/resources/README-tool.txt"/>
 				<exclude name="**/resources/parse-commented.awk"/>
+				<exclude name="**/resources/KUAL.cfg"/>
 			</fileset>
 			<!-- "cover" icon -->
 			<fileset dir=".">
