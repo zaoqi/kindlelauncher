@@ -70,8 +70,11 @@
 			<fileset dir="src/">
 				<include name="**/resources/*"/>
 				<exclude name="**/resources/*.java"/>
-				<exclude name="**/resources/aloop"/>
 				<exclude name="**/resources/old"/>
+				<exclude name="**/resources/aloop"/>
+				<exclude name="**/resources/tool"/>
+				<exclude name="**/resources/README-tool.txt"/>
+				<exclude name="**/resources/parse-commented.awk"/>
 			</fileset>
 			<!-- "cover" icon -->
 			<fileset dir=".">
