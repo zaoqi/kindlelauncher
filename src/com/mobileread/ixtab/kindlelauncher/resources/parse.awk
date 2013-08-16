@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
-# aloop-v2.awk - version 20130809,a stepk
+# aloop-v2.awk - version 20130816,a stepk
 BEGIN {
-VERSION="20130809,a"
+VERSION="20130816,a"
 ERRORS = BAILOUT = CACHE_SENT = IN_MEMORY_CACHE_INVALID = PARSED_OK_COUNTER = 0
 SELF_BUTTONS_INSERT = SELF_BUTTONS_FILTER = SELF_BUTTONS_APPEND = ""
 if (1 < ARGC) {
@@ -89,7 +89,7 @@ function init(   x) {
 if ("" == EXTENSIONDIR) EXTENSIONDIR="/mnt/us/extensions"
 if ("" == PRODUCTNAME) PRODUCTNAME="KUAL"
 if ("" == CONFIGFILE) CONFIGFILE=PRODUCTNAME".cfg"
-if ("" == (CONFIGPATH = config_full_path())) CONFIGPATH = "/dev/null"
+if ("" == (CONFIGPATH = config_full_path("create"))) CONFIGPATH = "/dev/null"
 config_read(CONFIGPATH)
 CONFIG["model"] = get_model()
 x = "/bin/busybox "
@@ -234,6 +234,7 @@ break
 if ("" != x)
 return cfp
 if ("create" == create) {
+system("mkdir -p " EXTENSIONDIR)
 cfp=ary[1]"/"CONFIGFILE
 "date" | getline x
 close("date")

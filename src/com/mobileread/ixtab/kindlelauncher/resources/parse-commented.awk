@@ -1,5 +1,5 @@
 #!/usr/bin/awk -f
-# aloop-v2.awk - version 20130809,a stepk
+# aloop-v2.awk - version 20130816,a stepk
 #!/bin/busybox awk -f on kindle e-ink devices .or. /usr/bin/awk
 #!/bin/awk on puppy linux
 #
@@ -22,7 +22,7 @@
 # Gotchas {{{ READ THIS
 # . Control characters are not allowed in JSON strings (invalid syntax, see www.json.org).
 #   In particular, a tab character (ctrl+I) is invalid and returns a parsing error; use \t instead.
-#  
+#
 #}}}
 # Testing aids {{{
 # alias FND='y=`find /mnt/us/extensions -follow -name \*.json`'
@@ -79,7 +79,7 @@
 #}}}
 
 BEGIN { #{{{
-	VERSION="20130809,a"
+	VERSION="20130816,a"
 
 	# usage 1: scan EXTENSIONDIR {{{
 	#      awk -f aloop-v2.awk < /dev/null
@@ -151,7 +151,7 @@ if(0) {
 
 	# config parser {{{
 	# option_BRIEF(1) - parse() omits printing non-leaf nodes
-	BRIEF=1; # 
+	BRIEF=1; #
 	# option_STREAM(0) - parse() omits stdout and stores jpaths in JPATHS[]
 	STREAM=0;
 	# for each input file:
@@ -220,7 +220,7 @@ if(0) {
 #   to inadvertently create spurious array keys, which are hard to find
 #   in the testing phase. For instance, this code
 #     if (value != ary[i])  creates key i if it does not exist. Then
-#   the test (i in ary) would return true but the value of ary[i] 
+#   the test (i in ary) would return true but the value of ary[i]
 #   would be null!
 # It goes without saying - but I'm saying it - that NPATHS[] is
 # never compacted; the number range of its keys is fixed [1..NNPATHS]
@@ -229,14 +229,14 @@ if(0) {
 
 END { #{{{ process parsed data and emit menu to kindlet
 
-	# early exit cases did not go through the main loop {{{ 
+	# early exit cases did not go through the main loop {{{
 	# BAILOUT - usage/configuration error
 	#}}}
 	if (BAILOUT) {
 		teardown()
 		exit(BAILOUT)
 	}
-	
+
 	if (CACHE_SENT) { # kindlet is not I/O blocked
 		if (0 != cache_update()) {
 			scream(SenCantUpdateCache)
@@ -261,7 +261,7 @@ END { #{{{ process parsed data and emit menu to kindlet
 		}
 	        # unblock kindlet from read loop, xref UNBLOCK_KINDLET
 		close("/dev/stdout")
-		
+
 		if (0 != cache_save()) {
 			scream(SenCantWriteCache)
 			++ERRORS
@@ -280,7 +280,7 @@ function init(   x) { #{{{ constants
 if ("" == EXTENSIONDIR) EXTENSIONDIR="/mnt/us/extensions" # single dirpath
 if ("" == PRODUCTNAME) PRODUCTNAME="KUAL"
 if ("" == CONFIGFILE) CONFIGFILE=PRODUCTNAME".cfg" # first found in EXTENSIONDIR
-if ("" == (CONFIGPATH = config_full_path())) CONFIGPATH = "/dev/null" # sic
+if ("" == (CONFIGPATH = config_full_path("create"))) CONFIGPATH = "/dev/null" # sic
 config_read(CONFIGPATH)
 CONFIG["model"] = get_model()
 # config_send() skips sending keys that start with NC
@@ -338,7 +338,7 @@ NBSP0="&nbsp;"
 NBSP1="\xC2\xA0" # 2-byte UTF-8 encoded
 # Black right-pointing triangle - submenu marker
 #  echo -n ">" | hexdump  # replace ">" with the actual unicode character
-#  0000000 96e2 00b6                              
+#  0000000 96e2 00b6
 #  0000003
 #Let the Kindlet mark submenus#MMRK=" \xE2\x96\xB6" # > full
 CROSS="\xC3\x97" # x
@@ -435,7 +435,7 @@ function cache_save(    errors,hash1,hash2,cmd) { # {{{ << globals IN_MEMORY_CAC
 
 function cache_send(cachepath,   # {{{ << globals MENUS[],NMENUS,CONFIG[]; >>global IN_MEMORY_CACHE_INVALID; return  no. of errors
 	slurp,version) {
-	
+
 	if (0 <= (getline slurp < cachepath))
 		close(cachepath)
 	if ("" != slurp) {
@@ -456,7 +456,7 @@ function cache_send(cachepath,   # {{{ << globals MENUS[],NMENUS,CONFIG[]; >>glo
 #}}}
 
 function cache_update(   errors) { # {{{ >> globals NPATHS[],NNPATHS,IN_MEMORY_CACHE_INVALID,MENUS[],NMENUS,CONFIG[]; cache_save(); return  no. of errors
-	
+
 	errors = 0
 	json_emit_self_menu_and_parsing_errors(0+PARENT_ERRORS) # appends to NPATHS[]
 
@@ -491,6 +491,8 @@ function config_full_path(create, # {{{
 	if ("" != x)
 		return cfp
 	if ("create" == create) {
+		# Make sure EXTENSIONDIR exists first
+		system("mkdir -p " EXTENSIONDIR)
 		cfp=ary[1]"/"CONFIGFILE
 		"date" | getline x
 		close("date")
@@ -791,7 +793,7 @@ function children_map(ary, nary, idx, map, # {{{ >>map[*], return nmap == nary
 	i,min,max) {
 # for each sub-menu in ary[min...max] map a list of its children records as indexes of ary[]
 # *min..max == 1..nary iff idx==0 else min==max==idx
-	
+
 	if (0 == idx) {
 		min = 1
 		max = nary
@@ -1145,7 +1147,7 @@ function json_self_menu_button(name, action, params, internal, priority, xif, no
 }
 #}}}
 
-function jp2np(ary, size, serial, menufilepathname,   # {{{ appends to NPATHS[], NNPATHS 
+function jp2np(ary, size, serial, menufilepathname,   # {{{ appends to NPATHS[], NNPATHS
 	i,x,npath,apath,jpath,key,value,level,errors) {
 # description: convert jpaths to npaths {{{
 # convert jpaths (parsed json) into qualified output records (with npaths):
@@ -1249,7 +1251,7 @@ function np2mn(ary, size,    # {{{ appends to MENUS[], NMENUS
 						value = "??"(++COUNTER["nameNull"])
 					if (submenu_pathQ(snpath, last_action)) { # xref IS_SUBMENU
 		# PLAIN ITEM
-						ITEM[key]=value # item	
+						ITEM[key]=value # item
 						x = substr(ITEM[K_action], 1, index(ITEM[K_action],";")-1) # extension directory path
 						if (RPN_if(ITEM[K_if], x)) {
 
@@ -1273,7 +1275,7 @@ function np2mn(ary, size,    # {{{ appends to MENUS[], NMENUS
 					    # 20130719: NiLuJe added RPN_if() support for sub-menus
 					    x = ITEM[K_name]
 					    if (RPN_if(ITEM[K_if], x)) {
-						
+
 
 # xref SORTABLE : tag a "name" with sortable data {{{
 # We want to tag each item/submenu name with enough data fields that a
@@ -1432,7 +1434,7 @@ function npath_from_jpath(jpath, serial,   # {{{ convert jpath to a unique numer
 #   the "items",N serialization index (2 bytes), and reserved block (1 byte).
 #     length(npath) = 24 bytes or 48 hex digits (NPATH_len).
 # items_internal,N,items,0,items,1,items,2,items,3,items,4,items,5,items,6,items,7,items,8,items,9,KEY
-# 
+#
 # Sorting npaths: xref SORTABLE
 # IMPORTANT: np2mn() sorts npaths ALPHAbetically - NOT numerically
 # In any given jpath level, it is convenient to sort elements of array "items"
@@ -1440,7 +1442,7 @@ function npath_from_jpath(jpath, serial,   # {{{ convert jpath to a unique numer
 # We can achieve this by encoding key "items" as 0xff, and by right-
 # padding npaths with 0xff. Recall that we also encode "items" indeces:
 #     JPATH            CODE   NOTES
-#   ..."name"         00ffff  00 is "name", next ffff is padding  
+#   ..."name"         00ffff  00 is "name", next ffff is padding
 #   ..."items"        ffffff  left ff is "items", next ffff is padding
 #   ..."items".0      ff00ff  ff00 is "items".0, next ff is padding
 #   ..."priority"     01ffff  01 is "priority", next ffff is padding
