@@ -234,7 +234,7 @@ break
 if ("" != x)
 return cfp
 if ("create" == create) {
-system("mkdir -p " EXTENSIONDIR)
+system("mkdir -p " ary[1])
 cfp=ary[1]"/"CONFIGFILE
 "date" | getline x
 close("date")
