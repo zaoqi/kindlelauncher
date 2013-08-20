@@ -492,7 +492,7 @@ function config_full_path(create, # {{{
 		return cfp
 	if ("create" == create) {
 		# Make sure EXTENSIONDIR exists first
-		system("mkdir -p " EXTENSIONDIR)
+		system("mkdir -p " ary[1])
 		cfp=ary[1]"/"CONFIGFILE
 		"date" | getline x
 		close("date")
