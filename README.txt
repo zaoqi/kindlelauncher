@@ -75,7 +75,7 @@ Currently just press the HOME key if you have one or the < icon.
 Or select an item, the menu is now self-terminating.
 
 Credits.
-Twobob Ixtab Stepk 
+Twobob Ixtab Stepk Niluje
 Thanks to KNC1 for download authentication support.
 wakawakawaka for testing the DX prerequisites.
 Yifan was the original chap whoms configs we parse. 
