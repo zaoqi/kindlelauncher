@@ -9,6 +9,9 @@ NOTE: Flashed 3.2.1 Dx's may not show up kindlets There is a workaround
 tested by wakawakawaka (thanks to him for the DX testing)
 http://www.mobileread.com/forums/showpost.php?p=1747631&postcount=354 
 Workaround 3.2.1 DX Link is above.
+In addition REALLY old firmwares of the Kindle 2 did not support kindlets.
+Please update these to later firmwares to get support.
+
 
 SUPPORT: READ THIS >>>
 
@@ -21,13 +24,16 @@ SOME OF THESE DONT WORK, SOME WORK ON CERTAIN FIRMWARES ONLY.
 AS A COURTESY THESE APPLICATIONS ARE LISTED ON THE MAIN THREAD UNDER KNOWN ISSUES.
 
 ALSO: SOME EXTENSION SUCH AS Kterm ARE DEVICE SPECIFIC.
-THIS LAUNCHER WON'T MAGICALLY MAKE CODE THAT IS DEVICE SPECIFIC WORK ON OTHER DEVICES. 
+THIS LAUNCHER WON'T MAGICALLY MAKE DEVICE-SPECIFIC CODE WORK ON OTHER DEVICES. 
 If it doesn't normally work on that type of device? It won't work via this either.
 
-Enough shouting. It's a launcher of "other things" not an exciting thing in itself...
+Enough shouting. 
+It's a launcher of "other things" not an exciting thing in itself.
 
 We have now included a few helper scripts to get you going called "Helper" 
 (attached on main thread - unzip to [FAT-ROOT]/extensions/helper)
+And also a set of extensions for the main KUAL helpers
+(also available from main thread)
 
 #####################################
 # Requirements, Installation & Use: #
@@ -54,8 +60,10 @@ Put KindleLauncher-2.0.azw2 in documents folder.
 Run it by clicking icon.
 
 Expected output:
-It should read thru the /mnt/us/extensions folder and build a list of your extensions. 
-You then select a button to run the relevant command. Paginated results are provided.
+It should read thru the /mnt/us/extensions folder and build an extension list.
+If you have NO extensions? It will show a message telling you that.  
+You then select a button to run the relevant command. 
+Paginated results are provided.
 
 NOTE: /mnt/us/extensions is simply a folder called "extensions" 
 a normal folder you can access when you connect via normal USB. 
