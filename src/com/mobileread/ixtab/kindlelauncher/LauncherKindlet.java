@@ -792,12 +792,6 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	public void onDestroy() {
 		// Try to cleanup behind us on exit...
 		try {
-			// If we clicked on a suicidal button, sleep a bit, so that we have a chance to actually run it ;)
-			if (commandToRunOnExit != null) {
-				// Why isn't commandToRunOnExit null when onStop should have taken care of it?
-				// No idea, even though if I understand the life cycle correctly, destroy should always come after stop :?
-				Thread.sleep(500);
-			}
 			cleanupTemporaryDirectory();
 		} catch (Exception ignored) {
 			// Avoid the framework shouting at us...
