@@ -774,7 +774,9 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		 * might be invoked multiple times. But in the onDestroy() method, it
 		 * just won't work. Might be related with what the life cycle
 		 * documentation says about not holding files open etc. after stop() was
-		 * called. Anyway: seems to work.
+		 * called. Anyway: seems to work, since we only set commandToRunOnExit at
+		 * very specific times, where we'll always exit right after, so we can't really
+		 * fire a random command during an unexpected stop event ;).
 		 */
 		if (commandToRunOnExit != null) {
 			try {
@@ -785,6 +787,23 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			commandToRunOnExit = dirToChangeToOnExit = null;
 		}
 		super.onStop();
+	}
+
+	public void onDestroy() {
+		// Try to cleanup behind us on exit...
+		try {
+			// If we clicked on a suicidal button, sleep a bit, so that we have a chance to actually run it ;)
+			if (commandToRunOnExit != null) {
+				// Why isn't commandToRunOnExit null when onStop should have taken care of it?
+				// No idea, even though if I understand the life cycle correctly, destroy should always come after stop :?
+				Thread.sleep(500);
+			}
+			cleanupTemporaryDirectory();
+		} catch (Exception ignored) {
+			// Avoid the framework shouting at us...
+		}
+
+		super.onDestroy();
 	}
 
 	private File createLauncherScript(String cmd, boolean background,

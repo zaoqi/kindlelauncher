@@ -1,4 +1,11 @@
 CHANGE LOG
+20130820,a
+- Try to cleanup behind us on exit. Here be dragons!
+  Please test and check that, especially, this:
+    1. doesn't utterly break KUAL
+    2. actually does what it's supposed to
+    3. doesn't break suicidal buttons (exitmenu: true)
+
 20130816,a
 - Try to create the extensions folder & a blank config file if we can't find a
   proper config file at init.
