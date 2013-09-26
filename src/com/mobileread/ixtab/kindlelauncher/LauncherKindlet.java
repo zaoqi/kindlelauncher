@@ -782,7 +782,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			try {
 				execute(commandToRunOnExit, dirToChangeToOnExit, true);
 				// FIXME: This is apparently sometimes (?) a bit racy with onDestroy(), so sleep for a teeny tiny bit...
-				Thread.sleep(100);
+				Thread.sleep(175);
 			} catch (Exception ignored) {
 				// can't do much, really. Too late for that :-)
 			}
@@ -794,6 +794,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	public void onDestroy() {
 		// Try to cleanup behind us on exit...
 		try {
+			// FIXME: This is apparently sometimes (?) a bit racy with onStop(), so sleep for a tiny bit...
+			Thread.sleep(175);
 			cleanupTemporaryDirectory();
 		} catch (Exception ignored) {
 			// Avoid the framework shouting at us...
