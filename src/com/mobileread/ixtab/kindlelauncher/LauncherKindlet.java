@@ -888,7 +888,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 					// new cache then consume it.
 					// Since we can't know how long that will take, we delay
 					// consuming data from the parser
-					// by afterParser ms (default 1500). That's long enough for
+					// by afterParser ms (default 750). That's long enough for
 					// a medium-sized extension folder.
 					// Users with very large folders may need to increase
 					// afterParser.
