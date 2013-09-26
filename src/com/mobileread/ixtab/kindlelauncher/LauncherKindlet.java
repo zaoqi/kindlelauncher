@@ -226,7 +226,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			// Thereafter check the mailbox on each button event in
 			// actionPerformed().
 			new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(),
-					1000, 1000, 10); // steps 4,8
+					500, 500, 10); // steps 4,8
 		} catch (Throwable t) {
 			throw new RuntimeException(t);
 		}
@@ -730,16 +730,16 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		if (ke.hasOption('r')) {
 			// JSON "refresh":true - refresh and reload the menu
 			// Default value for afterParser, cf. refreshMenu().
-			long afterParser = 1500L;
+			long afterParser = 750L;
 			// Add 750ms for legacy devices with slower CPU
 			if ("Kindle2".equals(kualMenu.getConfig("model")) || "KindleDX".equals(kualMenu.getConfig("model")) || "KindleDXG".equals(kualMenu.getConfig("model")) || "Kindle3".equals(kualMenu.getConfig("model"))) {
-				afterParser += 750L;
+				afterParser += 375L;
 			}
 			// If we showed a custom status message, don't overwrite it!
 			if (internalStatus) {
-				refreshMenu(500L, afterParser, null);
+				refreshMenu(250L, afterParser, null);
 			} else {
-				refreshMenu(500L, afterParser, ke.label);
+				refreshMenu(250L, afterParser, ke.label);
 			}
 		}
 		if (ke.hasOption('d')) {
@@ -859,27 +859,27 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 					// in milliseconds, where
 					// before_action/after_action refer to the time KUAL
 					// *backgrounds* the user's action
-					// before_refresh/refresh (default 500 ms) it's the delay
+					// before_refresh/refresh (default 250 ms) it's the delay
 					// before tearing down the
-					// current menu (a <500 value is allowed but not
+					// current menu (a <250 value is allowed but not
 					// recommended)
-					// after_refresh (default 1500 ms) is the time that the
+					// after_refresh (default 750 ms) is the time that the
 					// parser takes to
-					// build a new cache (1500 ms is an average value)
+					// build a new cache (750 ms is an average value)
 
 					/*
 					 * Goal: display a fresh menu with just one screen update.
 					 * If we allowed more screen updates it would be enough to
 					 * just say: initializeState(); initializeUI(): new
-					 * MailboxProcessor(..., 1000, 1000, 10). But since we aim
+					 * MailboxProcessor(..., 500, 500, 10). But since we aim
 					 * at a single screen update more steps are involved.
 					 */
 
-					// Yield 500 ms to allow an extension to stage its menu
+					// Yield 250 ms to allow an extension to stage its menu
 					// change.
 					// Extension developers may set beforeParser to achieve a
 					// longer pause.
-					Thread.sleep(beforeParser > 0 ? beforeParser : 500);
+					Thread.sleep(beforeParser > 0 ? beforeParser : 250);
 
 					runParser(); // still sends the old cache while
 									// background-building a new one
@@ -904,7 +904,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 					// reaps a new cache one way or another - when it does the
 					// user sees another screen update
 					new MailboxProcessor(kualMenu, '1',
-							new ReloadMenuFromCache(), 0, 500, 10);
+							new ReloadMenuFromCache(), 0, 250, 10);
 				} catch (Throwable t) {
 					new KualLog().append(t.toString());
 					setStatus("Exception logged.");
@@ -917,6 +917,6 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			}
 		};
 		Object task = tmi.newTimerTask(runnable);
-		tmi.schedule(timer, task, 0L, 500L);
+		tmi.schedule(timer, task, 0L, 250L);
 	}
 }
