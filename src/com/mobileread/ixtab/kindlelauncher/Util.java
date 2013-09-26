@@ -26,7 +26,7 @@ public class Util {
 		String[] cmd = new String[] { "/usr/bin/awk", "-f", scriptName };
 		// If it is installed, use our own gawk binary, it's much faster.
 		if (new File("/mnt/us/extensions/gawk/bin/gawk").exists()) {
-			cmd = new String[] { "/mnt/us/extensions/gawk/bin/gawk", "-f", scriptName };
+			cmd = new String[] { "/mnt/us/extensions/gawk/bin/gawk", "--non-decimal-data", "-f", scriptName };
 		}
 
 		Process process = Runtime.getRuntime().exec(cmd, null);
