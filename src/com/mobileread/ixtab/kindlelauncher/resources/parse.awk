@@ -1,7 +1,7 @@
 #!/usr/bin/awk -f
-# aloop-v2.awk - version 20130920,a stepk
+# aloop-v2.awk - version 20130926,a stepk
 BEGIN {
-VERSION="20130920,a"
+VERSION="20130926,a"
 ERRORS = BAILOUT = CACHE_SENT = IN_MEMORY_CACHE_INVALID = PARSED_OK_COUNTER = 0
 SELF_BUTTONS_INSERT = SELF_BUTTONS_FILTER = SELF_BUTTONS_APPEND = ""
 if (1 < ARGC) {

@@ -1,4 +1,8 @@
 CHANGE LOG
+20130826,a
++ Use the custom gawk binary from the gawk extension if it's installed.
+  it seems to be roughly 4 times faster on my Touch :).
+
 20130820,a
 - Try to cleanup behind us on exit. Here be dragons!
   Please test and check that, especially, this:

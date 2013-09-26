@@ -731,7 +731,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			// JSON "refresh":true - refresh and reload the menu
 			// Default value for afterParser, cf. refreshMenu().
 			long afterParser = 750L;
-			// Add 750ms for legacy devices with slower CPU
+			// Add 375ms for legacy devices with slower CPU
 			if ("Kindle2".equals(kualMenu.getConfig("model")) || "KindleDX".equals(kualMenu.getConfig("model")) || "KindleDXG".equals(kualMenu.getConfig("model")) || "Kindle3".equals(kualMenu.getConfig("model"))) {
 				afterParser += 375L;
 			}
