@@ -785,7 +785,7 @@ function npath_padded(path) {
 return substr(path FFS, 1, NPATH_len)
 }
 function npath_reserved(path) {
-return "" == path ? sRESERVED : substring(path, 1, sRESERVED_len)
+return "" == path ? sRESERVED : substr(path, 1, sRESERVED_len)
 }
 function npath_wo_reserved(path,   x) {
 return substr(path,1+sRESERVED_len)

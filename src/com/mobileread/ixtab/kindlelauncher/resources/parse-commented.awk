@@ -1526,8 +1526,8 @@ function npath_put(path, # {{{ replace NPATH_MAP[path] (path as snpath or npath)
 #: ESTR
 function npath_reserved(path) { # {{{ if path return its reserved block else return a generic reserved block
 #uncomment below to TEST whether the reserved block is handled transparently as it should be
-#return "" == path ? sprintf("%02x",rand()*254) : substring(path, 1, sRESERVED_len)
-	return "" == path ? sRESERVED : substring(path, 1, sRESERVED_len)
+#return "" == path ? sprintf("%02x",rand()*254) : substr(path, 1, sRESERVED_len)
+	return "" == path ? sRESERVED : substr(path, 1, sRESERVED_len)
 }
 #}}}
 function npath_wo_reserved(path,   x) { # {{{ return path (snpath or npath) without reserved block
