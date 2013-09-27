@@ -1011,11 +1011,11 @@ x = npath_wo_reserved(snpath)
 y = npath_wo_reserved(last_action)
 return substr(x,1,length(x)-2) == substr(y,1,length(y)-2)
 }
-function work_record(sortable_record, options, level,snpath, name, action,
+function work_record(a_sortable_record, options, level,snpath, name, action,
 lvlsnpath) {
 lvlsnpath = level ":" npath_wo_reserved(snpath)
 return sprintf("%s%s"SEP"%s%s"SEP"%s"SEP"%s",
-sortable_record,
+a_sortable_record,
 "" == options ? 3 : 4,
 options,
 lvlsnpath, name, action)

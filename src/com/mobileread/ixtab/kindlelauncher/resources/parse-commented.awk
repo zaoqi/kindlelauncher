@@ -1848,14 +1848,14 @@ function submenu_pathQ(snpath, last_action,     x,y) { # {{{ does snpath refer t
 }
 #}}}
 
-function work_record(sortable_record, options, level,snpath, name, action, # {{{
+function work_record(a_sortable_record, options, level,snpath, name, action, # {{{
 	lvlsnpath) {
 	lvlsnpath = level ":" npath_wo_reserved(snpath)
 	return sprintf("%s%s"SEP"%s%s"SEP"%s"SEP"%s",
-		sortable_record, # fixed in 1st position!
+		a_sortable_record, # fixed in 1st position!
 		"" == options ? 3 : 4, # variable record size
 		options,
-	       	lvlsnpath, name, action)
+		lvlsnpath, name, action)
 		# collate()/menu2Dsplit() access these fields from the end, i.e. last, last-1, last-2, etc. xref VARIABLE_REC
 }
 # }}}
