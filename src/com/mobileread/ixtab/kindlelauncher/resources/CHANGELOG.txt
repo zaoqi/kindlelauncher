@@ -1,4 +1,8 @@
 CHANGE LOG
+20130827,a
+- Minor fixes to the parser to make it at least run on mawk, and throw a
+  couple of warnings less with gawk's lint check.
+
 20130826,a
 + Use the custom gawk binary from the gawk extension if it's installed.
   it seems to be roughly 4 times faster on my Touch :).
