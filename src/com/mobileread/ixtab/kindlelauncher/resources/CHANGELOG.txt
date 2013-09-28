@@ -1,4 +1,8 @@
 CHANGE LOG
+20130828,a
+- Make the menu refresh triggered by refresh:true faster by running only one
+  parser instance instead of two, potentially concurrently.
+
 20130827,a
 - Minor fixes to the parser to make it at least run on mawk, and throw a
   couple of warnings less with gawk's lint check.
