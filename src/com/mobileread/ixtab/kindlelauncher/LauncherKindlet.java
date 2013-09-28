@@ -228,7 +228,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			// Thereafter check the mailbox on each button event in
 			// actionPerformed().
 			new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(),
-					500, 500, 20); // steps 4,8
+					1000, 500, 20); // steps 4,8
 		} catch (Throwable t) {
 			throw new RuntimeException(t);
 		}
@@ -875,7 +875,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 					 * Goal: display a fresh menu with just one screen update.
 					 * If we allowed more screen updates it would be enough to
 					 * just say: initializeState(); initializeUI(): new
-					 * MailboxProcessor(..., 500, 500, 20). But since we aim
+					 * MailboxProcessor(..., 1000, 500, 20). But since we aim
 					 * at a single screen update more steps are involved.
 					 */
 
