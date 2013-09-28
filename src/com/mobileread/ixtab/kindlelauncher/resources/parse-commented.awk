@@ -105,7 +105,7 @@ BEGIN { #{{{
 	init()
 
 	if (0 == cache_send(CACHEPATH)) { # try sending cached config+menu
-		# why closing stdout ? {{{ xref UNBLOCK_KINDLET - TODO test sleep("20") on all platforms
+		# why closing stdout ? {{{ xref UNBLOCK_KINDLET
 		# Closing stdout unblocks the kindlet from its read loop, so it
 		# can initializeUI() and meet its 5000 ms timeout before java
 		# throws an exception. After closing stdout this script can
@@ -118,7 +118,10 @@ BEGIN { #{{{
 		# needs to runtime.exec() this script directly from AWK.
 		# Runtime.exec()ing /bin/ash to spawn /usr/bin/awk leaves
 		# the kindlet blocked while this script is sleeping.
-		# Tested on K5 only - TODO test sleep("20") on all platforms.
+		#
+		# xref NON_GNU_AWK:
+		# By default, GNU Awk doesn't allow closing stdout...
+		# We use a dirty patch in our gawk build to workaround that.
 		# }}}
 		close("/dev/stdout")
 		CACHE_SENT=1 # (CACHE_SENT == 1) <=> (! Kindlet is I/O blocked)
