@@ -113,16 +113,18 @@ BEGIN { #{{{
 		# Prove it: uncomment the sleep command below and ensure that
 		# KUAL.cache exists; then run the kindlet; it should show the
 		# menu while this script is sleeping.
-		#system("sleep 20")
 		#
 		# However, for the kindlet to I/O unblock and show the menu, java
-	       	# needs to runtime.exec() this script directly from AWK.
+		# needs to runtime.exec() this script directly from AWK.
 		# Runtime.exec()ing /bin/ash to spawn /usr/bin/awk leaves
 		# the kindlet blocked while this script is sleeping.
 		# Tested on K5 only - TODO test sleep("20") on all platforms.
 		# }}}
 		close("/dev/stdout")
 		CACHE_SENT=1 # (CACHE_SENT == 1) <=> (! Kindlet is I/O blocked)
+		#
+		#system("sleep 20")
+		#
 		# Asynchronous: Kindlet is not I/O blocked, continue through main loop while kindlet is showing GUI
 	} else {
 		config_send("/dev/stdout")
@@ -1975,7 +1977,7 @@ function get_model(    file,line,device) {#{{{ >>global MODEL; return MODEL or `
 }
 #}}}
 #: BSTR old method
-function get_model(    x, #{{{ >>global MODEL; return MODEL or ``
+function get_model_old(    x, #{{{ >>global MODEL; return MODEL or ``
 	y,z,xary,nxary,cpu_mod) {
 # assumes SLURP mode
 # adapted from https://github.com/koreader/koreader/blob/master/frontend/ui/device.lua#L9
