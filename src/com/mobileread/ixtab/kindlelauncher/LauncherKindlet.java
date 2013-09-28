@@ -899,9 +899,18 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 					new MailboxProcessor(kualMenu, '1',
 							new ReloadMenuFromCache(), afterParser, 0, 0);
 
+					/*
 					initializeState(); // now the parser is even more likely to
 										// send a fresh cache
 					// initializeState() also cleans up temporary files
+					*/
+					// NOTE: AFAICT, there's no need to run a second parser, especially
+					// since there's a good chance it will run concurrently with the
+					// still running previous one from runParser(), which makes things
+					// even slower...
+					// Just clear tempfiles, the previous ReloadMenuFromCache() already
+					// has consumed the new cache, or at worse the next one will.
+					cleanupTemporaryDirectory();
 
 					initializeUI(); // enables "hard" configuration changes such
 									// as number of items per page
