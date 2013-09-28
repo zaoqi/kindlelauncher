@@ -211,7 +211,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		 * 1. kindlet: spawn the parser then block waiting for input from the
 		 * parser. 2. parser: send the kindlet cached data so the kindlet can
 		 * quickly move on to initialize the UI. 3. kindlet: initialize UI and
-		 * display the menu. 4. kindlet: schedule a 10-time-repeat 1-second
+		 * display the menu. 4. kindlet: schedule a 20-time-repeat 500ms
 		 * timer task which checks for messages from the parser. 5. parser:
 		 * (while the kindlet is initializing the UI) parse menu files and
 		 * refresh the cache. 6: parser: if the fresh cache differs from the
@@ -224,11 +224,11 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			initializeState(); // step 1
 			initializeUI(); // step 3
 			// Monitor messages from backgrounded script. Monitoring ends in 10
-			// s.
+			// s. (20 * 500ms)
 			// Thereafter check the mailbox on each button event in
 			// actionPerformed().
 			new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(),
-					1000, 1000, 10); // steps 4,8
+					500, 500, 20); // steps 4,8
 		} catch (Throwable t) {
 			throw new RuntimeException(t);
 		}
@@ -875,7 +875,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 					 * Goal: display a fresh menu with just one screen update.
 					 * If we allowed more screen updates it would be enough to
 					 * just say: initializeState(); initializeUI(): new
-					 * MailboxProcessor(..., 1000, 1000, 10). But since we aim
+					 * MailboxProcessor(..., 500, 500, 20). But since we aim
 					 * at a single screen update more steps are involved.
 					 */
 
@@ -916,8 +916,10 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 									// as number of items per page
 					// reaps a new cache one way or another - when it does the
 					// user sees another screen update
+					// Try that for 5s (20 * 250ms), after that, we'll rely on
+					// actionPerformed or a keypress to trigger a refresh...
 					new MailboxProcessor(kualMenu, '1',
-							new ReloadMenuFromCache(), 0, 250, 10);
+							new ReloadMenuFromCache(), 0, 250, 20);
 				} catch (Throwable t) {
 					new KualLog().append(t.toString());
 					setStatus("Exception logged.");
