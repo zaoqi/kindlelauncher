@@ -6,24 +6,24 @@
 	<property file="build-local.properties"/>
 
 	<path id="classpath.jdk14">
-		<fileset dir="${build.classpath.jdk14}" includes="**/*.jar" />
+		<fileset dir="${build.classpath.jdk14}" includes="**/*.jar"/>
 	</path>
 
 	<path id="classpath.lib">
-		<fileset dir="lib" includes="**/*.jar" />
+		<fileset dir="lib" includes="**/*.jar"/>
 	</path>
 
 	<target name="clean">
-		<delete dir="${build.dir}" />
+		<delete dir="${build.dir}"/>
 	</target>
 
 	<target name="prepare">
-		<delete dir="${build.dir}" />
+		<delete dir="${build.dir}"/>
 		<mkdir dir="${build.dir}"/>
 	</target>
 
 	<target name="compile" depends="prepare, strip-parser">
-		<javac source="1.4" target="1.4" includeantruntime="false" bootclasspathref="classpath.jdk14" classpathref="classpath.lib" srcdir="src" destdir="${build.dir}" >
+		<javac source="1.4" target="1.4" includeantruntime="false" bootclasspathref="classpath.jdk14" classpathref="classpath.lib" srcdir="src" destdir="${build.dir}">
 			<include name="**/*.java"/>
 		</javac>
 	</target>
@@ -43,7 +43,7 @@
 
 	<target name="build-kdk" depends="compile, git.changelog">
 		<property name="file" value="${product.filename}-${kdk-version}.${product.extension}"/>
-		<delete file="${file}" />
+		<delete file="${file}"/>
 		<jar destfile="${file}">
 			<manifest>
 				<attribute name="Implementation-Title" value="${product.name}"/>
@@ -62,7 +62,7 @@
 
 			<!-- actual program logic files -->
 			<fileset dir="${build.dir}">
-				<include name="**/*.class" />
+				<include name="**/*.class"/>
 			</fileset>
 
 			<!-- jailbreak frontend, required -->
@@ -114,8 +114,8 @@
 		</exec>
 		<condition property="repository.version" value="${git.revision}" else="unknown">
 			<and>
-			<isset property="git.revision"/>
-			<length string="${git.revision}" trim="yes" length="0" when="greater"/>
+				<isset property="git.revision"/>
+				<length string="${git.revision}" trim="yes" length="0" when="greater"/>
 			</and>
 		</condition>
 	</target>
@@ -148,5 +148,5 @@
 		</exec>
 	</target>
 
-	<target name="dist" depends="build, clean" />
+	<target name="dist" depends="build, clean"/>
 </project>

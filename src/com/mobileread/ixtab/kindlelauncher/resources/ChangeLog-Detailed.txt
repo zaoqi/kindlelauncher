@@ -8,6 +8,8 @@ CHANGE LOG
   where we can be a bit more verbose than a commit log (or more
   concise/user-friendly).
   . Pushed git tags for all known releases
+- Tweak the format of the default status bar: use pipes to separate our three
+fields.
 
 20130828,a
 - Make the menu refresh triggered by refresh:true faster by running only one
