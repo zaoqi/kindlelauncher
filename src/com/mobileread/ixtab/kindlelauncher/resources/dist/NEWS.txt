@@ -10,8 +10,9 @@ CHANGE LOG
   . Pushed git tags for all known releases
   . Also add the date of the last commit to the version tag
 + Wrote a minimal dist script for packaging
-- Tweak the format of the default status bar: use a square bullet to separate
-  our three fields.
+- Tweak the format of the default status bar:
+    . Use a square bullet to separate our three fields.
+    . Use the nickname of the device instead of its full model name.
 
 20130828,a
 - Make the menu refresh triggered by refresh:true faster by running only one

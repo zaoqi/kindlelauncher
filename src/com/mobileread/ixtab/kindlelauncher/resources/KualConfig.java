@@ -58,6 +58,30 @@ public class KualConfig {
 		return version;
 	}
 
+	public String getModel() {
+		// Transform the full model name to its nickname
+		String model = get("model");
+		String modelnick = "K??";
+
+		if ("Kindle2".equals(model)) {
+			modelnick = "K2";
+		} else if ("KindleDX".equals(model)) {
+			modelnick = "DX";
+		} else if ("KindleDXG".equals(model)) {
+			modelnick = "DXG";
+		} else if ("Kindle3".equals(model)) {
+			modelnick = "K3";
+		} else if ("Kindle4".equals(model)) {
+			modelnick = "K4";
+		} else if ("KindleTouch".equals(model)) {
+			modelnick = "K5";
+		} else if ("KindlePaperWhite".equals(model)) {
+			modelnick = "PW";
+		}
+
+		return modelnick;
+	}
+
 	public String getMailboxPath() {
 		return mailboxPath;
 	}

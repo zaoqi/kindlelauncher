@@ -79,7 +79,7 @@
 #}}}
 
 BEGIN { #{{{
-	VERSION="@repository.version@-@repository.date@"
+	VERSION="@repository.version@ (@repository.date@)"
 
 	# usage 1: scan EXTENSIONDIR {{{
 	#      awk -f aloop-v2.awk < /dev/null

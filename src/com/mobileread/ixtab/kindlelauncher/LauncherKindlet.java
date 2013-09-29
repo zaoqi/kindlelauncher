@@ -595,7 +595,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		if (null != status) {
 			setStatus("Entries " + (viewOffset + 1) + " - " + end + " of "
 					+ viewList.size() + " " + BULLET + " " + kualMenu.getVersion() + " " + BULLET + " "
-					+ kualMenu.getConfig("model"));
+					+ kualMenu.getModel());
 		}
 		setBreadcrumb(null == status && enableButtons ? (viewOffset + 1) + "-"
 				+ end + "/" + viewList.size() : null, null);
@@ -735,7 +735,8 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 			// Default value for afterParser, cf. refreshMenu().
 			long afterParser = 750L;
 			// Add 750ms for legacy devices with slower CPU
-			if ("Kindle2".equals(kualMenu.getConfig("model")) || "KindleDX".equals(kualMenu.getConfig("model")) || "KindleDXG".equals(kualMenu.getConfig("model")) || "Kindle3".equals(kualMenu.getConfig("model"))) {
+			String model = kualMenu.getModel();
+			if ("K2".equals(model) || "DX".equals(model) || "DXG".equals(model) || "K3".equals(model)) {
 				afterParser += 750L;
 			}
 			// If we showed a custom status message, don't overwrite it!

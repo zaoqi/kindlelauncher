@@ -68,9 +68,13 @@ public class KualMenu {
 	public String getConfig(String name) {
 		return kualConfig.get(name);
 	}
-	
+
 	public String getVersion() {
 		return kualConfig.getVersion();
+	}
+
+	public String getModel() {
+		return kualConfig.getModel();
 	}
 
 	public String getMailboxPath() {
