@@ -22,19 +22,22 @@
 		<mkdir dir="${build.dir}"/>
 	</target>
 
-	<target name="compile" depends="prepare">
+	<target name="compile" depends="prepare, inject-git.revision">
 		<javac source="1.4" target="1.4" includeantruntime="false" bootclasspathref="classpath.jdk14" classpathref="classpath.lib" srcdir="src" destdir="${build.dir}" >
 			<include name="**/*.java"/>
-   		</javac>
+		</javac>
 	</target>
 
 	<target name="build" depends="compile">
+		<antcall target="restore-kualconfig"/>
 		<antcall target="build-kdk">
-		        <param name="kdk-version" value="1.0"/>
-	    </antcall>
+			<param name="kdk-version" value="1.0"/>
+		</antcall>
+		<antcall target="restore-kualconfig"/>
 		<antcall target="build-kdk">
-	        <param name="kdk-version" value="2.0"/>
-	    </antcall>
+			<param name="kdk-version" value="2.0"/>
+		</antcall>
+		<antcall target="restore-kualconfig"/>
 	</target>
 
 	<target name="build-kdk" depends="compile">
@@ -76,6 +79,7 @@
 				<exclude name="**/resources/README-tool.txt"/>
 				<exclude name="**/resources/parse-commented.awk"/>
 				<exclude name="**/resources/KUAL.cfg"/>
+				<exclude name="**/resources/KualConfig.java.tpl"/>
 			</fileset>
 			<!-- "cover" icon -->
 			<fileset dir=".">
@@ -85,6 +89,43 @@
 		<signjar jar="${file}" keystore="${sign.keystore.file}" storepass="${sign.keystore.password}" alias="dk${sign.aliases}"/>
 		<signjar jar="${file}" keystore="${sign.keystore.file}" storepass="${sign.keystore.password}" alias="di${sign.aliases}"/>
 		<signjar jar="${file}" keystore="${sign.keystore.file}" storepass="${sign.keystore.password}" alias="dn${sign.aliases}"/>
+	</target>
+
+	<!-- Get a pretty git version :). Cf. http://stackoverflow.com/questions/2974106 -->
+	<available file=".git" type="dir" property="git.present"/>
+
+	<target name="git.revision" description="Store git revision in ${repository.version}" if="git.present">
+		<exec executable="git" outputproperty="git.revision" failifexecutionfails="false" errorproperty="">
+			<arg value="describe"/>
+			<arg value="--tags"/>
+			<arg value="--always"/>
+			<arg value="HEAD"/>
+		</exec>
+		<condition property="repository.version" value="${git.revision}" else="unknown">
+			<and>
+			<isset property="git.revision"/>
+			<length string="${git.revision}" trim="yes" length="0" when="greater"/>
+			</and>
+		</condition>
+	</target>
+
+	<target name="backup-kualconfig" description="Backup KualConfig.java">
+		<copy file="src/com/mobileread/ixtab/kindlelauncher/resources/KualConfig.java" tofile="src/com/mobileread/ixtab/kindlelauncher/resources/KualConfig.java.tpl" overwrite="yes"/>
+	</target>
+
+	<target name="inject-git.revision" depends="git.revision, backup-kualconfig" description="Inject git revision in KualConfig.java">
+		<copy file="src/com/mobileread/ixtab/kindlelauncher/resources/KualConfig.java.tpl" tofile="src/com/mobileread/ixtab/kindlelauncher/resources/KualConfig.java" overwrite="yes">
+			<filterchain>
+				<replacetokens>
+					<token key="repository.version" value="${repository.version}"/>
+				</replacetokens>
+			</filterchain>
+		</copy>
+	</target>
+
+	<target name="restore-kualconfig" description="Restore KualConfig.java">
+		<copy file="src/com/mobileread/ixtab/kindlelauncher/resources/KualConfig.java.tpl" tofile="src/com/mobileread/ixtab/kindlelauncher/resources/KualConfig.java" overwrite="yes"/>
+		<delete file="src/com/mobileread/ixtab/kindlelauncher/resources/KualConfig.java.tpl"/>
 	</target>
 
 	<target name="dist" depends="build, clean" />

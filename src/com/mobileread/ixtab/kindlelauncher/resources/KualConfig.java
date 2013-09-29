@@ -55,7 +55,7 @@ public class KualConfig {
 	}
 
 	public String getVersion() {
-		return version;
+		return version + " + @repository.version@";
 	}
 
 	public String getMailboxPath() {
