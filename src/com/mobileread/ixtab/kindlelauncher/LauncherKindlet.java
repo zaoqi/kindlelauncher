@@ -69,11 +69,12 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private String commandToRunOnExit = null;
 	private String dirToChangeToOnExit = null;
 
-	private final String CROSS = "\u00D7"; // X - match parser script
-	private final String ATTN = "\u25CF"; // O - match parser script
-	private final String RARROW = "\u25B6";
-	private final String LARROW = "\u25C0";
-	private final String UARROW = "\u25B2";
+	private final String CROSS = "\u00D7"; // × - match parser script
+	private final String ATTN = "\u25CF"; // ● - match parser script
+	private final String RARROW = "\u25B6"; // ▶
+	private final String LARROW = "\u25C0"; // ◀
+	private final String UARROW = "\u25B2"; // ▲
+	private final String BULLET = "\u25AA"; // ▪
 	private final String PATH_SEP = "/";
 
 	private KeyListener keyListener = new KeyAdapter() {
@@ -593,7 +594,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		boolean enableButtons = getPageSize() < viewList.size();
 		if (null != status) {
 			setStatus("Entries " + (viewOffset + 1) + " - " + end + " of "
-					+ viewList.size() + " | " + kualMenu.getVersion() + " | "
+					+ viewList.size() + " " + BULLET + " " + kualMenu.getVersion() + " " + BULLET + " "
 					+ kualMenu.getConfig("model"));
 		}
 		setBreadcrumb(null == status && enableButtons ? (viewOffset + 1) + "-"
