@@ -22,8 +22,8 @@ cd "${WD}"
 # Clean dist directory...
 rm -f ../../../../../../../dist/*.tar.xz
 
-# make Windows users happy...
-dos2unix -k ../dist/*
+# Make Windows users happy...
+unix2dos -k ../dist/*.txt
 
 # And package it (flatten the directory structure)
 tar --transform 's,^.*/,,S' --show-transformed-names -cvJf ../../../../../../../dist/KUAL-${KUAL_VERSION}-${KUAL_DATE}.tar.xz ../dist/* ../../../../../../../*.azw2 ../../../../../../../*.txt
