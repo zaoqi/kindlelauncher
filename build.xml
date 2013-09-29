@@ -22,22 +22,23 @@
 		<mkdir dir="${build.dir}"/>
 	</target>
 
-	<target name="compile" depends="prepare, inject-git.revision">
+	<target name="compile" depends="prepare, strip-parser">
 		<javac source="1.4" target="1.4" includeantruntime="false" bootclasspathref="classpath.jdk14" classpathref="classpath.lib" srcdir="src" destdir="${build.dir}" >
 			<include name="**/*.java"/>
 		</javac>
 	</target>
 
 	<target name="build" depends="compile">
-		<antcall target="restore-kualconfig"/>
+		<antcall target="restore-parser"/>
 		<antcall target="build-kdk">
 			<param name="kdk-version" value="1.0"/>
 		</antcall>
-		<antcall target="restore-kualconfig"/>
+		<antcall target="restore-parser"/>
 		<antcall target="build-kdk">
 			<param name="kdk-version" value="2.0"/>
 		</antcall>
-		<antcall target="restore-kualconfig"/>
+		<antcall target="restore-parser"/>
+		<antcall target="clean-parser"/>
 	</target>
 
 	<target name="build-kdk" depends="compile">
@@ -79,7 +80,7 @@
 				<exclude name="**/resources/README-tool.txt"/>
 				<exclude name="**/resources/parse-commented.awk"/>
 				<exclude name="**/resources/KUAL.cfg"/>
-				<exclude name="**/resources/KualConfig.java.tpl"/>
+				<exclude name="**/resources/parse-commented.awk.tpl"/>
 			</fileset>
 			<!-- "cover" icon -->
 			<fileset dir=".">
@@ -89,6 +90,15 @@
 		<signjar jar="${file}" keystore="${sign.keystore.file}" storepass="${sign.keystore.password}" alias="dk${sign.aliases}"/>
 		<signjar jar="${file}" keystore="${sign.keystore.file}" storepass="${sign.keystore.password}" alias="di${sign.aliases}"/>
 		<signjar jar="${file}" keystore="${sign.keystore.file}" storepass="${sign.keystore.password}" alias="dn${sign.aliases}"/>
+	</target>
+
+	<!-- Strip the parser -->
+	<target name="strip-parser" depends="inject-git.revision" description="Strip the parser">
+		<exec executable="src/com/mobileread/ixtab/kindlelauncher/resources/tool/stripit.sh" failifexecutionfails="true" errorproperty=""/>
+	</target>
+
+	<target name="clean-parser" description="Remove the stripped parser">
+		<delete file="src/com/mobileread/ixtab/kindlelauncher/resources/parse.awk"/>
 	</target>
 
 	<!-- Get a pretty git version :). Cf. http://stackoverflow.com/questions/2974106 -->
@@ -109,12 +119,12 @@
 		</condition>
 	</target>
 
-	<target name="backup-kualconfig" description="Backup KualConfig.java">
-		<copy file="src/com/mobileread/ixtab/kindlelauncher/resources/KualConfig.java" tofile="src/com/mobileread/ixtab/kindlelauncher/resources/KualConfig.java.tpl" overwrite="yes"/>
+	<target name="backup-parser" description="Backup parse-commented.awk">
+		<copy file="src/com/mobileread/ixtab/kindlelauncher/resources/parse-commented.awk" tofile="src/com/mobileread/ixtab/kindlelauncher/resources/parse-commented.awk.tpl" overwrite="yes"/>
 	</target>
 
-	<target name="inject-git.revision" depends="git.revision, backup-kualconfig" description="Inject git revision in KualConfig.java">
-		<copy file="src/com/mobileread/ixtab/kindlelauncher/resources/KualConfig.java.tpl" tofile="src/com/mobileread/ixtab/kindlelauncher/resources/KualConfig.java" overwrite="yes">
+	<target name="inject-git.revision" depends="git.revision, backup-parser" description="Inject git revision in parse-commented.awk">
+		<copy file="src/com/mobileread/ixtab/kindlelauncher/resources/parse-commented.awk.tpl" tofile="src/com/mobileread/ixtab/kindlelauncher/resources/parse-commented.awk" overwrite="yes">
 			<filterchain>
 				<replacetokens>
 					<token key="repository.version" value="${repository.version}"/>
@@ -123,9 +133,9 @@
 		</copy>
 	</target>
 
-	<target name="restore-kualconfig" description="Restore KualConfig.java">
-		<copy file="src/com/mobileread/ixtab/kindlelauncher/resources/KualConfig.java.tpl" tofile="src/com/mobileread/ixtab/kindlelauncher/resources/KualConfig.java" overwrite="yes"/>
-		<delete file="src/com/mobileread/ixtab/kindlelauncher/resources/KualConfig.java.tpl"/>
+	<target name="restore-parser" description="Restore parse-commented.awk">
+		<copy file="src/com/mobileread/ixtab/kindlelauncher/resources/parse-commented.awk.tpl" tofile="src/com/mobileread/ixtab/kindlelauncher/resources/parse-commented.awk" overwrite="yes"/>
+		<delete file="src/com/mobileread/ixtab/kindlelauncher/resources/parse-commented.awk.tpl"/>
 	</target>
 
 	<target name="dist" depends="build, clean" />

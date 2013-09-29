@@ -1,5 +1,5 @@
 #!/usr/bin/awk -f
-# aloop-v2.awk - version 20130928,a stepk
+# aloop-v2.awk
 #!/bin/busybox awk -f on kindle e-ink devices .or. /usr/bin/awk
 #!/bin/awk on puppy linux
 #
@@ -79,7 +79,7 @@
 #}}}
 
 BEGIN { #{{{
-	VERSION="20130928,a"
+	VERSION="@repository.version@"
 
 	# usage 1: scan EXTENSIONDIR {{{
 	#      awk -f aloop-v2.awk < /dev/null
