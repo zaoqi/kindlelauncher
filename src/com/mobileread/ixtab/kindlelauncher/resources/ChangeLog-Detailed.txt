@@ -37,6 +37,8 @@ CHANGE LOG
     2. in ./resources run ./tool/strip.awk -v AWK=1 parse-commented.awk > parse.awk
     3. compile the project
 
+**** v2.1 ****
+
 20130719,a
 + Fix [#6] & [#5]:
   Implemented a set of keyboard shortcuts on devices without a touchscreen:
@@ -62,6 +64,8 @@ CHANGE LOG
 - Fix [#8]: Don't overwrite a custom status text if the button requested a refresh
 - Fix [#10]: Apply an if clause to a submenu itself, too
 # Tweaked afterParser default value a bit (+50%) on armv6 devices (K2/DX/3).
+
+**** v2.0 ****
 
 20130701,a
 - Fix: add missing -m RPN operator (reported by NiLuJe)

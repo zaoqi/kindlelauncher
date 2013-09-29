@@ -4,7 +4,7 @@
 #
 ##
 
-# Handle being called from a diiferent directory...
+# Handle being called from a different directory (ie. by ant)...
 WD="${0%/*}"
 
 echo "y" | ${WD}/strip.awk -v AWK=1 ${WD}/../parse-commented.awk > ${WD}/../parse.awk
