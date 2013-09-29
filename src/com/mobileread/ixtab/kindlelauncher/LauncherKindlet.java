@@ -593,7 +593,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		boolean enableButtons = getPageSize() < viewList.size();
 		if (null != status) {
 			setStatus("Entries " + (viewOffset + 1) + " - " + end + " of "
-					+ viewList.size() + " build " + kualMenu.getVersion() + " "
+					+ viewList.size() + " | " + kualMenu.getVersion() + " | "
 					+ kualMenu.getConfig("model"));
 		}
 		setBreadcrumb(null == status && enableButtons ? (viewOffset + 1) + "-"
