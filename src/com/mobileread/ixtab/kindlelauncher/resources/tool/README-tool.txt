@@ -10,3 +10,11 @@ strip.awk
 		3. compile the project
 	For tool help run strip.awk with no options.
 	Adopt the best practice listed therein.
+
+NB: This is now automatically done during the build :).
+
+stripit.sh
+	Used by the buildsystem to strip the commented parser.
+
+shipit.sh
+	Used by the buildsystem to package the project for release.
