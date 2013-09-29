@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# Simple wrapper around the strip awk script to make it easier to call from oan ant task
+# Simple wrapper around the strip awk script to make it easier to call from an ant task
 #
 ##
 
