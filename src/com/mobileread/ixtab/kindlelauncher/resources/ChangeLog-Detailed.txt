@@ -19,6 +19,8 @@ CHANGE LOG
     2. actually does what it's supposed to
     3. doesn't break suicidal buttons (exitmenu: true)
 
+**** v2.2 ****
+
 20130816,a
 - Try to create the extensions folder & a blank config file if we can't find a
   proper config file at init.
