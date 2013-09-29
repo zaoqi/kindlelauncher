@@ -1,4 +1,14 @@
 CHANGE LOG
+20130829
++ Multiple tweaks to the build system:
+  . Automatically strip the commented parser (dropped the stripped version
+  from the repo)
+  . Use a git-describe tag instead of a manual date as the version tag
+  . Bundle a ChangeLog built with git log (renamed this manual ChangeLog,
+  where we can be a bit more verbose than a commit log (or more
+  concise/user-friendly).
+  . Pushed git tags for all known releases
+
 20130828,a
 - Make the menu refresh triggered by refresh:true faster by running only one
   parser instance instead of two, potentially concurrently.
