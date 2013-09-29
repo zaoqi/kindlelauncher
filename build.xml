@@ -111,6 +111,14 @@
 			<arg value="--tags"/>
 			<arg value="--always"/>
 			<arg value="HEAD"/>
+			<!-- Replace the first dash by a dot -->
+			<redirector>
+				<outputfilterchain>
+					<tokenfilter>
+						<replaceregex pattern="-" replace="."/>
+					</tokenfilter>
+				</outputfilterchain>
+			</redirector>
 		</exec>
 		<condition property="repository.version" value="${git.revision}" else="unknown">
 			<and>
