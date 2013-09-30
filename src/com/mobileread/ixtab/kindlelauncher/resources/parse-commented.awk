@@ -1,5 +1,5 @@
 #!/usr/bin/awk -f
-# aloop-v2.awk
+# parse-commented.awk
 #!/bin/busybox awk -f on kindle e-ink devices .or. /usr/bin/awk
 #!/bin/awk on puppy linux
 #
@@ -11,7 +11,7 @@
 #
 # Usage {{{
 # alias PRE='rm -f /var/tmp/KUAL.cache'
-# PRE; awk [--non-decimal-data] [-v OPT_FMT=tbl|tab|%s|multiline] [-v OPT_SORT=ABC|ABC!|123] -f aloop-v2.awk </dev/null
+# PRE; awk [--non-decimal-data] [-v OPT_FMT=tbl|tab|%s|multiline] [-v OPT_SORT=ABC|ABC!|123] -f parse-commented.awk </dev/null
 #    OPT_SORT overrides KUAL.cfg:KUAL_sort_mode for the current run.
 #}}}
 # Limitations {{{
@@ -26,8 +26,8 @@
 #}}}
 # Testing aids {{{
 # alias FND='y=`find /mnt/us/extensions -follow -name \*.json`'
-# test cmd 1: PRE;awk -v OPT_FMT=tbl -f aloop-v2.awk 2>/dev/stdout </dev/null ; echo $?
-# test cmd 2: PRE;FND;{ echo "$y"; echo; } | awk -v OPT_FMT=tbl -v OPT_SORT=ABC -f aloop-v2.awk 2>/dev/stdout ; echo $?
+# test cmd 1: PRE;awk -v OPT_FMT=tbl -f parse-commented.awk 2>/dev/stdout </dev/null ; echo $?
+# test cmd 2: PRE;FND;{ echo "$y"; echo; } | awk -v OPT_FMT=tbl -v OPT_SORT=ABC -f parse-commented.awk 2>/dev/stdout ; echo $?
 #}}}
 # Overview {{{
 # 1. From menu syntax (JSON) {{{
@@ -79,12 +79,15 @@
 #}}}
 
 BEGIN { #{{{
-	VERSION="@repository.version@ (@repository.date@)"
+	# Append the first character of the awk binary used to interpret this script.
+	# This gives the user an indication of whether he's using busybox awk or GNU awk.
+	callern=split(ARGV[0], callerary, "/")
+	VERSION="@repository.version@ (@repository.date@," substr(callerary[callern], 0 , 1) ")"
 
 	# usage 1: scan EXTENSIONDIR {{{
-	#      awk -f aloop-v2.awk < /dev/null
+	#      awk -f parse-commented.awk < /dev/null
 	# usage 2: filepathnames from stdin
-	# ex.a { echo -e "file1\nfile2\n\n"; cat file1 file2 ... ;}| awk -f aloop-v2.awk
+	# ex.a { echo -e "file1\nfile2\n\n"; cat file1 file2 ... ;}| awk -f parse-commented.awk
 	#}}}
 
 	ERRORS = BAILOUT = CACHE_SENT = IN_MEMORY_CACHE_INVALID = PARSED_OK_COUNTER = 0
@@ -92,7 +95,7 @@ BEGIN { #{{{
 	if (1 < ARGC) {
 		print "usage!" > "/dev/stderr"
 		BAILOUT=1
-	       	exit # skip the main loop
+		exit # skip the main loop
 	}
 
 	while (0 < getline < "/dev/stdin") {
