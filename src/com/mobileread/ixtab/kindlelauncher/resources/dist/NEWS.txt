@@ -1,5 +1,8 @@
 CHANGE LOG
-20130829
+20131009
++ Detect the PaperWhite 2/2013 as KindlePaperWhite2 (PW2).
+
+20130929
 + Multiple tweaks to the build system:
   . Automatically strip the commented parser (dropped the stripped version
   from the repo)
@@ -14,22 +17,22 @@ CHANGE LOG
     . Use a square bullet to separate our three fields.
     . Use the nickname of the device instead of its full model name.
 
-20130828,a
+20130928,a
 - Make the menu refresh triggered by refresh:true faster by running only one
   parser instance instead of two, potentially concurrently.
 
-20130827,a
+20130927,a
 - Minor fixes to the parser to make it at least run on mawk, and throw a
   couple of warnings less with gawk's lint check.
 - Check for mailbox notifications on keypresses, too.
 
-20130826,a
+20130926,a
 + Use the custom gawk binary from the gawk extension if it's installed.
   it seems to be roughly 4 times faster on my Touch :).
   The extension is available here:
   http://www.mobileread.com/forums/showpost.php?p=2636883&postcount=59
 
-20130820,a
+20130920,a
 - Try to cleanup behind us on exit. Here be dragons!
   Please test and check that, especially, this:
     1. doesn't utterly break KUAL

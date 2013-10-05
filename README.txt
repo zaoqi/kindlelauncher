@@ -74,6 +74,11 @@ Generally the kindlet will exit when you click a choice
 Currently just press the HOME key if you have one or the < icon.
 Or select an item, the menu is now self-terminating.
 
+NOTE:
+Additionally, you can also install a custom awk build (GNU awk), making the
+parser around two times faster, by installing gawk with this extension:
+http://www.mobileread.com/forums/showpost.php?p=2636883&postcount=59
+
 Credits.
 Twobob Ixtab Stepk Niluje
 Thanks to KNC1 for download authentication support.
