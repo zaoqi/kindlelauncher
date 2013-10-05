@@ -1,5 +1,5 @@
 CHANGE LOG
-20131009
+20131005
 + Detect the PaperWhite 2/2013 as KindlePaperWhite2 (PW2).
 
 20130929
