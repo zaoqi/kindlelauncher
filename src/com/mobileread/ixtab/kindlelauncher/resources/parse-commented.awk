@@ -1977,7 +1977,7 @@ function get_model(    file,line,device) {#{{{ >>global MODEL; return MODEL or `
 			: device ~ /^(0E)|(23)$/ ? "Kindle4" \
 			: device ~ /^(0F)|(11)|(10)|(12)$/ ? "KindleTouch" \
 			: device ~ /^(24)|(1B)|(1D)|(1F)|(1C)|(20)$/ ? "KindlePaperWhite" \
-			: device ~ /^(D4)|(5A)|(D5)|(D7)|(D8)$/ ? "KindlePaperWhite2" \
+			: device ~ /^(D4)|(5A)|(D5)|(D7)|(D8)|(F2)$/ ? "KindlePaperWhite2" \
 			: "Unknown"
 	}
 	return MODEL
