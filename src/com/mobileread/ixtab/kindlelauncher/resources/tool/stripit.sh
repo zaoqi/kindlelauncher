@@ -8,3 +8,4 @@
 WD="${0%/*}"
 
 echo "y" | ${WD}/gawk.sh ${WD}/strip.awk -v AWK=1 ${WD}/../parse-commented.awk > ${WD}/../parse.awk
+cp ${WD}/../parse.awk ${WD}/../parse.awk.produced
