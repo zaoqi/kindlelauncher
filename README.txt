@@ -3,7 +3,7 @@
 ##############################################
 http://www.mobileread.com/forums/showthread.php?p=2389078
 
-Supporting the DX, k2, k2i, K3 Keyboard, Kindle 4 Range, Kindle Touch's and P/W
+Supporting the DX, K2, K2i, K3 Keyboard, Kindle 4, Kindle Touch, PW & PW2.
 
 NOTE: Flashed 3.2.1 DX's may fail to handle kindlets properly.
 There is a workaround tested by wakawakawaka (thanks to him for the DX testing)
@@ -43,10 +43,8 @@ Jailbreak:
 Go find the relevant Jailbreak for your device.
 Links are provided on the main thread.
 
-Kindlet Jailbreak, Shared Developer Keys:
-
-Apply the right pair from the prerequisites.zip (Link to the thread)
-http://www.mobileread.com/forums/attachment.php?attachmentid=100138&d=1359291514)
+Mobileread Kindlet Kit:
+http://www.mobileread.com/forums/showthread.php?t=233932
 
 Running the kindlet:
 Depending on your device:
@@ -64,6 +62,8 @@ It should read thru the /mnt/us/extensions folder and build an extension list.
 If you have NO extensions? It will show a message telling you that.
 You then select a button to run the relevant command.
 Paginated results are provided.
+If the device shouts at you about keys, developer access, a testing device or a jailbreak,
+you forgot to install the Mobileread Kindlet Kit ;).
 
 NOTE: /mnt/us/extensions is simply a folder called "extensions"
 a normal folder you can access when you connect via normal USB.
