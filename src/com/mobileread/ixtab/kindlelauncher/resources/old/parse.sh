@@ -4,20 +4,20 @@ VERSION="20130412,a"
 usage () {
 local -
 }
-set -f 
-readonly EXTENSIONDIR="/mnt/us/extensions" 
+set -f
+readonly EXTENSIONDIR="/mnt/us/extensions"
 readonly PRODUCTNAME="KUAL"
-readonly CONFIGFILE="$PRODUCTNAME.cfg" 
+readonly CONFIGFILE="$PRODUCTNAME.cfg"
 readonly SEPARATOR=`printf "\x01"`
 EXITSTATUS=0
 readonly SCREAM_LOG="/var/tmp/$PRODUCTNAME.log"
-alias scream="echo >> \"$SCREAM_LOG\"" 
+alias scream="echo >> \"$SCREAM_LOG\""
 case " $* " in
   *" -l "*)
-     opt_log=1; 
-     alias log='echo >&2'" ${0##*/}: " 
+     opt_log=1;
+     alias log='echo >&2'" ${0##*/}: "
   ;;
-  *) alias log='echo >/dev/null ' 
+  *) alias log='echo >/dev/null '
   ;;
 esac
 readonly WSP_IFS=`printf "\x20\x09\x0A\x0D"`
@@ -28,12 +28,12 @@ readonly SPC=' '
 readonly LT='<'
 readonly GT='>'
 readonly TAB=`printf "\x09"`
-readonly k_action=0x00  
-readonly k_priority=0x01 
+readonly k_action=0x00
+readonly k_priority=0x01
 readonly k_params=0x02
 readonly k_exitmenu=0x03
 readonly k_hidden=0x04
-readonly k_name=0x05 
+readonly k_name=0x05
 readonly k_items=0xff # don't change
 readonly RESERVED=0xff
 alias sed='/bin/busybox sed'
@@ -54,7 +54,7 @@ FOR CHANGES TO TAKE EFFECT"
 enStoreButtonUnchanged="
 STORE BUTTON UNCHANGED
 ANOTHER APP ALREADY HOLDS IT"
-XenErrNotInstalled="$PRODUCTNAME incomplete install." 
+XenErrNotInstalled="$PRODUCTNAME incomplete install."
 readonly MAX_LABEL_LEN=40
 XenErrConfig="Config"
 XenErrSyntax="Syntax"
@@ -65,10 +65,10 @@ screen_msg () {
   case "$1" in -lm=[0-9]|-lm=[0-9][0-9]) col=${1#-lm=} ; shift ;; esac
   case "$1" in -wo) wo=1 ; shift ;; esac
   msg="$@"
-  caps=`eips -i 2>/dev/null` || return 
+  caps=`eips -i 2>/dev/null` || return
   set -- ${caps#*Variable framebuffer info}
   if [[ 0 = $wo ]]; then
-    local xres=$2 
+    local xres=$2
     eips -d l=00,w=$xres,h=104 -x 0 -y 148 2>/dev/null 1>&2
     eips -d l=ff,w=$xres,h=100 -x 0 -y 150 2>/dev/null 1>&2
     usleep 25000
@@ -78,7 +78,7 @@ screen_msg () {
   printf "%s\n" "$msg" | while read line; do
     [[ $((++i)) -le 4 ]] || break
     case "$line" in
-      -*) line=${line##-} ;; 
+      -*) line=${line##-} ;;
     esac
     eips ${col:-5} $((row++)) "${line}" 2>/dev/null 1>&2
   done
@@ -143,7 +143,7 @@ unset XSECT
 case " $* " in
 *" -x "*) while [[ "$1" != -x ]]; do shift; done; shift;
 case "$1" in
-0) shift; 
+0) shift;
 ;;
 1) shift; screen_msg "$@"; exit ;;
 2) shift
@@ -152,14 +152,14 @@ case "$1" in
   dbus-send --system /default com.lab126.powerd.resuming int32:1
   exit
 ;;
-3) test_applet install; exit $? 
+3) test_applet install; exit $?
 ;;
 esac
 esac
 script_full_path () {
   local pth=$(2>/dev/null cd "${0%/*}" >&2; pwd -P)
   [[ "-p" = "$1" ]] || pth=$pth/${0##*/}
-  echo -n "$pth" 
+  echo -n "$pth"
 }
 config_full_path () {
   local - IFS=: p cfp= a1=$1
@@ -180,7 +180,7 @@ clean_up_previous_runs () {
   case "$pth/" in */tmp/*|*/temp/*) true ;; *) return ;; esac
   local x me=$1 name=${1##*/} suf glob
   suf="${name##*.}"; [[ -n "$suf" ]] && suf=".$suf"
-  glob="$pth/${name%-*}-*${suf}" 
+  glob="$pth/${name%-*}-*${suf}"
   log "clean-up glob($glob)=\"`echo ${glob}`\""
   IFS=${NO_WSP}
   for x in `printf "%s\n" ${glob}`; do [[ "$x" = "$me" ]] || rm -f "$x" 2>/dev/null; done
@@ -190,33 +190,33 @@ exec_self_menu() {
   set -- $*
   IFS=${WSP_IFS}
   case $1 in
-  1) 
+  1)
     local verb=$2 btnpath=`store_button_filepath` bak
-    [[ -e "$btnpath" ]] || return 
-    bak=$btnpath.KUAL_bak 
+    [[ -e "$btnpath" ]] || return
+    bak=$btnpath.KUAL_bak
     case $verb in
-      Restore) [[ -e "$bak" ]] || return 
+      Restore) [[ -e "$bak" ]] || return
         mntroot rw && mv -f "$bak" "$btnpath"
         mntroot ro
-        screen_msg "$enStoreButtonRestored" 
+        screen_msg "$enStoreButtonRestored"
       ;;
-      Replace) [[ -e "$bak" ]] && return 
+      Replace) [[ -e "$bak" ]] && return
         local needle='app://com.lab126.store'
         if ! grep -q -m 1 -F "$needle" "$btnpath"; then
           screen_msg "$enStoreButtonUnchanged"
           return
         fi
         local repl=`KUAL_filepath`
-        [[ -e "$repl" ]] || return 
+        [[ -e "$repl" ]] || return
         if mntroot rw && mv "$btnpath" "$bak"; then
           sed -e "s~\([\"']\)$needle\(['\"]\)~\1file://$repl\2~" "$bak" > "$btnpath"
           mntroot ro
-          screen_msg "$enStoreButtonReplaced" 
+          screen_msg "$enStoreButtonReplaced"
         fi
       ;;
     esac
   ;;
-  2) 
+  2)
     local opt=$2 config=`config_full_path create` newtext=''
     IFS=${NO_WSP}
     newtext=$(awk '
@@ -230,10 +230,10 @@ exec_self_menu() {
 	{print}
 	END {exit NOT_FOUND}
 	' "$config" || echo KUAL_options=\"$opt\"
-    ) 
+    )
     [ 0 != ${#newtext} ] && echo "$newtext" > "$config"
   ;;
-  3|99) 
+  3|99)
   ;;
   esac
 }
@@ -244,7 +244,7 @@ store_button_filepath() {
 KUAL_filepath() {
   local -
   set +f
-  set -- `echo /mnt/us/documents/KindleLauncher*.azw2`
+  set -- `echo /mnt/us/documents/KUAL-KDK-*.azw2`
   [[ -e "$1" ]] && echo -n "$1"
 }
 EMIT_ERROR_COUNT=0
@@ -263,7 +263,7 @@ for opt in "$@"; do
   case "$opt" in
     -e=*) opt_execmenu=${opt#*=} ;;
     -h|--help) usage >&2; exit ;;
-    -l) ;; 
+    -l) ;;
     -p=*)  opt_formatter=${opt#*=} ;;
     -s=*)  x=${opt#*=}
       case "$x" in
@@ -290,12 +290,12 @@ SCRIPTPATH=`script_full_path`
 if [[ -e "$CONFIGPATH" ]]; then
   if ! source "$CONFIGPATH"; then
     emit_error 1 XenErrConfig "$CONFIGPATH"
-    KUAL_options='' 
+    KUAL_options=''
   fi
 fi
 until [ $max_errors -lt 1 ]; do
   if [[ \( 0 = $# -a -z "$KUAL_options" \) -o \( 1 = $# -a -n "$opt_log" -a -z "$KUAL_options" \) ]]; then
-    set -- -s=ABC 
+    set -- -s=ABC
   else
     set -- $KUAL_options "$@"
   fi
@@ -333,9 +333,9 @@ send_config () {
     echo -e "1\n$VERSION"
   fi
 }
-unpack () { 
-cat << 'UNPACK' 
-BEGIN { 
+unpack () {
+cat << 'UNPACK'
+BEGIN {
 	VERSION="20130412,a"
 	BAILOUT=0
 	if (1 < ARGC) { print "usage!" > "/dev/stderr"; BAILOUT=1; exit }
@@ -352,30 +352,30 @@ BEGIN {
 			close(X)
 			if ("" != $0) ARGV[++ARGC] = $0
 		}
-		if("" != ARGV[ARGC]) ++ARGC 
+		if("" != ARGV[ARGC]) ++ARGC
 	}
-	BRIEF=1; 
+	BRIEF=1;
 	STREAM=0;
 	delete FAILS
-	ERRORS = GOODCOUNT = 0 
+	ERRORS = GOODCOUNT = 0
 }
-{ 
-	reset() 
+{
+	reset()
 	SVNJPATHS = 0+NJPATHS
-	tokenize($0) 
-	if (0 == (status = parse())) { 
-		++GOODCOUNT 
-		status = jp2np(JPATHS, NJPATHS, GOODCOUNT, FILENAME) 
-	} else { 
+	tokenize($0)
+	if (0 == (status = parse())) {
+		++GOODCOUNT
+		status = jp2np(JPATHS, NJPATHS, GOODCOUNT, FILENAME)
+	} else {
 		while(NJPATHS > SVNJPATHS) {
 			delete JPATHS[NJPATHS--]
 		}
 	}
 	if (status) ++ERRORS
 }
-END { 
+END {
 	if (BAILOUT) exit(BAILOUT)
-	json_emit_self_menu_and_parsing_errors(0+PARENT_ERRORS) 
+	json_emit_self_menu_and_parsing_errors(0+PARENT_ERRORS)
 	delete MENUS; NMENUS=0
 	if (0 == (status = np2mn(NPATHS, NNPATHS))) {
 		delete NPATHS; NNPATHS=0
@@ -384,50 +384,50 @@ END {
 	teardown()
 	exit(ERRORS)
 }
-function init(   i) { 
+function init(   i) {
 if (""==FORMATTER) FORMATTER="multiline"
 if (""==OPT_SORT) OPT_SORT="ABC"
 delete COUNTER
 COUNTER["nameNull"]=0
-if (""==EXTENSIONDIR) EXTENSIONDIR="/mnt/us/extensions" 
+if (""==EXTENSIONDIR) EXTENSIONDIR="/mnt/us/extensions"
 if (""==PRODUCTNAME) PRODUCTNAME="KUAL"
-if (""==CONFIGFILE) CONFIGFILE=PRODUCTNAME".cfg" 
+if (""==CONFIGFILE) CONFIGFILE=PRODUCTNAME".cfg"
 CONFIGPATH=config_full_path()
 if (""!=CONFIGPATH) config_read(CONFIGPATH)
 CONFIG["bb find"]="/bin/busybox find"
 CONFIG["bb sort"]="/bin/busybox sort"
 SEP="\x01"
 if (""==SCREAM_LOG) SCREAM_LOG="/var/tmp/" PRODUCTNAME ".log"
-VALID_KEYS["action"]=K_action=0x00  
-VALID_KEYS["priority"]=K_priority=0x01 
+VALID_KEYS["action"]=K_action=0x00
+VALID_KEYS["priority"]=K_priority=0x01
 VALID_KEYS["params"]=K_params=0x02
 VALID_KEYS["exitmenu"]=K_exitmenu=0x03
-VALID_KEYS["hidden"]=K_hidden=0x04 
-VALID_KEYS["name"]=K_name=0x05 
-VALID_KEYS["items"]=K_items=0xff 
+VALID_KEYS["hidden"]=K_hidden=0x04
+VALID_KEYS["name"]=K_name=0x05
+VALID_KEYS["items"]=K_items=0xff
 VALID_KEYS["ERROR"]="??"
 sK_name=sprintf("%02x", K_name)
 xRESERVED=0xff
 sRESERVED="ff"
 sRESERVED_len=2
 NPATH_len=48
-FFS="ffffffffffffffffffffffffffffffffffffffffffffffff" 
+FFS="ffffffffffffffffffffffffffffffffffffffffffffffff"
 NBSP0="&nbsp;"
-NBSP1="\xC2\xA0" 
-MMRK="\xE2\x96\xB6" 
-CROSS="\xC3\x97" 
-ATTN="\xE2\x97\x8F" 
+NBSP1="\xC2\xA0"
+MMRK="\xE2\x96\xB6"
+CROSS="\xC3\x97"
+ATTN="\xE2\x97\x8F"
 MAX_LABEL_LEN=40
 XenErrSyntax="Syntax"
 XenParentErrors="Startup error"
-TFL="/var/tmp/--" PRODUCTNAME "--" 
+TFL="/var/tmp/--" PRODUCTNAME "--"
 KINDLET["TRAIL"]=1
 KINDLET["STATUS"]=2
 }
-function teardown(   i) { 
+function teardown(   i) {
 	system("cd /var/tmp && rm -f \"" TFL "\"* 2>/dev/null")
 }
-function config_full_path(create, 
+function config_full_path(create,
 	i,ary,nary,x) {
 	nary = split(EXTENSIONDIR, ary, /;/)
 	for (i = 1; i <= nary; i++) {
@@ -449,57 +449,57 @@ function config_full_path(create,
 	}
 	return ""
 }
-function config_get(key) { 
+function config_get(key) {
 	return key in CONFIG ? CONFIG[key] : ""
 }
-function config_read(configfullpath, 
+function config_read(configfullpath,
 	ary,nary,slurp,k,v,p,count) {
 	if (0 <= (getline slurp < configfullpath))
 		close(configfullpath)
 	if ("" != slurp) {
 		nary = split(slurp, ary, /\n/)
-		if (nary) --nary 
+		if (nary) --nary
 		for (i = 1; i <= nary; i++) {
 			if (ary[i] ~ "^\\s*"PRODUCTNAME"_\\w+=") {
 				k = ary[i]
 				k = substr(k,1+index(k,"_"))
 				p = index(k, "=")
 				v = substr(k,p+1)
-				gsub(/^"|"$/,"",v) 
+				gsub(/^"|"$/,"",v)
 				CONFIG[substr(k,1,p-1)] = v
-				++count 
+				++count
 			}
 		}
 	}
 	return 0+count
 }
-function find_menu_fullpathnames(dirs, return_ary, base,  
+function find_menu_fullpathnames(dirs, return_ary, base,
 	pj,nj,follow,depth,paths,slurp,i,ary,nary,menu,cmd) {
 	follow = "true" == config_get("nofollow") ? "" : "-follow"
 	depth = config_get("search_depth")
 	depth =	"-maxdepth " (""==depth ? 2 : 0+depth)
 	paths = config_get("search_exclude_paths")
 	paths = "-path "dirs"/" (""==paths ? "system" : paths)
-	gsub(/;/," -o -path "dirs"/",paths) 
+	gsub(/;/," -o -path "dirs"/",paths)
 	cmd = config_get("bb find")" "dirs" "follow" "depth" \\( "paths" \\) \\( -prune -type f \\) -o \\( -name config.xml -type f \\) 2>/dev/null"
 	cmd | getline slurp
 	close(cmd)
 	nary = split(slurp, ary, /\n/)
-	if (nary) --nary 
+	if (nary) --nary
 	for (i=1; i <= nary; i++) {
 		menu = pathjson = pathxml = ""
-		if (0 <= (getline slurp < ary[i])) 
+		if (0 <= (getline slurp < ary[i]))
 			close(ary[i])
-		if (slurp ~ /<extension>.+<\/extension>/) { 
+		if (slurp ~ /<extension>.+<\/extension>/) {
 		    if (match(slurp, /<menu\>[^>]+\<type="json"[^>]*>[^<]+<\/menu>/)) { # type="json"
-			    slurp = substr(slurp,RSTART,RLENGTH-7) 
-			    menu = substr(slurp,1+index(slurp,">")) 
+			    slurp = substr(slurp,RSTART,RLENGTH-7)
+			    menu = substr(slurp,1+index(slurp,">"))
 		    }
 		}
 		if ("" != menu) {
-			if ("^/" !~ menu) { 
+			if ("^/" !~ menu) {
 				match(ary[i], /^.*\//)
-				menu = substr(ary[i],RSTART,RLENGTH) menu 
+				menu = substr(ary[i],RSTART,RLENGTH) menu
 			}
 			if (0 <= (getline x < menu)) {
 				return_ary[++base] = menu
@@ -509,7 +509,7 @@ function find_menu_fullpathnames(dirs, return_ary, base,
 	}
 	return base
 }
-function format_action(action, params,   
+function format_action(action, params,
 	p,cmd) {
 	p = index(action, ";")
 	cmd = substr(action,p+1)
@@ -519,20 +519,20 @@ function format_action(action, params,
 	}
 	return (action) ("" != params ? " " : "") (params)
 }
-function format_action_enter_submenu(level, items_path) { 
+function format_action_enter_submenu(level, items_path) {
 	return "^" (level+1) ":" npath_wo_reserved(items_path) ".." sK_name "$"
 }
-function json_emit_self_menu_and_parsing_errors(parent_errors,     
+function json_emit_self_menu_and_parsing_errors(parent_errors,
 	json,name,sname,msg,ary,nary) {
-	json=json_self_menu() 
+	json=json_self_menu()
 	if (parent_errors) {
 		++ERRORS
 		json=json "," json_error_button(fit_button(ATTN" "XenParentErrors, ""))
 	}
 	for(name in FAILS) {
 		json=json "," json_error_button(fit_button(ATTN" "XenErrSyntax" ", shortpathname(name)))
-	} 
-	if (json) { 
+	}
+	if (json) {
 		name = PRODUCTNAME
 		if (ERRORS)
 			name = name " " ATTN " " ERRORS
@@ -545,16 +545,16 @@ function json_emit_self_menu_and_parsing_errors(parent_errors,
 		jp2np(JPATHS, NJPATHS, 0, "/var/tmp/.")
 	}
 }
-function json_error_button(message) {  
+function json_error_button(message) {
 	return "{\"priority\": -1000, \"name\": \"" \
 		message \
 		"\", \"action\": \"TRAIL\", \"params\": \"[more info in "PRODUCTNAME" log]\", \"exitmenu\": false}"
 }
-function json_self_menu(   json, 
+function json_self_menu(   json,
 	show,b,ary,nary,verb,btnpath,bak) {
-	if (0 == (show = config_get("show_KUAL_buttons"))) 
+	if (0 == (show = config_get("show_KUAL_buttons")))
 		return ""
-	if ("" == show) show="1 2 3 99" 
+	if ("" == show) show="1 2 3 99"
 	json = ""
 	if (nary = split(show, ary, /\s+/)) {
 		for (b = 1; b <= nary; b++) {
@@ -573,7 +573,7 @@ function json_self_menu(   json,
 					"/bin/ash '"SCRIPTPATH"' '-e=1,"verb"'" \
 				"\", \"priority\": 1}"
 			} else if (2 == ary[b]) {
-				verb = OPT_SORT ~ /^ABC|abc$/ ? "123" : "ABC" 
+				verb = OPT_SORT ~ /^ABC|abc$/ ? "123" : "ABC"
 				json=json ",{\"name\": \"" \
 					"Sort Menu "verb \
 				"\", \"action\": \"" \
@@ -596,11 +596,11 @@ function json_self_menu(   json,
 	}
 	return json
 }
-function jp2np(ary, size, serial, menufilepathname,   
+function jp2np(ary, size, serial, menufilepathname,
 	i,x,npath,apath,jpath,key,value,level,errors) {
 	errors=0
 	apath=menufilepathname; sub(/\/[^\/]+$/, "", apath)
-	while (jp2np_LAST_SEEN <= size) { 
+	while (jp2np_LAST_SEEN <= size) {
 		line=ary[jp2np_LAST_SEEN++]  # {
 		if (line ~ /[]}]$/) {
 			continue
@@ -618,7 +618,7 @@ function jp2np(ary, size, serial, menufilepathname,
 		if (0 == level) {
 			continue
 		}
-		--level 
+		--level
 		npath = npath_new(jpath, serial)
 		gsub(/^"|"$/, "", value)
 		if (K_name == key) {
@@ -633,12 +633,12 @@ function jp2np(ary, size, serial, menufilepathname,
 	}
 	return errors
 }
-function np2mn(ary, size,    
+function np2mn(ary, size,
 	i,slurp,lines,nlines,iline,errors,
 	npary,level,npath,key,value,options,
 	npath_s_this_items,select_level,needle,snpath,last_action  ) {
 	errors=0
-	sort(ary, size, "-k2."(1+sRESERVED_len)",2 -k1,1 -k3,3") 
+	sort(ary, size, "-k2."(1+sRESERVED_len)",2 -k1,1 -k3,3")
 	if ("" == SORTED_DATA) {
 		scream("np2mn can't sort 1")
 		++errors
@@ -655,11 +655,11 @@ function np2mn(ary, size,
 					ITEM[key] = value
 					last_action = snpath
 				} else if (K_name == key) {
-					if ("" == value) 
+					if ("" == value)
 						value = "??"(++COUNTER["nameNull"])
-					if (submenuQ(snpath, last_action)) { 
-						ITEM[key]=value 
-						sortable_tag=select_level[level] 
+					if (submenuQ(snpath, last_action)) {
+						ITEM[key]=value
+						sortable_tag=select_level[level]
 						MENUS[++NMENUS] = work_record( \
 							sort_criteria(sortable_tag, OPT_SORT),
 							kindlet_options(),
@@ -667,11 +667,11 @@ function np2mn(ary, size,
 							ITEM[K_name],
 							format_action(ITEM[K_action], ITEM[K_params]))
 						new_item()
-					} else { 
-						ITEM[key]=value" "MMRK 
+					} else {
+						ITEM[key]=value" "MMRK
 						npath_s_this_items = npath_s_this_(K_items, snpath) # refers to this."items"
 						select_level[level+1] = npath_wo_reserved(npath_padded(npath_s_this_items))
-						sortable_tag = select_level[level] 
+						sortable_tag = select_level[level]
 						MENUS[++NMENUS] = work_record( \
 							sort_criteria(sortable_tag, OPT_SORT),
 							kindlet_options(),
@@ -695,52 +695,52 @@ function np2mn(ary, size,
 		++errors
 	}
 	delete MENUS; NMENUS=0
-	NMENUS = sort_criteria_cut(MENUS, OPT_SORT) 
+	NMENUS = sort_criteria_cut(MENUS, OPT_SORT)
 	formatter(MENUS, NMENUS, FORMATTER)
 	return errors
 }
-function kindlet_options(   x) { 
+function kindlet_options(   x) {
 	x = (ITEM[K_exitmenu] ~ /^(0|false)$/ ? "e" : "") \
 		(ITEM[K_hidden] ~ /^(1|true)$/ ? "h" : "")
 	return "" == x ? "" : x SEP
 }
-function new_item() { 
+function new_item() {
 	ITEM[K_name]=""; ITEM[K_action]=""; ITEM[K_params]=""; ITEM[K_priority]=0; ITEM[K_exitmenu]=""; ITEM[K_hidden]=""
 }
-function new_submenu() { 
+function new_submenu() {
 	ITEM[K_name]=""; ITEM[K_priority]=0; ITEM[K_hidden]=""
 }
-function npath_create(jpath, serial,   
+function npath_create(jpath, serial,
 	items,key,snpath,ary,nary,i) {
 	items = sprintf("%02x", K_items)
 	snpath = npath_reserved() sprintf("%s%02x", items, serial)
-	jpath=substr(jpath,2,length(jpath)-2) 
+	jpath=substr(jpath,2,length(jpath)-2)
 	nary=split(jpath, ary, /\"items\"/)
 	key=ary[nary]
 	sub(/^.+,/, "", key);
-	key=substr(key, 2, length(key)-2) 
-	sub(/\".+$/, "", ary[nary]) 
-	for(i=2; i<=nary; i++) { 
+	key=substr(key, 2, length(key)-2)
+	sub(/\".+$/, "", ary[nary])
+	for(i=2; i<=nary; i++) {
 		snpath = snpath items sprintf("%02x", substr(ary[i],2,length(ary[i])-2))
 	}
 	snpath = snpath sprintf("%02x", VALID_KEYS[key])
 	return npath_padded(snpath)
 }
-function npath_new(jpath, serial, 
+function npath_new(jpath, serial,
 	key,npath,snpath) {
 	key = jpath SEP serial
 	if (key in NPATH_MAP)
 		return NPATH_MAP[key]
 	npath = snpath = npath_create(jpath, serial)
-	sub(/(ff)+$/, "", snpath) 
+	sub(/(ff)+$/, "", snpath)
 	return NPATH_MAP[key] = NPATH_MAP[npath_wo_reserved(npath)] = NPATH_MAP[npath_wo_reserved(snpath)] = npath
 }
-function npath_get(path, 
+function npath_get(path,
 	upath,npath) {
 	upath = npath_wo_reserved(path)
 	return upath in NPATH_MAP ? NPATH_MAP[upath] : (npath_reserved() "NON-EXISTENT:npath_get("path")")
 }
-function npath_get_short(path, 
+function npath_get_short(path,
 	upath,snpath) {
 	upath = npath_wo_reserved(path)
 	if (upath in NPATH_MAP) {
@@ -750,31 +750,31 @@ function npath_get_short(path,
 	}
 	return (npath_reserved() "NON-EXISTENT:npath_get_short("path")")
 }
-function npath_padded(path) { 
+function npath_padded(path) {
 	return substr(path FFS, 1, NPATH_len)
 }
-function npath_put(path, 
+function npath_put(path,
 	npath,snpath,upath,prev) {
-	npath = snpath = npath_padded(path) 
-	sub(/(ff)+$/, "", snpath) 
+	npath = snpath = npath_padded(path)
+	sub(/(ff)+$/, "", snpath)
 	upath = npath_wo_reserved(path)
 	prev = upath in NPATH_MAP ? NPATH_MAP[prev] : ""
 	NPATH_MAP[npath_wo_reserved(npath)] = NPATH_MAP[npath_wo_reserved(snpath)] = npath
 	return prev
 }
-function npath_reserved(path) { 
+function npath_reserved(path) {
 	return "" == path ? sRESERVED : substring(path, 1, sRESERVED_len)
 }
-function npath_wo_reserved(path,   x) { 
+function npath_wo_reserved(path,   x) {
 	return substr(path,1+sRESERVED_len)
 }
-function npath_s_KUAL_menu() { 
+function npath_s_KUAL_menu() {
 	return npath_get_short(npath_new("[\"[items\",0,\"items\",0,\"name\"]", 0))
 }
-function npath_s_this_(key, snpath) { 
-    return substr(snpath,1,length(snpath)-2) sprintf("%02x", key) 
+function npath_s_this_(key, snpath) {
+    return substr(snpath,1,length(snpath)-2) sprintf("%02x", key)
 }
-function sort(ary, nary, sort_options,   
+function sort(ary, nary, sort_options,
 	tfl,i,cmd) {
 	tfl=TFL"-sort" rand()
 	for (i=1; i<=nary; i++) {
@@ -786,14 +786,14 @@ function sort(ary, nary, sort_options,
 	cmd | getline SORTED_DATA
 	close(cmd)
 }
-function sort_criteria(sortable_tag, opt_sort) { 
+function sort_criteria(sortable_tag, opt_sort) {
 	if ("123" == opt_sort) {
-		return sortable_tag SEP ITEM[K_priority] SEP 
+		return sortable_tag SEP ITEM[K_priority] SEP
 	} else if (toupper(opt_sort) ~ /ABC!?/) {
-		return sortable_tag SEP ITEM[K_name] SEP 
+		return sortable_tag SEP ITEM[K_name] SEP
 	} else return ""
 }
-function sort_criteria_cut(ary, opt_sort,   
+function sort_criteria_cut(ary, opt_sort,
 	nary,p,x,i) {
 	i = nary = split(SORTED_DATA, ary, /\n/)
 	if (toupper(opt_sort) ~ /^(123|ABC!?)$/) {
@@ -804,22 +804,22 @@ function sort_criteria_cut(ary, opt_sort,
 			ary[i] = substr(x, p+1)
 			--i
 		}
-	} else { 
+	} else {
 	}
 	return nary
 }
-function sort_for_user(ary, nary, opt_sort,    # {{{ 
+function sort_for_user(ary, nary, opt_sort,    # {{{
 	cherry,i,ary0,nary0,non_zero) {
 	cherry = SEP "0:" npath_wo_reserved(npath_s_KUAL_menu()) SEP
 	for (i = 1; i <= nary; i++) {
 		if (index(ary[i], cherry)) {
 			cherry = ary[i]
-			delete ary[i] 
+			delete ary[i]
 			break
 		}
 	}
 	if (i > nary) {
-		cherry="" 
+		cherry=""
 		scream("can't select "PRODUCTNAME" menu entry")
 	}
 	SORTED_DATA=""
@@ -827,7 +827,7 @@ function sort_for_user(ary, nary, opt_sort,    # {{{
 		sort(ary, nary, "-s -k1,1 -k2,2n")
 	} else if ("ABC" == toupper(opt_sort)) {
 		nary0 = 0
-		non_zero = "" 
+		non_zero = ""
 		for (i = 1; i <= nary; i++) {
 			if (ary[i] ~ SEP"0:")
 				ary0[++nary0] = ary[i]
@@ -854,21 +854,21 @@ function sort_for_user(ary, nary, opt_sort,    # {{{
 		SORTED_DATA = cherry "\n" SORTED_DATA
 	}
 }
-function submenuQ(snpath, last_action,     x,y) { 
+function submenuQ(snpath, last_action,     x,y) {
 	x = npath_wo_reserved(snpath)
 	y = npath_wo_reserved(last_action)
 	return substr(x,1,length(x)-2) == substr(y,1,length(y)-2)
 }
-function work_record(sort_criteria, options, level,snpath, name, action, 
+function work_record(sort_criteria, options, level,snpath, name, action,
 	lvlsnpath) {
 	lvlsnpath = level ":" npath_wo_reserved(snpath)
 	return sprintf("%s%s"SEP"%s%s"SEP"%s"SEP"%s",
 		sort_criteria,
-		"" == options ? 3 : 4, 
+		"" == options ? 3 : 4,
 		options,
 	       	lvlsnpath, name, action)
 }
-function fit_button(left, right,   len,rlen,cut) { 
+function fit_button(left, right,   len,rlen,cut) {
 	len=MAX_LABEL_LEN - length(left)
 	if (len < (rlen=length(right))) {
 		right=substr(right,rlen-len+1)
@@ -876,7 +876,7 @@ function fit_button(left, right,   len,rlen,cut) {
 	}
 	return left right
 }
-function formatter(ary, nary, fmt_name,   fmt,i,x,n) { 
+function formatter(ary, nary, fmt_name,   fmt,i,x,n) {
 	if ("multiline" == fmt_name) {
 		for (i = 1; i <= nary; i++) {
 			x = ary[i]
@@ -913,11 +913,11 @@ function formatter(ary, nary, fmt_name,   fmt,i,x,n) {
 			print ary[i]
 	}
 }
-function shortpathname(pathname,   ary,nary) { 
+function shortpathname(pathname,   ary,nary) {
 	return (nary = split(pathname, ary, /\//)) \
 		? ary[nary-1] "/" ary[nary] : pathname
 }
-function store_button_filepath(   KT532,ret) { 
+function store_button_filepath(   KT532,ret) {
 	if ("-" == FILEPATH_STORE_BUTTON) {
 		return ""
 	} else if ("" != FILEPATH_STORE_BUTTON) {
@@ -933,11 +933,11 @@ function store_button_filepath(   KT532,ret) {
 	}
 	return ret
 }
-function get_token() { 
-	TOKEN = TOKENS[++ITOKENS] 
+function get_token() {
+	TOKEN = TOKENS[++ITOKENS]
 	return ITOKENS < NTOKENS
 }
-function parse_array(a1,   idx,ary,ret) { 
+function parse_array(a1,   idx,ary,ret) {
 	idx=0
 	ary=""
 	get_token()
@@ -967,7 +967,7 @@ function parse_array(a1,   idx,ary,ret) {
 	}
 	return 0
 }
-function parse_object(a1,   key,obj) { 
+function parse_object(a1,   key,obj) {
 	obj=""
 	get_token()
 	if (TOKEN != "}") {
@@ -1007,7 +1007,7 @@ function parse_object(a1,   key,obj) {
 	}
 	return 0
 }
-function parse_value(a1,a2,   jpath,ret,x) { 
+function parse_value(a1,a2,   jpath,ret,x) {
 	jpath=(a1!="" ? a1 "," : "") a2 # "${1:+$1,}$2"
 	if (TOKEN == "{") {
 		if (parse_object(jpath)) {
@@ -1033,7 +1033,7 @@ function parse_value(a1,a2,   jpath,ret,x) {
 	}
 	return 0
 }
-function parse(   ret) { 
+function parse(   ret) {
 	get_token()
 	if (ret = parse_value()) {
 		return ret
@@ -1044,7 +1044,7 @@ function parse(   ret) {
 	}
 	return 0
 }
-function report(expected,got,   i,from,to,context) { 
+function report(expected,got,   i,from,to,context) {
 	from = ITOKENS - 10; if (from < 1) from = 1
 	to = ITOKENS + 10; if (to > NTOKENS) to = NTOKENS
 	for (i = from; i < ITOKENS; i++)
@@ -1054,11 +1054,11 @@ function report(expected,got,   i,from,to,context) {
 		context = context sprintf("%s ", TOKENS[i])
 	scream("expected <" expected "> but got <" got "> at input token " ITOKENS "\n" context, FILENAME)
 }
-function reset() { 
+function reset() {
 	TOKEN=""; delete TOKENS; NTOKENS=ITOKENS=0
 	VALUE=""
 }
-function scream(msg, originator) { 
+function scream(msg, originator) {
 	if ("" == originator)
 		originator=PRODUCTNAME
 	FAILS[originator] = FAILS[originator] (FAILS[originator]!="" ? "\n" : "") msg
@@ -1066,23 +1066,23 @@ function scream(msg, originator) {
 	print msg > "/dev/stderr"
 	print msg >> SCREAM_LOG
 }
-function tokenize(a1,   pq,pb,ESCAPE,CHAR,STRING,NUMBER,KEYWORD,SPACE) { 
+function tokenize(a1,   pq,pb,ESCAPE,CHAR,STRING,NUMBER,KEYWORD,SPACE) {
 	ESCAPE="(\\[^u[:cntrl:]]|\\u[0-9a-fA-F]{4})"
 	CHAR="[^[:cntrl:]\\\"]"
 	STRING="\"" CHAR "*(" ESCAPE CHAR "*)*\""
 	NUMBER="-?(0|[1-9][0-9]*)([.][0-9]*)?([eE][+-]?[0-9]*)?"
 	KEYWORD="null|false|true"
 	SPACE="[[:space:]]+"
-	pq="/p/r/e/s/e/r/v/e/q/u/o/t/e/" rand() 
-	pb="/p/r/e/s/e/r/v/e/b/a/c/k/s/" rand() 
+	pq="/p/r/e/s/e/r/v/e/q/u/o/t/e/" rand()
+	pb="/p/r/e/s/e/r/v/e/b/a/c/k/s/" rand()
 	gsub(/\\\\/, pb, a1)
-	gsub(/\\"/, pq, a1) 
+	gsub(/\\"/, pq, a1)
         gsub(STRING "|" NUMBER "|" KEYWORD "|" SPACE "|.", "\n&", a1)
-	gsub(pq, "\\\"", a1) 
-	gsub(pb, "\\\\", a1) 
+	gsub(pq, "\\\"", a1)
+	gsub(pb, "\\\\", a1)
         gsub("\n" SPACE, "\n", a1)
 	sub(/^\n/, "", a1)
-	ITOKENS=0 
+	ITOKENS=0
 	return NTOKENS = split(a1, TOKENS, /\n/)
 }
 UNPACK
@@ -1098,7 +1098,7 @@ handler () {
   log "end pid($$)"
 }
 init "$@"
-send_config 
+send_config
 test_applet uninstall >/dev/null
 	unpack > "$TFL.awk" &&
 	< /dev/null awk -f "$TFL.awk" \

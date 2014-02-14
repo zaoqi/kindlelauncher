@@ -37,7 +37,7 @@ cat << 'EOT'
 *  abc  lexicographic by group, names within each group do not move
    ABC  lexicographic by group and by action name, same name groups coalesce
    123  by priority, group's first then action's (json)
- 
+
 Limitations:
 . Supports json menus only
 . Supports one- or two-level menus only
@@ -65,7 +65,7 @@ FORMATTER="formatter" # $1:''(\n,default) 'tbl'(table) 'tab'(\t)
 
 case " $* " in
   *" -l "*)
-     opt_log=1; 
+     opt_log=1;
      alias log='echo >&2'" ${0##*/}: " # enabled
   ;;
   *) alias log='echo >/dev/null ' # disabled
@@ -117,7 +117,7 @@ ANOTHER APP ALREADY HOLDS IT"
 : RSTR
 
 # eips messages - these must fit in a screen line (48 chars)
-XenErrNotInstalled="$PRODUCTNAME incomplete install." 
+XenErrNotInstalled="$PRODUCTNAME incomplete install."
 
 # Kindlet button messages - these must fit in a button label - see emit_error()
 XenErrConfig="config"
@@ -173,7 +173,7 @@ script_full_path () {
   # symlinks not considered
   local pth=$(2>/dev/null cd "${0%/*}" >&2; pwd -P)
   [[ "-p" = "$1" ]] || pth=$pth/${0##*/}
-  echo -n "$pth" 
+  echo -n "$pth"
 }
 
 # return full path of $CONFIGFILE if one exists or can be created
@@ -352,7 +352,7 @@ debug_info () {
 #      for v in ${!xml_*};  do echo -n " $v='${!v}'"; done
 #      for v in ${!json_*}; do echo -n " $v='${!v}'"; done
 #      for v in ${!jsonU_*}; do echo -n " $v='${!v}'"; done
-  
+
 #ash: hardwired variable names
  vars="xml_name json_name0 jsonU_name0 json_priority0
  json_name jsonU_name
@@ -388,7 +388,7 @@ one_level () {
   [[ -e "$action_path/$json_action" ]] && apath=\"$action_path/$json_action\"
   # sort by priority?
   [[ 123 = "$opt_sort" ]] && priority="${json_priority0:-0}$SEPARATOR${json_priority:-0}$SEPARATOR"
-  
+
   echo "$TIER$SEPARATOR${priority}2$SEPARATOR$group · $label$SEPARATOR$apath $json_params"
 }
 
@@ -406,7 +406,7 @@ touch_runner () {
   label=`str_repl_chars "$group" . _`.$label
   # sort by priority?
   [[ 123 = "$opt_sort" ]] && priority="${json_priority0:-0}$SEPARATOR${json_priority:-0}$SEPARATOR"
-  
+
   echo "$TIER$SEPARATOR$priority$action_path$SEPARATOR$action$SEPARATOR${json_params:-NULL}$SEPARATOR$label"
 }
 
@@ -426,7 +426,7 @@ two_level () {
   [[ 123 = "$opt_sort" ]] && priority="${json_priority0:-0}$SEPARATOR${json_priority:-0}$SEPARATOR"
 #group="$group,${json_priority0:-0}" # DEBUG
 #label="$label,${json_priority:-0}" # DEBUG
- 
+
   echo "$TIER$SEPARATOR${priority}3$SEPARATOR$group$SEPARATOR$label$SEPARATOR$apath $json_params"
 }
 
@@ -449,7 +449,7 @@ colorize () {
 # usage: loop [ignorecount]
 # find and process all config.xml files and their corresponding json menu files
 loop () {
-local - IFS=:${NO_WSP} TIER=2 f px pj nj count=0 ignorecount=0 t list 
+local - IFS=:${NO_WSP} TIER=2 f px pj nj count=0 ignorecount=0 t list
 case $1 in
   ignorecount) ignorecount=1 ;;
 esac
@@ -474,14 +474,14 @@ for f in $(find $EXTENSIONDIR -name config.xml 2>&-); do
   esac
   nj=${xml_menu##*/} # nj json menu filename
   if [[ -f $pj/$nj ]]; then
-    json_parse $pj/$nj $proc $pj $nj || count=$(($? + $count)) # allow -e by || 
+    json_parse $pj/$nj $proc $pj $nj || count=$(($? + $count)) # allow -e by ||
   fi
 done
 log loop counted $count entries
 # when extensions dir is empty
 [[ 00 = $count$ignorecount ]] && test_applet install && loop ignorecount
 # append  KUAL's own menu entries
-[[ 0 = $ignorecount ]] && emit_self_menu 
+[[ 0 = $ignorecount ]] && emit_self_menu
 return 0
 }
 
@@ -537,7 +537,7 @@ exec_self_menu() {
   1) # replace/restore K5/PW Store button with KUAL
     local verb=$2 btnpath=`store_button_filepath` bak
     [[ -e "$btnpath" ]] || return # unsupported platform
-    bak=$btnpath.KUAL_bak 
+    bak=$btnpath.KUAL_bak
     case $verb in
       Restore) [[ -e "$bak" ]] || return # nothing to restore
         mntroot rw && mv -f "$bak" "$btnpath"
@@ -608,7 +608,7 @@ store_button_filepath() {
 KUAL_filepath() {
   local -
   set +f
-  set -- `echo /mnt/us/documents/KindleLauncher*.azw2`
+  set -- `echo /mnt/us/documents/KUAL-KDK-*.azw2`
   [[ -e "$1" ]] && echo -n "$1"
 }
 
@@ -702,7 +702,7 @@ formatter () {
 }
 
 # usage: emit_error TIER ERROR_MESSAGE_NAME [MESSAGE]
-# Emit error message as a button label; TIER defines button placement: 
+# Emit error message as a button label; TIER defines button placement:
 # . TIER=1 put button at the beginning of the button list
 # . TIER=2 put button according to sort criteria of loop()
 # . TIER=3 put button at the end of the button list
@@ -867,7 +867,7 @@ FORMATTER='$FORMATTER'
 # Solution: Capture init's output until $to_user is fully set up.
 # By design we prefer capturing output in memory (without temp files). We run
 # init through backticks, that is in a subshell[6] that can't change MAIN's
-# environment. $starter is the captured output, and because of catch-22 it is 
+# environment. $starter is the captured output, and because of catch-22 it is
 # dynamic code that will be evaluated when $to_user is fully set up.
 
 log "start pid($$)"

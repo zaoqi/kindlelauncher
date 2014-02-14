@@ -50,11 +50,11 @@ Running the kindlet:
 Depending on your device:
 
 (k2, dx, K3, K4)
-Put KindleLauncher-1.0.azw2 in documents folder.
+Put KUAL-KDK-1.0.azw2 in documents folder.
 Run it by clicking new kindlet document in your list.
 
 (Touch, PW)
-Put KindleLauncher-2.0.azw2 in documents folder.
+Put KUAL-KDK-2.0.azw2 in documents folder.
 Run it by clicking icon.
 
 Expected output:
