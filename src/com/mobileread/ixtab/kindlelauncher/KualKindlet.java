@@ -43,7 +43,7 @@ import com.mobileread.ixtab.kindlelauncher.timer.TimerAdapter;
 import com.mobileread.ixtab.kindlelauncher.ui.GapComponent;
 import com.mobileread.ixtab.kindlelauncher.ui.UIAdapter;
 
-public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
+public class KualKindlet extends SuicidalKindlet implements ActionListener {
 
 	public static final String RESOURCE_PARSER_SCRIPT = "parse.awk"; // "parse.sh";
 	private static final String EXEC_PREFIX_PARSE = "klauncher_parse-";
@@ -69,13 +69,13 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 	private String commandToRunOnExit = null;
 	private String dirToChangeToOnExit = null;
 
-	private final String CROSS = "\u00D7"; // × - match parser script
-	private final String ATTN = "\u25CF"; // ● - match parser script
-	private final String RARROW = "\u25B6"; // ▶
-	private final String LARROW = "\u25C0"; // ◀
-	private final String UARROW = "\u25B2"; // ▲
-	private final String BULLET = "\u25AA"; // ▪
-	private final String PATH_SEP = "/";
+	final String CROSS = "\u00D7"; // × - match parser script
+	final String ATTN = "\u25CF"; // ● - match parser script
+	final String RARROW = "\u25B6"; // ▶
+	final String LARROW = "\u25C0"; // ◀
+	final String UARROW = "\u25B2"; // ▲
+	final String BULLET = "\u25AA"; // ▪
+	final String PATH_SEP = "/";
 
 	private KeyListener keyListener = new KeyAdapter() {
 		public void keyPressed(KeyEvent e) {
@@ -199,7 +199,7 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 		// postpone longer initialization for quicker return
 		Runnable runnable = new Runnable() {
 			public void run() {
-				LauncherKindlet.this.longStart();
+				KualKindlet.this.longStart();
 			}
 		};
 		EventQueue.invokeLater(runnable);
@@ -406,10 +406,10 @@ public class LauncherKindlet extends SuicidalKindlet implements ActionListener {
 
 	private String getJailbreakError() {
 		if (!jailbreak.isAvailable()) {
-			return "Kindlet Jailbreak not installed";
+			return "Mobileread Kindlet Kit is not installed";
 		}
 		if (!jailbreak.isEnabled()) {
-			return "Kindlet Jailbreak could not be enabled";
+			return "MKK could not enable Kindlet Jailbreak";
 		}
 		return null;
 	}
