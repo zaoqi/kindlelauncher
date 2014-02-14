@@ -2,13 +2,7 @@ package com.mobileread.ixtab.kindlelauncher.resources;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import com.mobileread.ixtab.kindlelauncher.resources.KualConfig;
-import com.mobileread.ixtab.kindlelauncher.resources.KualEntry;
 
 public class KualMenu {
 

@@ -4,7 +4,8 @@ import javax.swing.JButton;
 import com.mobileread.ixtab.kindlelauncher.resources.KualEntry;
 
 public class KualButton extends JButton {
-
+	private static final long serialVersionUID = 1L;
+	
 	private KualEntry kualEntry = null;
 
 	public KualButton(String text, KualEntry kualEntry) {

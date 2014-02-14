@@ -1,6 +1,6 @@
-#################################
-# Unified Applications Launcher #
-#################################
+##############################################
+# KUAL: Kindle Unified Applications Launcher #
+##############################################
 http://www.mobileread.com/forums/showthread.php?p=2389078
 
 Supporting the DX, k2, k2i, K3 Keyboard, Kindle 4 Range, Kindle Touch's and P/W

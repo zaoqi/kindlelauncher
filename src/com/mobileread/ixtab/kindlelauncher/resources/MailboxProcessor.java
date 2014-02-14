@@ -2,14 +2,9 @@ package com.mobileread.ixtab.kindlelauncher.resources;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 
-import com.mobileread.ixtab.kindlelauncher.resources.KualMenu;
-import com.mobileread.ixtab.kindlelauncher.resources.MailboxCommand;
-import com.mobileread.ixtab.kindlelauncher.timer.TimerAdapter;
 import com.mobileread.ixtab.kindlelauncher.Util;
+import com.mobileread.ixtab.kindlelauncher.timer.TimerAdapter;
 
 public class MailboxProcessor {
 
