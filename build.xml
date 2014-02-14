@@ -41,7 +41,7 @@
 	</target>
 
 	<target name="build-kdk" depends="compile, git.changelog">
-		<property name="file" value="${product.filename}-${kdk-version}.${product.extension}"/>
+		<property name="file" value="${product.filename}-KDK-${kdk-version}.${product.extension}"/>
 		<delete file="${file}"/>
 		<jar destfile="${file}">
 			<manifest>
