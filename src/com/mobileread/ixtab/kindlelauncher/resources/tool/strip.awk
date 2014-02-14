@@ -1,4 +1,4 @@
-#!/usr/bin/env gawk -f
+#!/usr/bin/gawk -f
 
 function kprint(txt,      pre,cmp)
 {

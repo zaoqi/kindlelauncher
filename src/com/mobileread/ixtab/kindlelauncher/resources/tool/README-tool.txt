@@ -1,5 +1,8 @@
 Tools in this folder:
 
+gawk.sh
+	A simple wrapper in case gawk lives somewhere else than /usr/bin
+
 strip.awk
 	strips white space and code blocks from awk scripts to make them smaller.
 	In particular, use strip.awk to build parse.awk from parse-commented.awk <<<<
