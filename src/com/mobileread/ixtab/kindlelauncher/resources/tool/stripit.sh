@@ -8,5 +8,3 @@
 WD="${0%/*}"
 
 echo "y" | sh ${WD}/awk.sh ${WD}/strip.awk -v AWK=1 ${WD}/../parse-commented.awk > ${WD}/../parse.awk
-echo "FIXME!!! overwriting parse.awk with known good version"
-cp ${WD}/../parse.awk.ok ${WD}/../parse.awk
