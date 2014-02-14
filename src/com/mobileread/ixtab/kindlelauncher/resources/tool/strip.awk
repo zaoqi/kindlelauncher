@@ -1,3 +1,5 @@
+#!/usr/bin/env gawk -f
+
 function kprint(txt,      pre,cmp)
 {
 #debug#	if(pre) printf ("%4d::%s::\t%s\n\t\t", NR, pre, cmp)

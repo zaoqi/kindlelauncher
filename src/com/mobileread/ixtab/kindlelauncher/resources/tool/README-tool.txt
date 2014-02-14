@@ -1,8 +1,5 @@
 Tools in this folder:
 
-awk.sh
-	just a wrapper around `which awk` -f
-	
 strip.awk
 	strips white space and code blocks from awk scripts to make them smaller.
 	In particular, use strip.awk to build parse.awk from parse-commented.awk <<<<
