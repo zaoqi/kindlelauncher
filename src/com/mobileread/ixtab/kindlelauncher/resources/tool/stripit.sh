@@ -15,4 +15,4 @@ if [[ "$(env gawk -V 2>/dev/null | grep -e 'GNU Awk' | cut -c 9)" -lt "4" ]] ; t
 	exit 1
 fi
 
-echo "y" | env gawk ${WD}/strip.awk -v AWK=1 ${WD}/../parse-commented.awk > ${WD}/../parse.awk
+echo "y" | env gawk -f ${WD}/strip.awk -v AWK=1 ${WD}/../parse-commented.awk > ${WD}/../parse.awk
