@@ -54,7 +54,7 @@ The new KUAL v2.x series is less forgiving of BROKEN syntax in extension menu.js
 [url]http://www.mobileread.com/forums/showpost.php?p=2507368&postcount=778[/url]
 
 ALSO: We have included a few optional helper scripts to get you going:
-Called "Helper" ([URL="http://www.mobileread.com/forums/attachment.php?attachmentid=101570"]attached [/URL]- unzip to [B]FAT-ROOT[/B]/extensions/helper)
+Called "Helper" ([URL="http://www.mobileread.com/forums/attachment.php?attachmentid=119275"]attached [/URL]- unzip to [B]FAT-ROOT[/B]/extensions/helper)
 
 [B]ALSO: highly recommended is:  "Additional Menu Items for KUAL 2.x"
 [url]http://www.mobileread.com/forums/showpost.php?p=2591741&postcount=15[/url][/B]
@@ -96,7 +96,7 @@ Run it by clicking icon.
 NOTE: /mnt/us/extensions is simply a folder called [B]extensions[/B] when you connect via normal USB.
 Usbnetworking is [B]not required[/B] to access this folder.[/COLOR][/SPOILER][/COLOR]
 [B]The "Helper" Extensions[/B] [SIZE="1"][COLOR="Gray"]Optional extra[/COLOR][/SIZE]
-[COLOR="White"][spoiler][COLOR="Black"][SIZE="1"][COLOR="DarkRed"](All Devices) [/COLOR] If you would like some helpful additional buttons you can get the [URL="http://www.mobileread.com/forums/attachment.php?attachmentid=101570"]Helper Extensions[/URL] package.
+[COLOR="White"][spoiler][COLOR="Black"][SIZE="1"][COLOR="DarkRed"](All Devices) [/COLOR] If you would like some helpful additional buttons you can get the [URL="http://www.mobileread.com/forums/attachment.php?attachmentid=119275"]Helper Extensions[/URL] package.
 
 Unzip the archive and place the contents in a folder called [B]helper[/B] in the [B]extensions[/B] folder.  [I][COLOR="Gray"]Simply extracting the folder IN the extensions folder will work fine too since the [B]helper[/B] folder name is included in the archive.[/COLOR][/I]
 
@@ -254,7 +254,6 @@ This is in the Release phase right now for K2, K2i, DX, K3, K4, Touch, PW and PW
 You can follow the project updates and grab the source here: [URL="https://bitbucket.org/ixtab/kindlelauncher/overview"]Kindle Launcher Git[/URL]
 
 Also Attached [I]as described above[/I] is the "Helper" extensions package.
-THIS REALLY NEEDS UPDATING TO BE USEFUL ON ALL DEVICES... Some bits won't work on some models right now...
 
 However: DO, Simply un-archive the HELPER package and place the resulting "helper" folder and it's contents in your extensions folder to get started with a few "Helper" links. If you don't have an extensions folder then create one and put it in there. Get you going with a few buttons.[/COLOR]
 [/SPOILER][/COLOR]
