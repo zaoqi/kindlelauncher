@@ -31,7 +31,7 @@ Enough shouting.
 It's a launcher of "other things" not an exciting thing in itself.
 
 We have now included a few helper scripts to get you going called "Helper"
-(attached on main thread - unzip to [FAT-ROOT]/extensions/helper)
+(attached on main thread - unzip to [FAT-ROOT])
 And also a set of extensions for the main KUAL helpers
 (also available from main thread)
 
