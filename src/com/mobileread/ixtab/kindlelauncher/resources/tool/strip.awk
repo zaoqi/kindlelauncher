@@ -5,7 +5,7 @@ function kprint(txt,      pre,cmp)
 #debug#	if(pre) printf ("%4d::%s::\t%s\n\t\t", NR, pre, cmp)
 	if (pre ~ /^kp/) {
 		print txt
-		sub(/^\s+/, "", txt)
+		sub(/^[[:space:]]+/, "", txt)
 		printf "%3d to be safe didn't change %4d: %s\n",++TOBESAFE, NR, txt >"/dev/stderr"
 	} else {
 		sprint(txt)
@@ -15,7 +15,7 @@ function kprint(txt,      pre,cmp)
 function sprint(txt)
 {
 	if (AWK)
-		sub(/^\s+/, "", txt) # safe in AWK only - sh syntax supports multiline string literals
+		sub(/^[[:space:]]+/, "", txt) # safe in AWK only - sh syntax supports multiline string literals
 	print txt
 }
 
@@ -54,16 +54,16 @@ PROMPT="Usage: strip.awk [-v AWK=1] [-v WARN=0] [-v PROMPT=0] script.sh > new_sc
 }
 # suspend stripping
 {
-	if ($0 ~ /^\s*#?: RSTR\>/) { SUSPENDED=0; next }
-	else if ($0 ~ /^\s*#?: SSTR\>/) { SUSPENDED=1; next }
+	if ($0 ~ /^[[:space:]]*#?: RSTR\>/) { SUSPENDED=0; next }
+	else if ($0 ~ /^[[:space:]]*#?: SSTR\>/) { SUSPENDED=1; next }
 	else if (SUSPENDED) { sprint($0); next }
 }
 # forced stripping
-/^\s*#?: BSTR\>/,/^\s*#?: ESTR\>/ {
+/^[[:space:]]*#?: BSTR\>/,/^[[:space:]]*#?: ESTR\>/ {
 	next
 }
 # commented continuation line isn't a continuation
-/\\$/ && /^\s*#/ {
+/\\$/ && /^[[:space:]]*#/ {
 	next
 }
 # continuation line
@@ -72,7 +72,7 @@ PROMPT="Usage: strip.awk [-v AWK=1] [-v WARN=0] [-v PROMPT=0] script.sh > new_sc
 	sprint($0); next
 }
 # white line
-/^\s*$/	{
+/^[[:space:]]*$/	{
 	if (CONTINUATION) { # unless after continuation
 		sprint($0)
 		CONTINUATION=0
@@ -84,13 +84,13 @@ PROMPT="Usage: strip.awk [-v AWK=1] [-v WARN=0] [-v PROMPT=0] script.sh > new_sc
 	CONTINUATION=0
 }
 # full comment line
-/^\s*#/ {
+/^[[:space:]]*#/ {
 	if (2>=NR) print # unless shebang and version info comment
 	next
 }
 # in-line comment not in string nor in variable substitution
 /#/ && ! ( /["']/ || /\${/ ) {
-	match($0,/\s*#[^#]*$/) # non-greedy => look for tail comment
+	match($0,/[[:space:]]*#[^#]*$/) # non-greedy => look for tail comment
 	s=substr($0,1,RSTART-1)
 	t=substr($0,RSTART+1,RLENGTH-1) # $0 == s"#"t
 	r1=substr(s,length(s),1)
@@ -103,7 +103,7 @@ PROMPT="Usage: strip.awk [-v AWK=1] [-v WARN=0] [-v PROMPT=0] script.sh > new_sc
 }
 # in-line comment possibly in string or in variable substitution
 /#/ {
-	match($0,/\s*#[^#]*$/) # non-greedy => look for tail comment
+	match($0,/[[:space:]]*#[^#]*$/) # non-greedy => look for tail comment
 	s=substr($0,1,RSTART-1)
 	t=substr($0,RSTART+1,RLENGTH-1) # $0 == s"#"t
 	r1=substr(s,length(s),1)
