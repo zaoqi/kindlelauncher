@@ -1,4 +1,12 @@
 CHANGE LOG
+
+**** v2.3 ****
+
+20140219
++ Minor code refactoring/cleanup
++ More buildsystem tweaks to fix some portability issues introduced in the
+  the previous changes
+
 20131005
 + Detect the PaperWhite 2/2013 as KindlePaperWhite2 (PW2).
 
@@ -51,10 +59,12 @@ CHANGE LOG
   . ignore bitbucket's 'commented' branch from this commit on, and
   . find the important files in ./resources:
     . parse-commented.awk (used to be aloop/aloop-v2.awk in commented branch)
-    . CHANGELOG.txt (this file, used to be aloop/CHANGELOG.txt in commented branch)
+    . CHANGELOG.txt (this file, used to be aloop/CHANGELOG.txt in the
+      commented branch)
   . add resources/README-tool.txt, which explains the main point:
     1. edit ./resources/parse-commented.awk to change the parser code, then
-    2. in ./resources run ./tool/strip.awk -v AWK=1 parse-commented.awk > parse.awk
+    2. in ./resources run
+       ./tool/strip.awk -v AWK=1 parse-commented.awk > parse.awk
     3. compile the project
 
 **** v2.1 ****
@@ -72,16 +82,17 @@ CHANGE LOG
 - Fix [#3]: we always count the extra quit or / button we add as the last item
   of a menu level, and we don't forget to add even it if it falls at the top of
   a new page.
-- Fix [#11]: rewrite get_model to properly differentiate the Kindle 2 from the DX
-  (AFAICT, their cpuinfo output is perfectly identical). We get a finer-grained
-  KindleDX model detection in the bargain ;).
+- Fix [#11]: rewrite get_model to properly differentiate the Kindle 2 from the
+  DX (AFAICT, their cpuinfo output is perfectly identical). We get a
+  finer-grained KindleDX model detection in the bargain ;).
 # Don't bundle useless (at runtime) resources in the final jar.
-- Fix [#12]: We now properly draw the shiny unicode glyphs (arrows, checkmarks, ...)
-  on the K2/DX.
+- Fix [#12]: We now properly draw the shiny unicode glyphs (arrows, checkmarks,
+  ...) on the K2/DX.
 # Refactored duplicated code between KualLabel and KualButton.
 - Fix [#1]: The checkmarks are now drawn properly on non-touch devices
   (and really is a checkmark, not a cross).
-- Fix [#8]: Don't overwrite a custom status text if the button requested a refresh
+- Fix [#8]: Don't overwrite a custom status text if the button requested a
+  refresh
 - Fix [#10]: Apply an if clause to a submenu itself, too
 # Tweaked afterParser default value a bit (+50%) on armv6 devices (K2/DX/3).
 
@@ -252,7 +263,8 @@ Internal changes:
 + documentation updates
 
 20130409,a
-- Fix "wrong action is executed when a menu.json file includes multiple top-level items".
+- Fix "wrong action is executed when a menu.json file includes multiple
+  top-level items".
 - Minor fixes and improvements
 
 20130408,a
@@ -291,8 +303,10 @@ Extensions can now write a message to the trail/status lines
   {"name":"label","action":"STATUS","params":"this message","exitmenu":false}
 ! Note that it's a fixed message; sh doesn't process it at all
 + Capture stderr of extensions to /var/tmp/KUAL.log
-+ New KUAL sub-menu button "File KUAL log as a document"; moves KUAL.log to /mnt/us/documents/
-! Still not quite working; the log file is always empty. Could it be due to the suicidal context ?!?
++ New KUAL sub-menu button "File KUAL log as a document"; moves KUAL.log to
+  /mnt/us/documents/
+! Still not quite working; the log file is always empty. Could it be due to the
+  suicidal context ?!?
 - Fix out of range index in setTrail()
 - Removed more dead wood and command-line options -c -f,
 
@@ -421,10 +435,12 @@ Internal changes
   . the GUI hasn't changed yet so it can't show levels above 2
   . license MIT or APACHE 2
 + option -v=1|2 selects the parsing engine; 1=old 2=new(nested,DEFAULT)
-  . the new engine exposes issue http://kual.knetconnect.com/forums/topic/menu-json-structure-and-future/#post-92
+  . the new engine exposes issue
+    http://kual.knetconnect.com/forums/topic/menu-json-structure-and-future/#post-92
     KUAL team to fix invalid menu.json files out there?
   . unlike engine 1, engine 2 doesn't touch up labels anymore
-  . unlike engine 1, engine 2 doesn't make up the group label when one isn't specified
+  . unlike engine 1, engine 2 doesn't make up the group label when one isn't
+    specified
   . soon the old engine 1 will go
   . don't worry about script size, there's still a lot of dead wood
   . performance sucks for now.
@@ -563,7 +579,8 @@ internal:
 --- KT/PW only versions below ---
 
 20130126,b,stepk
-- fix: K3 ash compatibility http://www.mobileread.com/forums/showpost.php?p=2397966&postcount=160
+- fix: K3 ash compatibility
+  http://www.mobileread.com/forums/showpost.php?p=2397966&postcount=160
 
 20130125,a,stepk
 + auto fix DOS line endings
