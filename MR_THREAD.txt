@@ -391,7 +391,7 @@ Here's a [URL="http://irtfweb.ifa.hawaii.edu/~lockhart/gpg/gpg-cs.html"]howto gu
 Replace the old KUAL-KDK-[I](1|2)[/I].0.azw2 file in the [I]documents[/I] folder with the new one.
 [B]NOTE:[/B] If you're upgrading from a version older than 2.3, remove the deprecated [B]KindleLauncher-[I](1|2)[/I].0.azw2[/B] file in the process.
 The correct, up to date filename is now [B]KUAL-KDK-[I](1|2)[/I].0.azw2[/B] ;).
-That's everything. [COLOR="Gray"][I]You can find the new one in the KUAL.V.2.2 files below[/I][/COLOR]
+That's everything. [COLOR="Gray"][I]You can find the new one in the KUAL files below[/I][/COLOR]
 
 [B]Changelog [/B]
 [url]https://bitbucket.org/ixtab/kindlelauncher/src/master/src/com/mobileread/ixtab/kindlelauncher/resources/CHANGELOG.txt?at=master[/url]
