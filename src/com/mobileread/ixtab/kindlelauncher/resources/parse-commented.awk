@@ -1097,9 +1097,9 @@ x = "s=$("x") && [ 0 != ${#s} ] && echo \\\"$s\\\" >'"CONFIGPATH"'"
 x = "[ -r '"CONFIGPATH"' ] || echo \\\"# "CONFIGPATH" - created on `date`\\\" >'"CONFIGPATH"';" x
 #}}}
 				json=json "," json_self_menu_button( \
-					"Sort menu "verb" on restart", \
+					"Sort menu "verb"", \
 					x, "", \
-					"", 2, "", "ecsd")
+					"", 2, "", "ecrsd")
 				#}}}
 			} else if (3 == ary[b]) {
 				# {{{ menu entry #3, copy SCREAM_LOG to documents
