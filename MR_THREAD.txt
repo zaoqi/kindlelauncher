@@ -279,7 +279,7 @@ And everyone else along the way.[/COLOR]
 [B]Known issues[/B]:[COLOR="White"][SPOILER][COLOR="Black"][B]ERROR[/B] "This device is not authorized as a test Kindle by the developer of this item"
 [B]SOLUTION[/B] Re/Install the MKK bundle.
 
-[B]ERROR[/B] "Kindlet Jailbreak not installed"
+[B]ERROR[/B] "Mobileread Kindlet Kit is not installed"
 [B]SOLUTION[/B] Install the MKK bundle.
 
 [B]ERROR[/B] [COLOR="Sienna"][B]Flashed 3.2.1 Dx's[/B][/COLOR] may not show up [B]any[/B] kindlets...
