@@ -52,7 +52,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 	private static final String EXEC_EXTENSION_AWK = ".awk";
 	private static final long serialVersionUID = 1L;
 
-	private static final int VK_KEYBOARD = 17; /* K4: We should be using getKeyboardKeyCode() here, but it's 1.3 only */
+	private static final int VK_KEYBOARD = 17; /* K4: We should be using getKeyboardKeyCode() here, but it's KDK 1.3 only */
 
 	private static final int PAGING_PREVIOUS = -1;
 	private static final int PAGING_NEXT = 1;
@@ -85,7 +85,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 				handlePaging(PAGING_NEXT, depth, true);
 				break;
 			case KindleKeyCodes.VK_TURN_PAGE_BACK: /* 61450 */
-			case 61452: /* K4: KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE_BACK in 1.3. See also *DistinctTurnPageBackKeyCodes*() */
+			case 61452: /* K4: KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE_BACK in KDK 1.3. See also *DistinctTurnPageBackKeyCodes*() */
 				handleLevel(LEVEL_PREVIOUS, true);
 				break;
 			case KeyEvent.VK_1:
