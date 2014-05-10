@@ -5,7 +5,7 @@ CHANGE LOG
 20140219
 + Minor code refactoring/cleanup
 + More buildsystem tweaks to fix some portability issues introduced in the
-  the previous changes
+  previous changes
 + Tweaked the default 'sort' buttons in the KUAL menu to be consistent with
   the KUAL+ extension.
 
