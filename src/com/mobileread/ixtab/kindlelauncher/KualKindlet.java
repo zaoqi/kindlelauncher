@@ -153,12 +153,10 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 			this, keyListener, null);
 	private Component breadcrumb = getUI().newLabel(PATH_SEP);
 
-	private final KualEntry toTopEntry = new KualEntry(1, PATH_SEP);
-	private final Component toTopButton = getUI().newButton(PATH_SEP, this,
-			keyListener, toTopEntry);
-	private final KualEntry quitEntry = new KualEntry(2, CROSS + " Quit");
-	private final Component quitButton = getUI().newButton(CROSS + " Quit",
-			this, keyListener, quitEntry);
+	private KualEntry toTopEntry;
+	private Component toTopButton;
+	private KualEntry quitEntry;
+	private Component quitButton;
 
 	private int[] offset = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }; // 10
 	private KualEntry[] keTrail = { null, null, null, null, null, null, null,
@@ -271,6 +269,15 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 		Container root = context.getRootContainer();
 		int gap = getUI().getGap();
 		root.removeAll();
+
+		// Setup custom fonts now (KDK-2)
+		getUI().setupUserFont(root);
+
+		// Only generate those buttons now, so that they honor the font chosen by the user...
+		toTopEntry = new KualEntry(1, PATH_SEP);
+		toTopButton = getUI().newButton(PATH_SEP, this, keyListener, toTopEntry);
+		quitEntry = new KualEntry(2, CROSS + " Quit");
+		quitButton = getUI().newButton(CROSS + " Quit", this, keyListener, quitEntry);
 
 		root.setLayout(new BorderLayout(gap, gap));
 		Container main = getUI().newPanel(new BorderLayout(gap, gap));

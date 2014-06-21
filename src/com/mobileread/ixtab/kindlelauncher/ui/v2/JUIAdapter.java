@@ -17,31 +17,33 @@ import com.mobileread.ixtab.kindlelauncher.resources.KualEntry;
 
 public class JUIAdapter extends UIAdapter {
 
+	private static Font defaultFont;
+	private static Font userFont;
+
+	// Die in a fire, Helvetica!
+	public void setupUserFont(Container root) {
+		defaultFont = root.getFont();
+		// I wish we could use Futura DemiBold, but Amazon's fontconfig setup smushes it into the Futura family, with a custom demibold style...
+		// Meaning we can't access it in Java, and apparently we can't do it ourselves either because createFont isn't supported... :/
+		userFont = new Font("Futura", Font.PLAIN, defaultFont.getSize());
+		// Restore default font if Futura isn't supported...
+		if (userFont.getFamily().equals(defaultFont.getFamily()))
+			userFont = defaultFont;
+	}
+
 	public Container newPanel(LayoutManager layout) {
 		return layout != null ? new JPanel(layout) : new JPanel();
 	}
 
 	public Component newLabel(String text) {
 		JLabel label = new JLabel(text);
-		// Die in a fire, Helvetica!
-		Font defaultFont = label.getFont();
-		// I wish we could use Futura DemiBold, but Amazon's fontconfig setup smushes it into the Futura family, with a custom demibold style...
-		// Meaning we can't access it in Java, and apparently we can't do it ourselves either because createFont isn't supported... :/
-		label.setFont(new Font("Futura", Font.PLAIN, defaultFont.getSize()));
-		// Restore default font if Futura isn't supported...
-		if (label.getFont().getFamily().equals(defaultFont.getFamily()))
-			label.setFont(defaultFont);
+		label.setFont(userFont);
 		return label;
 	}
 
 	public Component newButton(String text, ActionListener listener, KeyListener keyListener, KualEntry kualEntry) {
 		JButton button = new KualButton(text, kualEntry);
-		// Die in a fire, Helvetica!
-		Font defaultFont = button.getFont();
-		button.setFont(new Font("Futura", Font.PLAIN, defaultFont.getSize()));
-		// Restore default font if Futura isn't supported...
-		if (button.getFont().getFamily().equals(defaultFont.getFamily()))
-			button.setFont(defaultFont);
+		button.setFont(userFont);
 		if (listener != null) {
 			button.setName(text);
 			button.addActionListener(listener);

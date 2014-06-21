@@ -62,4 +62,8 @@ public class KUIAdapter extends UIAdapter {
 			return ((KualButton) component).getKualEntry();
 		return null;
 	}
+
+	public void setupUserFont(Container root) {
+		// No-op on KDK-1
+	}
 }

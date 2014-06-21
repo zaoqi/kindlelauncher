@@ -63,4 +63,6 @@ public abstract class UIAdapter {
 	public int getGap() {
 		return 5;
 	}
+
+	public abstract void setupUserFont(Container root);
 }
