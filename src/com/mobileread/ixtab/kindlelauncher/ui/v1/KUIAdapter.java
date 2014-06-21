@@ -40,8 +40,7 @@ public class KUIAdapter extends UIAdapter {
 	}
 
 	public Component newLabel(String text) {
-		KLabel label = new KualLabel(text);
-		return label;
+		return new KualLabel(text);
 	}
 
 	public Component newButton(String text, ActionListener listener, KeyListener keyListener, KualEntry kualEntry) {
