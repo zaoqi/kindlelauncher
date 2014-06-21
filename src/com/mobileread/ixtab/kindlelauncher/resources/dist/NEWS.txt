@@ -1,8 +1,8 @@
 CHANGE LOG
 
 20140621
-+ Make the font used by KUAL user-configurable (KDK-2 only)
-+ Switches to Futura regular as the default UI font on KDK-2
++ Make the font used by KUAL user-configurable
++ Switches to Futura Regular as the default UI font on KDK-2
 
 **** v2.3 ****
 
