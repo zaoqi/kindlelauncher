@@ -298,7 +298,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 		getUI().setupUserFont(root, userReqFamily, userFontStyle);
 
 		// Only initialize that now to honor the user's font...
-		breadcrumb = getUI().newLabel(PATH_SEP)
+		breadcrumb = getUI().newLabel(PATH_SEP);
 		// Same deal with those default buttons...
 		toTopEntry = new KualEntry(1, PATH_SEP);
 		toTopButton = getUI().newButton(PATH_SEP, this, keyListener, toTopEntry);
