@@ -23,25 +23,23 @@ public class JUIAdapter extends UIAdapter {
 
 	public Component newLabel(String text) {
 		JLabel label = new JLabel(text);
-		// Die in a fire, Helvetica!
-		Font defaultFont = label.getFont();
-		// I wish we could use Futura DemiBold, but Amazon's fontconfig setup smushes it into the Futura family, with a custom demibold style...
-		// Meaning we can't access it in Java, and apparently we can't do it ourselves either because createFont isn't supported... :/
-		label.setFont(new Font("Futura", Font.PLAIN, defaultFont.getSize()));
-		// Restore default font if Futura isn't supported...
-		if (label.getFont().getFamily().equals(defaultFont.getFamily()))
-			label.setFont(defaultFont);
+		// Die in a fire, Helvetica (if we have Futura... [FW >= 5.3])!
+		if (new File("/usr/java/lib/fonts/Futura-Medium.ttf").exists()) {
+			Font defaultFont = label.getFont();
+			// I wish we could use Futura DemiBold, but Amazon's fontconfig setup smushes it into the Futura family, with a custom demibold style...
+			// Meaning we can't access it in Java, and apparently we can't do it ourselves either because createFont isn't supported... :/
+			label.setFont(new Font("Futura", Font.PLAIN, defaultFont.getSize()));
+		}
 		return label;
 	}
 
 	public Component newButton(String text, ActionListener listener, KeyListener keyListener, KualEntry kualEntry) {
 		JButton button = new KualButton(text, kualEntry);
 		// Die in a fire, Helvetica!
-		Font defaultFont = button.getFont();
-		button.setFont(new Font("Futura", Font.PLAIN, defaultFont.getSize()));
-		// Restore default font if Futura isn't supported...
-		if (button.getFont().getFamily().equals(defaultFont.getFamily()))
-			button.setFont(defaultFont);
+		if (new File("/usr/java/lib/fonts/Futura-Medium.ttf").exists()) {
+			Font defaultFont = button.getFont();
+			button.setFont(new Font("Futura", Font.PLAIN, defaultFont.getSize()));
+		}
 		if (listener != null) {
 			button.setName(text);
 			button.addActionListener(listener);
