@@ -2,6 +2,7 @@ package com.mobileread.ixtab.kindlelauncher.ui.v2;
 
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Font;
 import java.awt.LayoutManager;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyListener;
@@ -21,11 +22,19 @@ public class JUIAdapter extends UIAdapter {
 	}
 
 	public Component newLabel(String text) {
-		return new JLabel(text);
+		JLabel label = new JLabel(text);
+		// Die in a fire, Helvetica!
+		Font defaultFont = label.getFont();
+		// NOTE: On K5 devices without Futura (< 5.3), this is mostly harmless, only the style (Regular instead of Bold) is applied...
+		label.setFont(new Font("Futura", Font.PLAIN, defaultFont.getSize()));
+		return label;
 	}
 
 	public Component newButton(String text, ActionListener listener, KeyListener keyListener, KualEntry kualEntry) {
 		JButton button = new KualButton(text, kualEntry);
+		// Die in a fire, Helvetica!
+		Font defaultFont = button.getFont();
+		button.setFont(new Font("Futura", Font.PLAIN, defaultFont.getSize()));
 		if (listener != null) {
 			button.setName(text);
 			button.addActionListener(listener);
