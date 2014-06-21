@@ -64,5 +64,5 @@ public abstract class UIAdapter {
 		return 5;
 	}
 
-	public abstract void setupUserFont(Container root);
+	public abstract void setupUserFont(Container root, String fontFamily, int fontStyle);
 }

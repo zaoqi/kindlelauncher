@@ -63,7 +63,7 @@ public class KUIAdapter extends UIAdapter {
 		return null;
 	}
 
-	public void setupUserFont(Container root) {
+	public void setupUserFont(Container root, String fontFamily, int fontStyle) {
 		// No-op on KDK-1
 	}
 }
