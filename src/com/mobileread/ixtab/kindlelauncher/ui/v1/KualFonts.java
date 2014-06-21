@@ -30,7 +30,14 @@ public class KualFonts {
 		KualFonts result = (KualFonts) INSTANCES.get(caller.getClass());
 		if (result == null) {
 			synchronized (KualFonts.class) {
-				Font defaultFont = caller.getFont();
+				Font callerFont = caller.getFont();
+				// Try to use the user requested font...
+				Font defaultFont = new Font(KUIAdapter.getUserFontFamily(), KUIAdapter.getUserFontStyle(), callerFont.getSize());
+				// Restore default (caller) font if the requested font isn't supported... (Which will happen w/ default settings, since we ask for Futura)
+				// Note that we detect this in a slightly more convoluted way than on KDK-2... If family is dialog but name isn't, then it's a bogus font.
+				if (defaultFont.getFamily().equals("dialog") && !defaultFont.getName().equals("dialog")) {
+					defaultFont = callerFont;
+				}
 				FontMetrics defaultFontMetrics = caller
 						.getFontMetrics(defaultFont);
 				Font unicodeFont = null;
