@@ -34,6 +34,8 @@ public class JUIAdapter extends UIAdapter {
 		JButton button = new KualButton(text, kualEntry);
 		// Die in a fire, Helvetica!
 		Font defaultFont = button.getFont();
+		// I wish we could use Futura DemiBold, but Amazon's fontconfig setup smushes it into the Futura family, with a custom demibold style...
+		// Meaning we can't access it in Java, and apparently we can't do it ourselves either because createFont isn't supported... :/
 		button.setFont(new Font("Futura", Font.PLAIN, defaultFont.getSize()));
 		if (listener != null) {
 			button.setName(text);

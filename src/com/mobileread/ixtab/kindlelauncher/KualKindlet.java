@@ -8,6 +8,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.EventQueue;
 import java.awt.Font;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -20,6 +21,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -223,6 +225,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 		 */
 		try {
 			initializeState(); // step 1
+			initializeFonts(); // Only actually does something useful on KDK-2 w/ FW >= 5.3
 			initializeUI(); // step 3
 			// Monitor messages from backgrounded script. Monitoring ends in 10
 			// s. (20 * 500ms)
@@ -265,6 +268,23 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 
 	private static UIAdapter getUI() {
 		return UIAdapter.INSTANCE;
+	}
+
+	private void initializeFonts() {
+		// Don't do anything if we don't even have Futura...
+		if (new File("/usr/java/lib/fonts/Futura-DemiBold.ttf").exists()) {
+			try {
+				Font font = Font.createFont(Font.TRUETYPE_FONT, new FileInputStream("/usr/java/lib/fonts/Futura-DemiBold.ttf"));
+				// DEBUG: Log the family name, see if it's sane...
+				new KualLog().append(font.toString());
+				// Make it available
+				GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+				ge.registerFont(font);
+			} catch (Throwable t) {
+				new KualLog().append(t.toString());
+				setStatus("Exception logged.");
+			}
+		}
 	}
 
 	private void initializeUI() {
