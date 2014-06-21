@@ -25,8 +25,12 @@ public class JUIAdapter extends UIAdapter {
 		JLabel label = new JLabel(text);
 		// Die in a fire, Helvetica!
 		Font defaultFont = label.getFont();
-		// NOTE: On K5 devices without Futura (< 5.3), this is mostly harmless, only the style (Regular instead of Bold) is applied...
+		// I wish we could use Futura DemiBold, but Amazon's fontconfig setup smushes it into the Futura family, with a custom demibold style...
+		// Meaning we can't access it in Java, and apparently we can't do it ourselves either because createFont isn't supported... :/
 		label.setFont(new Font("Futura", Font.PLAIN, defaultFont.getSize()));
+		// Restore default font if Futura isn't supported...
+		if (label.getFont().getFamily().equals(defaultFont.getFamily()))
+			label.setFont(defaultFont);
 		return label;
 	}
 
@@ -34,9 +38,10 @@ public class JUIAdapter extends UIAdapter {
 		JButton button = new KualButton(text, kualEntry);
 		// Die in a fire, Helvetica!
 		Font defaultFont = button.getFont();
-		// I wish we could use Futura DemiBold, but Amazon's fontconfig setup smushes it into the Futura family, with a custom demibold style...
-		// Meaning we can't access it in Java, and apparently we can't do it ourselves either because createFont isn't supported... :/
 		button.setFont(new Font("Futura", Font.PLAIN, defaultFont.getSize()));
+		// Restore default font if Futura isn't supported...
+		if (button.getFont().getFamily().equals(defaultFont.getFamily()))
+			button.setFont(defaultFont);
 		if (listener != null) {
 			button.setName(text);
 			button.addActionListener(listener);
