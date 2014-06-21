@@ -151,7 +151,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 			this, keyListener, null);
 	private Component prevPageButton = getUI().newButton("  " + UARROW + "  ",
 			this, keyListener, null);
-	private Component breadcrumb = getUI().newLabel(PATH_SEP);
+	private Component breadcrumb;
 
 	private KualEntry toTopEntry;
 	private Component toTopButton;
@@ -297,7 +297,9 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 		}
 		getUI().setupUserFont(root, userReqFamily, userFontStyle);
 
-		// Only generate those buttons now, so that they honor the font chosen by the user...
+		// Only initialize that now to honor the user's font...
+		breadcrumb = getUI().newLabel(PATH_SEP)
+		// Same deal with those default buttons...
 		toTopEntry = new KualEntry(1, PATH_SEP);
 		toTopButton = getUI().newButton(PATH_SEP, this, keyListener, toTopEntry);
 		quitEntry = new KualEntry(2, CROSS + " Quit");
