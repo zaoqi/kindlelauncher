@@ -270,34 +270,32 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 		int gap = getUI().getGap();
 		root.removeAll();
 
-		// Setup custom fonts now (Only actually do something on KDK-2)
-		if ("com.mobileread.ixtab.kindlelauncher.ui.v2.JUIAdapter".equals(getUI().getClass().getName())) {
-			String userReqFamily = kualMenu.getConfig("font_family");
-			if (null == userReqFamily) {
-				// Defaults to Futura
-				// I wish we could use Futura DemiBold, but Amazon's fontconfig setup smushes it into the Futura family, with a custom demibold style...
-				// Meaning we can't access it in Java, and apparently we can't do it ourselves either because createFont isn't supported... :/
-				userReqFamily = "Futura";
-			}
-			String userReqStyle = kualMenu.getConfig("font_style");
-			if (null == userReqStyle) {
-				// Defaults to Regular
-				userReqStyle = "Regular";
-			}
-			// Fugly way to make that style into something Java actually handles...
-			int userFontStyle;
-			if (userReqStyle.equals("BoldItalic")) {
-				userFontStyle = Font.BOLD + Font.ITALIC;
-			} else if (userReqStyle.equals("Bold")) {
-				userFontStyle = Font.BOLD;
-			} else if (userReqStyle.equals("Italic")) {
-				userFontStyle = Font.ITALIC;
-			} else {
-				// Defaults to Regular
-				userFontStyle = Font.PLAIN;
-			}
-			getUI().setupUserFont(root, userReqFamily, userFontStyle);
+		// Setup custom fonts now
+		String userReqFamily = kualMenu.getConfig("font_family");
+		if (null == userReqFamily) {
+			// Defaults to Futura
+			// I wish we could use Futura DemiBold, but Amazon's fontconfig setup smushes it into the Futura family, with a custom demibold style...
+			// Meaning we can't access it in Java, and apparently we can't do it ourselves either because createFont isn't supported... :/
+			userReqFamily = "Futura";
 		}
+		String userReqStyle = kualMenu.getConfig("font_style");
+		if (null == userReqStyle) {
+			// Defaults to Regular
+			userReqStyle = "Regular";
+		}
+		// Fugly way to make that style into something Java actually handles...
+		int userFontStyle;
+		if (userReqStyle.equals("BoldItalic")) {
+			userFontStyle = Font.BOLD + Font.ITALIC;
+		} else if (userReqStyle.equals("Bold")) {
+			userFontStyle = Font.BOLD;
+		} else if (userReqStyle.equals("Italic")) {
+			userFontStyle = Font.ITALIC;
+		} else {
+			// Defaults to Regular
+			userFontStyle = Font.PLAIN;
+		}
+		getUI().setupUserFont(root, userReqFamily, userFontStyle);
 
 		// Only initialize that now to honor the user's font...
 		breadcrumb = getUI().newLabel(PATH_SEP);
