@@ -1,5 +1,5 @@
-[FONT="Arial Black"][SIZE="6"][COLOR="YellowGreen"]UPDATE v 2.3: [/COLOR][/SIZE][/FONT]
-Kindle K2, K2i, DX, 3, 4, Touch, PW & PW2 supported (all revisions [COLOR="Gray"][SIZE="2"]that support kindlets[/SIZE][/COLOR])
+[FONT="Arial Black"][SIZE="6"][COLOR="YellowGreen"]UPDATE v 2.4: [/COLOR][/SIZE][/FONT]
+Kindle K2, K2i, DX, 3, 4, Touch, PW & PW2 supported (all revisions [COLOR="Gray"][SIZE="2"]that support Kindlets[/SIZE][/COLOR])
 
 [SIZE="1"]Many thanks to [URL="http://hackaday.com/2013/02/05/one-kindle-launcher-to-rule-them/"][COLOR="Gray"]Hackaday.com[/COLOR][/URL] and [URL="http://lifehacker.com/5982743/kual-is-a-simple-unified-launcher-for-jailbroken-kindles"][COLOR="Gray"]lifehacker.com[/COLOR][/URL] for their support[/SIZE][SIZE="5"][/SIZE]
 [QUOTE][SIZE="1"][COLOR="Red"]NOTICE! [COLOR="Black"]•[/COLOR] Lägg märke [COLOR="Black"]•[/COLOR] لاحظت [COLOR="Black"]•[/COLOR] Beachten [COLOR="Black"]•[/COLOR] AVIS [COLOR="Black"]•[/COLOR] Обратите внимание [COLOR="Black"]•[/COLOR] Προσοχή [COLOR="Black"]•[/COLOR] LET OP [COLOR="Black"]•[/COLOR] 注意[COLOR="Black"] •[/COLOR] نوٹس

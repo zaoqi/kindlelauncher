@@ -1,5 +1,7 @@
 CHANGE LOG
 
+**** v2.4 ****
+
 20140722
 + Added support for the missing 4GB PW2 variants.
 
