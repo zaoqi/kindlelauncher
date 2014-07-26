@@ -7,6 +7,8 @@ Kindle K2, K2i, DX, 3, 4, Touch, PW & PW2 supported (all revisions [COLOR="Gray"
 [B]BEFORE[/B] YOU CAN USE THE KINDLET: You MUST have [B]installed[/B] [URL=http://www.mobileread.com/forums/showthread.php?t=233932][COLOR="Red"][B]MKK[/B][/COLOR][/URL].[/QUOTE]
 
 [I][COLOR="Gray"][B]NOTES: [/B]
+Non-Japanese 4GB PW2 models won't run Kindlets at all, unless updated to 5.4.5 or newer.
+
 Really old firmware on Kindle 2's did not support kindlets, update the firmware.
 
 Flashed 3.2.1 Dx's may not show up [B]any[/B] kindlets... [COLOR="Gray"][SIZE="1"][I]See [B]Known Issues[/B] section for more details[/I][/SIZE][/COLOR][/COLOR][/I]
@@ -281,6 +283,9 @@ And everyone else along the way.[/COLOR]
 
 [B]ERROR[/B] "Mobileread Kindlet Kit is not installed"
 [B]SOLUTION[/B] Install the MKK bundle.
+
+[B]ERROR[/B] "The selected application cannot be started. Please try again later" on non-Japanese 4GB PW2 models.
+[B]SOLUTION[/B] Update to FW >= 5.4.5
 
 [B]ERROR[/B] [COLOR="Sienna"][B]Flashed 3.2.1 Dx's[/B][/COLOR] may not show up [B]any[/B] kindlets...
 [B]SOLUTION[/B] [COLOR="Gray"][SIZE="1"]There is a [URL="http://www.mobileread.com/forums/showpost.php?p=1747631&postcount=354"] workaround[/URL] by [URL="http://www.mobileread.com/forums/member.php?u=131896"]TJW[/URL] [B]<--[/B] [URL="http://www.mobileread.com/forums/showpost.php?p=2407467&postcount=6"]tested by wakawakawaka[/URL][/SIZE][/COLOR]

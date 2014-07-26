@@ -1,5 +1,8 @@
 CHANGE LOG
 
+20140722
++ Added support for the missing 4GB PW2 variants.
+
 20140621
 + Make the font used by KUAL user-configurable
 + Switches to Futura Regular as the default UI font on KDK-2
