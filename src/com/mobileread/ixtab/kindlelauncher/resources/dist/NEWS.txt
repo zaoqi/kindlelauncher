@@ -1,5 +1,8 @@
 CHANGE LOG
 
+20141005
++ Detect the Kindle Basic, because I'm the hopeful kind of guy... ;D
+
 **** v2.4 ****
 
 20140722
