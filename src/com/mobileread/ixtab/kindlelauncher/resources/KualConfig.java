@@ -78,7 +78,7 @@ public class KualConfig {
 		} else if ("KindlePaperWhite2".equals(model)) {
 			modelnick = "PW2";
 		} else if ("KindleBasic".equals(model)) {
-			modelnick = "KB";
+			modelnick = "KT2";
 		}
 
 		return modelnick;
