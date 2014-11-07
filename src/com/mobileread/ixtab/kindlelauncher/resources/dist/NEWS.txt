@@ -1,5 +1,8 @@
 CHANGE LOG
 
+20141107
++ Detect the Kindle Voyage, because why the hell not? ;p
+
 20141005
 + Detect the Kindle Basic, because I'm the hopeful kind of guy... ;D
 

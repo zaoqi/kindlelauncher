@@ -1968,7 +1968,7 @@ function get_model(    file,line,device) {#{{{ >>global MODEL; return MODEL or `
 	file = "/proc/usid"
 	if ((getline line < file) > 0) { # if, since we slurp anyway
 		close(file) # you may close only what got actually opened, else awk errors out
-		# Strips the B0 (leading 2 chars), that should help with those weird K4 starting in 90 instead of B0...
+		# Strip the B0/90 (leading 2 chars)...
 		device = substr(line, 3, 2)
 		MODEL =   device ~ /^(02)|(03)$/ ? "Kindle2" \
 		        : device ~ /^(04)|(05)$/ ? "KindleDX" \
@@ -1979,6 +1979,7 @@ function get_model(    file,line,device) {#{{{ >>global MODEL; return MODEL or `
 			: device ~ /^(24)|(1B)|(1D)|(1F)|(1C)|(20)$/ ? "KindlePaperWhite" \
 			: device ~ /^(D4)|(5A)|(D5)|(D6)|(D7)|(D8)|(F2)|(17)|(60)|(F4)|(F9)|(62)|(61)|(5F)$/ ? "KindlePaperWhite2" \
 			: device ~ /^(C6)$/ ? "KindleBasic" \
+			: device ~ /^(13)|(54)$/ ? "KindleVoyage" \
 			: "Unknown"
 	}
 	return MODEL
