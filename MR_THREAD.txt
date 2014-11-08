@@ -1,3 +1,81 @@
+Welcome to [b]K[/b]indle [b]U[/b]nified [b]A[/b]pplication [b]L[/b]auncher, your [i]/kuːl/[/i] friendly neighborhood Launcher ;).
+
+[COLOR="DarkGreen"][b]What Does It Do?:[/b][/COLOR]
+[INDENT]
+As the name implies, this is a Launcher application, in which anybody can plug into to provide new [i]buttons[/i] and [i]menus[/i] through [i]extensions[/i]. Those buttons can run pretty much anything, and the backend is powerful enough to make menus dynamic, allowing developers to use KUAL as a configuration UI for their stuff! But the basic principle is: click a button to run stuff!
+
+A number of hacks ship with a KUAL extension, which is why you'll often see KUAL listed as a required dependency ;).
+
+Morever, it's universal! It'll run on (pretty much) anything, as long as it's running FW >= 2.3! [COLOR="DarkGrey"]That said, the situation on the KT2 & KV is currently a bit murky...[/COLOR].
+[/INDENT]
+
+
+[COLOR="Red"][b]Latest Updates (07/22/2014):[/b][/COLOR]
+[INDENT]
+KUAL v2.4. Support for the full range of new PW2 variants.
+[/INDENT]
+
+
+[COLOR="Red"][b]INSTALL:[/b][/COLOR]
+
+[b]KUAL itself:[/b]
+[INDENT][SPOILER]
+As pretty much anything here, your device will need to be jailbroken. Please refer to the wiki and/or the [url=http://www.mobileread.com/forums/showthread.php?t=180113]stickies[/url] & index for the appropriate method for your specific Kindle model ;).
+
+In addition, you [i]may[/i] need to intall [url=http://www.mobileread.com/forums/showthread.php?t=233932]MKK[/url]: if your device runs on FW 5.x, and you're using the [url=http://www.mobileread.com/forums/showthread.php?t=186645]K5 JB >= 1.11.N[/url], you don't need to do anything, MKK is bundled with your JB. If you're using an older device, you [i]will[/i] need to install MKK yourself ;).
+
+Finally, you need to install KUAL itself, by putting the appropriate [i]azw2[/i] file somewhere in the [i]documents/[/i] directory tree of your device.
+First, unpack the [b]KUAL-v2.4.zip[/b] archive attached to this post. Then, if your device runs on FW 5.x, use the [b]KUAL-KDK-2.0.azw2[/b] file. If your device is older, use the [b]KUAL-KDK-1.0.azw2[/b] file.
+
+And that's it for the basics! You should now have a pretty KUAL button/entry on your Homescreen. Right now, it won't be terribly useful, since KUAL ships without any extension, but now you have the tools to change that :).
+Check the screenshots attached to this post for a quick tutorial on how to actually navigate KUAL's UI ;).
+[/INDENT][/SPOILER]
+
+[b]KUAL extensions:[/b]
+[INDENT][SPOILER]
+Let's take the 'Helper' extension attached to this post as an example. Simply unpack the [b]kual-helper-0.4.N.zip[/b] archive attached to this post at the USB root of your device. It'll create an [i]extensions[/i] folder, and a [i]helper[/i] subdirectory in it. That's it! Each extension lives as its own subdirectory inside the [i]extensions[/i] folder. It'll automagically get picked up the next time your start KUAL, and you should see a new 'Helper' menu pop up in the main KUAL screen!
+
+Extensions should always be packaged this way (i.e., simply unpack them at the root of your device), but if they're not, unpack them inside the [i]extensions[/i] directory instead.
+Developers, see [url=http://wiki.mobileread.com/wiki/KUAL_What%27s_New]this wiki page[/url] for all the gory details on what you can do ;).
+
+Here are a few other 'quality-of-life' extensions provided by the KUAL dev-team:
+[url=http://www.mobileread.com/forums/showpost.php?p=2591705&postcount=1014]KUAL+[/url], which extends the KUAL menu with more configuration options for KUAL itself.
+[url=http://www.mobileread.com/forums/showpost.php?p=2636883&postcount=50]GNU Awk Installer[/url], which will provide an install button for gawk in the KUAL menu. gawk will then be used by KUAL, instead of busybox awk. Long story short: it'll make KUAL parse your extensions faster ;).
+
+You will find the full list of available extensions [url=http://www.mobileread.com/forums/showthread.php?t=205064]here[/url].
+[/INDENT][/SPOILER]
+
+
+
+[COLOR="Red"][b]FAQs and Known Issues:[/b][/COLOR]
+[INDENT][SPOILER]
+[b]Q[/b]. Halp! Everything is broken, and my device shows me a weird popup when I try to launch KUAL!
+The content of the popup might range from "This device is not authorized as a test Kindle by the developer of this item", to "Mobileread Kindlet Kit is not installed"
+
+[b]A[/b]. You either fell victim to a silent OTA update, or you unregistered your device since the last time you tried to launch a Kindlet.
+The fix is simple: reinstall MKK.
+
+----
+
+[LIST]
+[*]Non-Japanese 4GB PW2 models won't run Kindlets at all [you'll get a "The selected application cannot be started. Please try again later" popup], unless updated to 5.4.5 or newer (make sure you're JailBroken [i]before[/i] updating).
+[*]On a cold boot, even with everything in order, KUAL [i]may[/i] sill fail to start on the first try, usually with a "The selected application cannot be started. Please try again later" or "Kindlet did not shut down properly" popup. This is a known issue, stemming from restrictions of the Kindlet framework, and the way in which KUAL is designed. Simply try again a bit later. (On a sidenote, enabling gawk [i]might[/i] help a bit).
+[*]Really old firmware versions on the K2 & DX did not support Kindlets, update the firmware to the latest version available.
+[*]Frankensteined DXG with FW 3.x won't be able to run Kindlets without [url=http://www.mobileread.com/forums/showpost.php?p=1747631&postcount=354]further tinkering[/url]
+[/LIST]
+[/INDENT][/SPOILER]
+
+
+[COLOR="Red"][b]ChangeLog:[/b][/COLOR]
+[INDENT][SPOILER]
+It's available [url=https://bitbucket.org/ixtab/kindlelauncher/src/master/src/com/mobileread/ixtab/kindlelauncher/resources/dist/NEWS.txt?at=master]here[/url].
+[/INDENT][/SPOILER]
+
+[CENTER][COLOR="Red"][B]==============================[/B][/COLOR][/CENTER]
+
+For historical purposes, and because it's much, much more verbose, here's the first post as it stood before the rewrite ;). That said, everything you need to know should already have been covered earlier :).
+
+[SPOILER]
 [FONT="Arial Black"][SIZE="6"][COLOR="YellowGreen"]UPDATE v 2.4: [/COLOR][/SIZE][/FONT]
 Kindle K2, K2i, DX, 3, 4, Touch, PW & PW2 supported (all revisions [COLOR="Gray"][SIZE="2"]that support Kindlets[/SIZE][/COLOR])
 
@@ -388,3 +466,4 @@ That's everything. [COLOR="Gray"][I]You can find the new one in the KUAL files b
 
 [B]Changelog [/B]
 [url]https://bitbucket.org/ixtab/kindlelauncher/src/master/src/com/mobileread/ixtab/kindlelauncher/resources/dist/NEWS.txt?at=master[/url]
+[/SPOILER]

@@ -1,5 +1,8 @@
 CHANGE LOG
 
+20141108
+- Rewrote the MR thread. Should now be more concise.
+
 20141107
 + Detect the Kindle Voyage, because why the hell not? ;p
 
