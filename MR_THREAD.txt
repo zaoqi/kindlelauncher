@@ -41,6 +41,7 @@ Developers, see [url=http://wiki.mobileread.com/wiki/KUAL_What%27s_New]this wiki
 Here are a few other 'quality-of-life' extensions provided by the KUAL dev-team:
 [url=http://www.mobileread.com/forums/showpost.php?p=2591705&postcount=1014]KUAL+[/url], which extends the KUAL menu with more configuration options for KUAL itself.
 [url=http://www.mobileread.com/forums/showpost.php?p=2636883&postcount=50]GNU Awk Installer[/url], which will provide an install button for gawk in the KUAL menu. gawk will then be used by KUAL, instead of busybox awk. Long story short: it'll make KUAL parse your extensions faster ;).
+[url=http://www.mobileread.com/forums/showthread.php?t=251143]MR Package Installer[/url], which will make installing your favorite set of hacks a breeze ;).
 
 You will find the full list of available extensions [url=http://www.mobileread.com/forums/showthread.php?t=205064]here[/url].
 [/INDENT][/SPOILER]
