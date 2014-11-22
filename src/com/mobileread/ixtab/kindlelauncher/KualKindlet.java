@@ -819,7 +819,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 		// Call Gandalf for help if need be...
 		if ("$".equals(PRIVILEDGE_HINT_PREFIX)) {
 			return Runtime.getRuntime().exec(
-					new String[] { "/var/local/mkk/gandalf", "-s", "/bin/ash", "-c", launcher.getAbsolutePath() }, null,
+					new String[] { "/var/local/mkk/su", "-s", "/bin/ash", "-c", launcher.getAbsolutePath() }, null,
 					workingDir);
 		} else {
 			return Runtime.getRuntime().exec(
