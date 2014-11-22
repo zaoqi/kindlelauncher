@@ -52,8 +52,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 	private static final String EXEC_EXTENSION_AWK = ".awk";
 	private static final long serialVersionUID = 1L;
 	// Handle the priviledge hint prefix...
-	private static final long currentUID = new com.sun.security.auth.module.UnixSystem().getUid();
-	static String PRIVILEDGE_HINT_PREFIX = "?";
+	private static String PRIVILEDGE_HINT_PREFIX = "?";
 
 	private static final int VK_KEYBOARD = 17; /* K4: We should be using getKeyboardKeyCode() here, but it's KDK 1.3 only */
 
@@ -276,7 +275,8 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 		root.removeAll();
 
 		// Check current priviledges...
-		if (currentUID == 0) {
+		String currentUsername = System.getProperty("user.name");
+		if ("root".equals(currentUsername)) {
 			PRIVILEDGE_HINT_PREFIX = "#";
 		} else {
 			if (new File("/var/local/mkk/gandalf").exists()) {
