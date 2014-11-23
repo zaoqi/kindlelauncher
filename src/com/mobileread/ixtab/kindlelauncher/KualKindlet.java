@@ -817,7 +817,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 		}
 		File launcher = createLauncherScript(cmd, background, "");
 		// Call Gandalf for help if need be...
-		if ("#".equals(PRIVILEDGE_HINT_PREFIX)) {
+		if ("$".equals(PRIVILEDGE_HINT_PREFIX)) {
 			return Runtime.getRuntime().exec(
 					new String[] { "/var/local/mkk/su", "-s", "/bin/ash", "-c", launcher.getAbsolutePath() }, null,
 					workingDir);
@@ -881,8 +881,8 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 		bw.newLine();
 		bw.close();
 
-		// Make it executable... Of course, we can't use setExecutable()...
-		tempFile.setExecutable(true);
+		// Make it executable... And of course, we can't use setExecutable(), so do it the fugly way...
+		Runtime.getRuntime().exec("chmod +x " + tempFile.getAbsolutePath(), null);
 		return tempFile;
 	}
 
