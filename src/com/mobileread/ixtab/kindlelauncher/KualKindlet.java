@@ -51,8 +51,8 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 	private static final String EXEC_EXTENSION_SH = ".sh";
 	private static final String EXEC_EXTENSION_AWK = ".awk";
 	private static final long serialVersionUID = 1L;
-	// Handle the priviledge hint prefix...
-	private static String PRIVILEDGE_HINT_PREFIX = "?";
+	// Handle the privilege hint prefix...
+	private static String PRIVILEGE_HINT_PREFIX = "?";
 
 	private static final int VK_KEYBOARD = 17; /* K4: We should be using getKeyboardKeyCode() here, but it's KDK 1.3 only */
 
@@ -260,8 +260,8 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 				label = "..." + label.substring(len - width + 3);
 			text += label;
 		}
-		// Add the priviledge hint...
-		text = PRIVILEDGE_HINT_PREFIX + " " + BULLET + " " + text;
+		// Add the privilege hint...
+		text = PRIVILEGE_HINT_PREFIX + " " + BULLET + " " + text;
 		getUI().setText(breadcrumb, text);
 	}
 
@@ -274,15 +274,15 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 		int gap = getUI().getGap();
 		root.removeAll();
 
-		// Check current priviledges...
+		// Check current privileges...
 		String currentUsername = System.getProperty("user.name");
 		if ("root".equals(currentUsername)) {
-			PRIVILEDGE_HINT_PREFIX = "#";
+			PRIVILEGE_HINT_PREFIX = "#";
 		} else {
 			if (new File("/var/local/mkk/gandalf").exists()) {
-				PRIVILEDGE_HINT_PREFIX = "$";
+				PRIVILEGE_HINT_PREFIX = "$";
 			} else {
-				PRIVILEDGE_HINT_PREFIX = "%";
+				PRIVILEGE_HINT_PREFIX = "%";
 			}
 		}
 
@@ -817,7 +817,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 		}
 		File launcher = createLauncherScript(cmd, background, "");
 		// Call Gandalf for help if need be...
-		if ("$".equals(PRIVILEDGE_HINT_PREFIX)) {
+		if ("$".equals(PRIVILEGE_HINT_PREFIX)) {
 			return Runtime.getRuntime().exec(
 					new String[] { "/var/local/mkk/su", "-s", "/bin/ash", "-c", launcher.getAbsolutePath() }, null,
 					workingDir);
