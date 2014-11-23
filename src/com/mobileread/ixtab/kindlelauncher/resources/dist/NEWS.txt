@@ -1,5 +1,8 @@
 CHANGE LOG
 
+20141123
+- Call on a faithful Wizard if need be!
+
 20141108
 - Rewrote the MR thread. Should now be more concise.
 
