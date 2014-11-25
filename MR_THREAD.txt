@@ -22,7 +22,7 @@ KUAL v2.5. Handle FW >= 5.6.1 (w/ the help of the latest JB).
 [INDENT][SPOILER]
 As pretty much anything here, your device will need to be jailbroken. Please refer to the wiki and/or the [url=http://www.mobileread.com/forums/showthread.php?t=180113]stickies[/url] & index for the appropriate method for your specific Kindle model ;).
 
-In addition, you [i]may[/i] need to intall [url=http://www.mobileread.com/forums/showthread.php?t=233932]MKK[/url]: if your device runs on FW 5.x, and you're using the [url=http://www.mobileread.com/forums/showthread.php?t=186645]K5 JB >= 1.11.N[/url], you don't need to do anything, MKK is bundled with your JB. If you're using an older device, you [i]will[/i] need to install MKK yourself ;).
+In addition, you [i]may[/i] need to install [url=http://www.mobileread.com/forums/showthread.php?t=233932]MKK[/url]: if your device runs on FW 5.x, and you're using the [url=http://www.mobileread.com/forums/showthread.php?t=186645]K5 JB >= 1.11.N[/url], you don't need to do anything, MKK is bundled with your JB. If you're using an older device, you [i]will[/i] need to install MKK yourself ;).
 
 Finally, you need to install KUAL itself, by putting the appropriate [i]azw2[/i] file somewhere in the [i]documents/[/i] directory tree of your device.
 First, unpack the [b]KUAL-v2.5.zip[/b] archive attached to this post. Then, if your device runs on FW 5.x, use the [b]KUAL-KDK-2.0.azw2[/b] file. If your device is older, use the [b]KUAL-KDK-1.0.azw2[/b] file.
