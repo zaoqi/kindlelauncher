@@ -10,9 +10,9 @@ Morever, it's universal! It'll run on (pretty much) anything, as long as it's ru
 [/INDENT]
 
 
-[COLOR="Red"][b]Latest Updates (07/22/2014):[/b][/COLOR]
+[COLOR="Red"][b]Latest Updates (11/25/2014):[/b][/COLOR]
 [INDENT]
-KUAL v2.4. Support for the full range of new PW2 variants.
+KUAL v2.5. Handle FW >= 5.6.1 (w/ the help of the latest JB).
 [/INDENT]
 
 
@@ -25,7 +25,7 @@ As pretty much anything here, your device will need to be jailbroken. Please ref
 In addition, you [i]may[/i] need to intall [url=http://www.mobileread.com/forums/showthread.php?t=233932]MKK[/url]: if your device runs on FW 5.x, and you're using the [url=http://www.mobileread.com/forums/showthread.php?t=186645]K5 JB >= 1.11.N[/url], you don't need to do anything, MKK is bundled with your JB. If you're using an older device, you [i]will[/i] need to install MKK yourself ;).
 
 Finally, you need to install KUAL itself, by putting the appropriate [i]azw2[/i] file somewhere in the [i]documents/[/i] directory tree of your device.
-First, unpack the [b]KUAL-v2.4.zip[/b] archive attached to this post. Then, if your device runs on FW 5.x, use the [b]KUAL-KDK-2.0.azw2[/b] file. If your device is older, use the [b]KUAL-KDK-1.0.azw2[/b] file.
+First, unpack the [b]KUAL-v2.5.zip[/b] archive attached to this post. Then, if your device runs on FW 5.x, use the [b]KUAL-KDK-2.0.azw2[/b] file. If your device is older, use the [b]KUAL-KDK-1.0.azw2[/b] file.
 
 And that's it for the basics! You should now have a pretty KUAL button/entry on your Homescreen. Right now, it won't be terribly useful, since KUAL ships without any extension, but now you have the tools to change that :).
 Check the screenshots attached to this post for a quick tutorial on how to actually navigate KUAL's UI ;).
@@ -63,6 +63,7 @@ The fix is simple: reinstall MKK.
 [*]On a cold boot, even with everything in order, KUAL [i]may[/i] sill fail to start on the first try, usually with a "An error occured while trying to open this item", or a "The selected application cannot be started. Please try again later" or "Kindlet did not shut down properly" popup. This is a known issue, stemming from restrictions of the Kindlet framework, and the way in which KUAL is designed. Simply try again a bit later. (On a sidenote, enabling gawk [i]might[/i] help a bit).
 [*]Really old firmware versions on the K2 & DX did not support Kindlets, update the firmware to the latest version available.
 [*]Frankensteined DXG with FW 3.x won't be able to run Kindlets without [url=http://www.mobileread.com/forums/showpost.php?p=1747631&postcount=354]further tinkering[/url]
+[*]You [i]need[/i] an up to date JailBreak (>= 1.13.N) in order for your extensions to behave properly on FW >= 5.6.1. If stuff appears to be half-broken, that's probably the case (the breadcrumb line being prefixed with a [i]%[/i] is a definitie sign that your JB is outdated).
 [/LIST]
 [/INDENT][/SPOILER]
 
