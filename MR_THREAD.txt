@@ -63,7 +63,7 @@ The fix is simple: reinstall MKK.
 [*]On a cold boot, even with everything in order, KUAL [i]may[/i] sill fail to start on the first try, usually with a "An error occured while trying to open this item", or a "The selected application cannot be started. Please try again later" or "Kindlet did not shut down properly" popup. This is a known issue, stemming from restrictions of the Kindlet framework, and the way in which KUAL is designed. Simply try again a bit later. (On a sidenote, enabling gawk [i]might[/i] help a bit).
 [*]Really old firmware versions on the K2 & DX did not support Kindlets, update the firmware to the latest version available.
 [*]Frankensteined DXG with FW 3.x won't be able to run Kindlets without [url=http://www.mobileread.com/forums/showpost.php?p=1747631&postcount=354]further tinkering[/url]
-[*]You [i]need[/i] an up to date JailBreak (>= 1.13.N) in order for your extensions to behave properly on FW >= 5.6.1. If stuff appears to be half-broken, that's probably the case (the breadcrumb line being prefixed with a [i]%[/i] is a definitie sign that your JB is outdated).
+[*]You [i]need[/i] an up to date JailBreak (>= 1.13.N) in order for your extensions to behave properly on FW >= 5.6.1. If stuff appears to be half-broken, that's probably the case (the breadcrumb line being prefixed with a [i]%[/i] is a definite sign that your JB is outdated).
 [/LIST]
 [/INDENT][/SPOILER]
 
