@@ -815,7 +815,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 			new KualLog().append("directory '" + dir + "' not found");
 			return null;
 		}
-		File launcher = createLauncherScript(cmd, background, "");
+		File launcher = createLauncherScript(cmd, background, "", dir);
 		// Call Gandalf for help if need be...
 		if ("$".equals(PRIVILEGE_HINT_PREFIX)) {
 			return Runtime.getRuntime().exec(
@@ -865,12 +865,16 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 	}
 
 	private File createLauncherScript(String cmd, boolean background,
-			String init) throws IOException {
+			String init, String pwd) throws IOException {
 		File tempFile = java.io.File.createTempFile(EXEC_PREFIX_BACKGROUND,
 				EXEC_EXTENSION_SH);
 
 		BufferedWriter bw = new BufferedWriter(new FileWriter(tempFile));
 		bw.write("#!/bin/ash");
+		bw.newLine();
+
+		// Try to cd to the working directory, in case something went wrong with the workingDir earlier (Java? Gandalf? Gremlins?)
+		bw.write("cd '" + pwd + "' 2>>/var/tmp/KUAL.log");
 		bw.newLine();
 
 		// wrap cmd inside {} to support backgrounding multiple commands and
