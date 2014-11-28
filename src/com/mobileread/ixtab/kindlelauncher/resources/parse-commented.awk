@@ -950,6 +950,14 @@ function format_action_item(action, params, internal,   # {{{ return formatted i
 	# action ::= <apath> ';' <shell cmd>
 	p = index(action, ";")
 	cmd = substr(action, p+1)
+	# Strip leading dot slash if found, we'll replace that with an absolute path later...
+	if (cmd ~ /^\.\/.*?$/)
+	{
+		# Strip leading two chars...
+		tweaked_cmd = substr(cmd, 3)
+		# And replace the command in the full action string
+		gsub(cmd, tweaked_cmd, action)
+	}
 	if (x = format_action_internal(internal)) {
 		# piggyback internal kindlet function
 		action = "#" x action

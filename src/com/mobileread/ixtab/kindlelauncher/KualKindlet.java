@@ -815,7 +815,14 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 			new KualLog().append("directory '" + dir + "' not found");
 			return null;
 		}
-		File launcher = createLauncherScript(cmd, background, "", dir);
+		File launcher;
+		// If the command is a script living somewhere inside the extension folder, call it with its absolute path...
+		if (new File(dir + "/" + cmd).exists()) {
+			launcher = createLauncherScript(cmd, background, dir + "/", dir);
+		} else {
+			// Barring that, trust the action value from the menu...
+			launcher = createLauncherScript(cmd, background, "", dir);
+		}
 		// Call Gandalf for help if need be...
 		if ("$".equals(PRIVILEGE_HINT_PREFIX)) {
 			return Runtime.getRuntime().exec(
@@ -875,6 +882,9 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 
 		// Try to cd to the working directory, in case something went wrong with the workingDir earlier (Java? Gandalf? Gremlins?)
 		bw.write("cd '" + pwd + "' 2>>/var/tmp/KUAL.log");
+		bw.newLine();
+		// Moar debug!
+		bw.write("echo -e \"PWD: ${PWD} vs. " + pwd + " | OLDPWD: ${OLDPWD} | UID: $(id -u) | USER: ${USER}\nls:\n$(ls -lash .)\nls bin:\n$(ls -lash ./bin)\" >>/var/tmp/KUAL.log 2>&1");
 		bw.newLine();
 
 		// wrap cmd inside {} to support backgrounding multiple commands and
