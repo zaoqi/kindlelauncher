@@ -815,14 +815,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 			new KualLog().append("directory '" + dir + "' not found");
 			return null;
 		}
-		File launcher;
-		// If the command is a script living somewhere inside the extension folder, call it with its absolute path...
-		if (new File(dir + "/" + cmd).exists()) {
-			launcher = createLauncherScript(cmd, background, dir + "/", dir);
-		} else {
-			// Barring that, trust the action value from the menu...
-			launcher = createLauncherScript(cmd, background, "", dir);
-		}
+		File launcher = createLauncherScript(cmd, background, "", dir);
 		// Call Gandalf for help if need be...
 		if ("$".equals(PRIVILEGE_HINT_PREFIX)) {
 			return Runtime.getRuntime().exec(

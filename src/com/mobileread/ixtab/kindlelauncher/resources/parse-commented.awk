@@ -948,15 +948,51 @@ function format_action_internal(internal,  # {{{ return formatted internal actio
 function format_action_item(action, params, internal,   # {{{ return formatted item action
 	p,cmd,x) {
 	# action ::= <apath> ';' <shell cmd>
-	p = index(action, ";")
-	cmd = substr(action, p+1)
-	# Strip leading dot slash if found, we'll replace that with an absolute path later...
+	split(action, action_ary, ";")
+	pwd = action_ary[1]
+	scream("pwd is: " pwd)
+	cmd = action_ary[2]
+	scream("cmd is: " cmd)
+	# Strip leading dot-slash, if need be
 	if (cmd ~ /^\.\/.*?$/)
 	{
 		# Strip leading two chars...
-		tweaked_cmd = substr(cmd, 3)
+		cmd = substr(cmd, 3)
+	}
+	# Fix broken action calls that don't set params properly, and instead include params in the action call...
+	if (":" != cmd && "/var/tmp" != pwd) {
+		scream("cmd is real")
+		cmd_nary = split(cmd, cmd_ary, " ")
+		scream("cmd_nary: " cmd_nary)
+		if (cmd_nary > 1) {
+			# Append the params one by one...
+			for (i=2; i<=cmd_nary; i++)
+			{
+				if (i == 2) {
+					# First param
+					cmd_params = cmd_ary[i]
+				} else {
+					cmd_params = cmd_params " " cmd_ary[i]
+				}
+			}
+			scream("cmd_params: " cmd_params)
+			# Reset cmd to just the cmd itself
+			cmd = cmd_ary[1]
+			# Append params if the entry is really, really broken and had also set params...
+			if ("" != params) {
+				params = cmd_params " " params
+			}
+			scream("new cmd: " cmd)
+			scream("new params: " params)
+		}
+	}
+	# Replace cmd by its absolute path if it's living inside the extension folder... It should be a single word, since params should be in, well, params, not action ;).
+	if ("/var/tmp" != pwd && (getline junk < (pwd "/" cmd)) > 0) {
+		scream(pwd "/" cmd " exists :)")
+		close((pwd "/" cmd))
+		cmd = pwd "/" cmd
 		# And replace the command in the full action string
-		gsub(cmd, tweaked_cmd, action)
+		action = pwd ";" cmd
 	}
 	if (x = format_action_internal(internal)) {
 		# piggyback internal kindlet function
