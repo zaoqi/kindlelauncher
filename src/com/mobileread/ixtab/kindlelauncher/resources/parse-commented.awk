@@ -950,9 +950,7 @@ function format_action_item(action, params, internal,   # {{{ return formatted i
 	# action ::= <apath> ';' <shell cmd>
 	split(action, action_ary, ";")
 	pwd = action_ary[1]
-	scream("pwd is: " pwd)
 	cmd = action_ary[2]
-	scream("cmd is: " cmd)
 	# Strip leading dot-slash, if need be
 	if (cmd ~ /^\.\/.*?$/)
 	{
@@ -961,9 +959,7 @@ function format_action_item(action, params, internal,   # {{{ return formatted i
 	}
 	# Fix broken action calls that don't set params properly, and instead include params in the action call...
 	if (":" != cmd && "/var/tmp" != pwd) {
-		scream("cmd is real")
 		cmd_nary = split(cmd, cmd_ary, " ")
-		scream("cmd_nary: " cmd_nary)
 		if (cmd_nary > 1) {
 			# Append the params one by one...
 			for (i=2; i<=cmd_nary; i++)
@@ -975,7 +971,6 @@ function format_action_item(action, params, internal,   # {{{ return formatted i
 					cmd_params = cmd_params " " cmd_ary[i]
 				}
 			}
-			scream("cmd_params: " cmd_params)
 			# Reset cmd to just the cmd itself
 			cmd = cmd_ary[1]
 			# And rebuild the full action string with that proper cmd
@@ -986,13 +981,10 @@ function format_action_item(action, params, internal,   # {{{ return formatted i
 			} else {
 				params = cmd_params
 			}
-			scream("new cmd: " cmd)
-			scream("new params: " params)
 		}
 	}
 	# Replace a real non-absolute cmd by its absolute path if it's living inside the extension folder... We've just made sure that it should be a single word ;).
 	if (":" != cmd && "/var/tmp" != pwd && index(cmd, "/") != 1 && (getline junk < (pwd "/" cmd)) > 0) {
-		scream(pwd "/" cmd " exists :)")
 		close((pwd "/" cmd))
 		cmd = pwd "/" cmd
 		# And replace the command in the full action string
