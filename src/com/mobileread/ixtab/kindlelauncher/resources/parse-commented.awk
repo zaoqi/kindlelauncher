@@ -981,6 +981,8 @@ function format_action_item(action, params, internal,   # {{{ return formatted i
 			# Append params if the entry is really, really broken and had also set params...
 			if ("" != params) {
 				params = cmd_params " " params
+			} else {
+				params = cmd_params
 			}
 			scream("new cmd: " cmd)
 			scream("new params: " params)
