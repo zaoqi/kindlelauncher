@@ -989,7 +989,7 @@ function format_action_item(action, params, internal,   # {{{ return formatted i
 		}
 	}
 	# Replace cmd by its absolute path if it's living inside the extension folder... We've just made sure that it should be a single word ;).
-	if ("/var/tmp" != pwd && (getline junk < (pwd "/" cmd)) > 0) {
+	if (":" != cmd && "/var/tmp" != pwd && (getline junk < (pwd "/" cmd)) > 0) {
 		scream(pwd "/" cmd " exists :)")
 		close((pwd "/" cmd))
 		cmd = pwd "/" cmd
