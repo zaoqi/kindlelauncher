@@ -978,6 +978,8 @@ function format_action_item(action, params, internal,   # {{{ return formatted i
 			scream("cmd_params: " cmd_params)
 			# Reset cmd to just the cmd itself
 			cmd = cmd_ary[1]
+			# And rebuild the full action string with that proper cmd
+			action = pwd ";" cmd
 			# Append params if the entry is really, really broken and had also set params...
 			if ("" != params) {
 				params = cmd_params " " params
@@ -988,8 +990,8 @@ function format_action_item(action, params, internal,   # {{{ return formatted i
 			scream("new params: " params)
 		}
 	}
-	# Replace cmd by its absolute path if it's living inside the extension folder... We've just made sure that it should be a single word ;).
-	if (":" != cmd && "/var/tmp" != pwd && (getline junk < (pwd "/" cmd)) > 0) {
+	# Replace a real non-absolute cmd by its absolute path if it's living inside the extension folder... We've just made sure that it should be a single word ;).
+	if (":" != cmd && "/var/tmp" != pwd && index(cmd, "/") != 1 && (getline junk < (pwd "/" cmd)) > 0) {
 		scream(pwd "/" cmd " exists :)")
 		close((pwd "/" cmd))
 		cmd = pwd "/" cmd
