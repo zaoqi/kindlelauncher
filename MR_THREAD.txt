@@ -64,6 +64,7 @@ The fix is simple: reinstall MKK.
 [*]Really old firmware versions on the K2 & DX did not support Kindlets, update the firmware to the latest version available.
 [*]Frankensteined DXG with FW 3.x won't be able to run Kindlets without [url=http://www.mobileread.com/forums/showpost.php?p=1747631&postcount=354]further tinkering[/url]
 [*]You [i]need[/i] an up to date JailBreak (>= 1.13.N) in order for your extensions to behave properly on FW >= 5.6.1. If stuff appears to be half-broken, that's probably the case (the breadcrumb line being prefixed with a [i]%[/i] is a definite sign that your JB is outdated).
+[*]If some buttons mysteriously fail to run, in an apparently random fashion, make sure your host system and/or your unarchiving tools are not messing with the case and the line-endings of files when unpacking the archives... This is sure to lead to hair-pulling mysteries otherwise ;).
 [/LIST]
 [/INDENT][/SPOILER]
 
