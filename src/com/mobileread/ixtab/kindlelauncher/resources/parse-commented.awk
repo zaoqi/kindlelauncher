@@ -412,7 +412,7 @@ function cache_save(    errors,hash1,hash2,cmd) { # {{{ << globals IN_MEMORY_CAC
 	#}}}
 
 	printf "" >CACHEPATH
-		# assert first two cache lines: number'\n'version! xref cache_send(), config_send()
+	# assert first two cache lines: number'\n'version! xref cache_send(), config_send()
 	errors += config_send(CACHEPATH)
 	errors += formatter(MENUS, NMENUS, "multiline", CACHEPATH)
 
@@ -549,7 +549,7 @@ function config_send(outfile,   k,n) { # {{{ << globals VERSION,MBXPATH,CONFIG[]
 	for (k in CONFIG)
 		if(k !~ /^NC/)
 			++n
-				# VERSION MUST immediately follow the FIRST NUMBER xref cache_save()
+	# VERSION MUST immediately follow the FIRST NUMBER xref cache_save()
 	printf "%d\n%s\n%s\n%d\n", 2, VERSION, MBXPATH, n >>outfile
 	for (k in CONFIG)
 		if(k !~ /^NC/)
@@ -801,7 +801,6 @@ function children_map(ary, nary, idx, map, # {{{ >>map[*], return nmap == nary
 	i,min,max) {
 # for each sub-menu in ary[min...max] map a list of its children records as indexes of ary[]
 # *min..max == 1..nary iff idx==0 else min==max==idx
-
 	if (0 == idx) {
 		min = 1
 		max = nary
@@ -910,10 +909,10 @@ function find_menu_fullpathnames(dirs, return_ary, base,  # {{{ >>SELF_BUTTONS_I
 		if (0 <= (getline slurp < ary[i])) # config.xml
 			close(ary[i])
 		if (slurp ~ /<extension>.+<\/extension>/) { # extension xml file
-		    if (match(slurp, /<menu\>[^>]+\<type="json"[^>]*>[^<]+<\/menu>/)) { # ignore non-json menu types
-			    slurp = substr(slurp,RSTART,RLENGTH-7) # <menu ...>name
-			    menu = substr(slurp,1+index(slurp,">")) # name
-		    }
+			if (match(slurp, /<menu\>[^>]+\<type="json"[^>]*>[^<]+<\/menu>/)) { # ignore non-json menu types
+				slurp = substr(slurp,RSTART,RLENGTH-7) # <menu ...>name
+				menu = substr(slurp,1+index(slurp,">")) # name
+			}
 		}
 		if ("" != menu) {
 			if ("^/" !~ menu) { # relative
@@ -967,8 +966,7 @@ function format_action_item_absolute(action, params, internal,   # {{{ return fo
 	pwd = action_ary[1]
 	cmd = action_ary[2]
 	# Strip leading dot-slash, if need be
-	if (cmd ~ /^\.\/.*?$/)
-	{
+	if (cmd ~ /^\.\/.*?$/) {
 		# Strip leading two chars...
 		cmd = substr(cmd, 3)
 	}
@@ -1110,8 +1108,8 @@ show = "0 " show # FIXME temporary until a cache expiration policy is in place
 				     ":", "", "breadcrumb help @ http://bit.ly/kualit", \
 				     -200, "", "e")
 				#}}}
-  			}
-  		}
+			}
+		}
 	}
 	#}}}
 	# {{{ add standard buttons
@@ -1219,7 +1217,7 @@ function jp2np(ary, size, serial, menufilepathname,   # {{{ appends to NPATHS[],
 #   level, npath, k_key, value
 # IMPORTANT: np2mn() will sort qualified records ALPHAbetically - NOT numerically
 #}}}
-      # here we could also output an 'enter new file' marker to aid np2mn(), xref NEW_FILE_MARKER_AID
+	# here we could also output an 'enter new file' marker to aid np2mn(), xref NEW_FILE_MARKER_AID
 	errors=0
 
 	# KUAL changes directory to menufilepath w/o name) before running commands
@@ -1300,7 +1298,7 @@ function np2mn(ary, size,    # {{{ appends to MENUS[], NMENUS
 		new_item()
 		new_submenu()
 
-	       	select_level[0] = npath_wo_reserved(npath_new("",0))
+		select_level[0] = npath_wo_reserved(npath_new("",0))
 		# init ^^ for level-0 sortable_tag items/menus - xref SORTABLE
 
 		if (0 < (nlines = split(SORTED_DATA,lines, /\n/))) {
@@ -1335,11 +1333,11 @@ function np2mn(ary, size,    # {{{ appends to MENUS[], NMENUS
 						new_item()
 					} else { # value is a submenu
 		# SUBMENU
-					    ITEM[key]=value MMRK # sub-menu
+						ITEM[key]=value MMRK # sub-menu
 
-					    # 20130719: NiLuJe added RPN_if() support for sub-menus
-					    x = ITEM[K_name]
-					    if (RPN_if(ITEM[K_if], x)) {
+						# 20130719: NiLuJe added RPN_if() support for sub-menus
+						x = ITEM[K_name]
+						if (RPN_if(ITEM[K_if], x)) {
 
 
 # xref SORTABLE : tag a "name" with sortable data {{{
@@ -1364,23 +1362,23 @@ function np2mn(ary, size,    # {{{ appends to MENUS[], NMENUS
 #
 # Conclusion: Tag each record with <select_level> a.k.a sortable_tag.
 #}}}
-						npath_s_this_items = npath_s_this_(K_items, snpath) # refers to this.`items`
-						# init sort tag elements for all sub-items/menus of this submenu {{{ # xref SORTABLE
-						# push next drill-down items/sub-menus
-						select_level[level+1] = npath_wo_reserved(npath_padded(npath_s_this_items))
-						#}}}
-						sortable_tag = select_level[level] # set for this menu - xref SORTABLE
+							npath_s_this_items = npath_s_this_(K_items, snpath) # refers to this.`items`
+							# init sort tag elements for all sub-items/menus of this submenu {{{ # xref SORTABLE
+							# push next drill-down items/sub-menus
+							select_level[level+1] = npath_wo_reserved(npath_padded(npath_s_this_items))
+							#}}}
+							sortable_tag = select_level[level] # set for this menu - xref SORTABLE
 
-						MENUS[++NMENUS] = work_record( \
-							sortable_record(sortable_tag, OPT_SORT),
-							kindlet_options(),
-							level,snpath,
-							# here snpath refers to this."action" since K_action==0x00 by design
-							ITEM[K_name],
-							format_action_submenu(level, npath_s_this_items))
+							MENUS[++NMENUS] = work_record( \
+								sortable_record(sortable_tag, OPT_SORT),
+								kindlet_options(),
+								level,snpath,
+								# here snpath refers to this."action" since K_action==0x00 by design
+								ITEM[K_name],
+								format_action_submenu(level, npath_s_this_items))
 
-					    }
-					    new_submenu()
+						}
+						new_submenu()
 					}
 				} else if (K_priority == key || K_params == key || K_internal == key || K_if == key || K_exitmenu == key || K_checked == key || K_refresh == key || K_status == key || K_date == key || K_hidden == key) {
 					ITEM[key] = value
@@ -1606,8 +1604,8 @@ function npath_s_KUAL_menu() { # {{{
 }
 #}}}
 function npath_s_this_(key, snpath) { # {{{
-    # make this."key"'s snpath at current level
-    return substr(snpath,1,length(snpath)-2) sprintf("%02x", key) # key ::= K_key constant, i.e., K_name, K_items, etc.
+	# make this."key"'s snpath at current level
+	return substr(snpath,1,length(snpath)-2) sprintf("%02x", key) # key ::= K_key constant, i.e., K_name, K_items, etc.
 }
 #}}}
 
@@ -1623,7 +1621,7 @@ function RPN_if(expr, source,   # {{{ return value of RPN conditional expression
 		if (match(token, /^\".*\"$/))
 			token = substr(token, 2, RLENGTH - 2) # dequote
 		RPN_eval_bool(token)
-	       	if(RPN_err) {
+		if(RPN_err) {
 			scream(RPN_msg(expr, source, RPN_err))
 			return 1
 		}
@@ -2100,9 +2098,7 @@ function isRegularFileEmpty (x,   #{{{ return -1(x is special file or non-existe
 # Parser core {{{
 function get_token() { #{{{
 # usage: {tokenize($0); while(get_token()) {print TOKEN}}
-
 	## return getline TOKEN number for external tokenizer
-
 	TOKEN = TOKENS[++ITOKENS] # for internal tokenize()
 	return ITOKENS < NTOKENS
 }
@@ -2246,7 +2242,6 @@ function reset() { #{{{ *** CUSTOMIZED *** to allow appending to JPATHS[]
 # otherwise each new input json file would reset JPATHS[]. The main input
 # loop includes code to delete partial JPATHS[] elements that can
 # result from parse() errors upon processing malformed json input.
-
 	TOKEN=""; delete TOKENS; NTOKENS=ITOKENS=0
 	# delete JPATHS; NJPATHS=0
 	VALUE=""
@@ -2261,7 +2256,7 @@ function scream(msg, origin, #{{{
 		++SCREAMED_BEFORE
 		"date" | getline x
 		close("date")
-		printf "\n%s: ***** started on %s", PRODUCTNAME, x >> SCREAM_LOG
+		printf "\n%s: ***** started %s on %s", PRODUCTNAME, VERSION, x >> SCREAM_LOG
 	}
 	FAILS[origin] = FAILS[origin] (FAILS[origin]!="" ? "\n" : "") msg
 	msg = origin ": " msg
