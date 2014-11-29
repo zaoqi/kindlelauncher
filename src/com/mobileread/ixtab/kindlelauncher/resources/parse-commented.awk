@@ -948,6 +948,21 @@ function format_action_internal(internal,  # {{{ return formatted internal actio
 function format_action_item(action, params, internal,   # {{{ return formatted item action
 	p,cmd,x) {
 	# action ::= <apath> ';' <shell cmd>
+	p = index(action, ";")
+	cmd = substr(action, p+1)
+	if (x = format_action_internal(internal)) {
+		# piggyback internal kindlet function
+		action = "#" x action
+	}
+	return (action) ("" != params ? " " : "") (params)
+	# [ '#' <internal id char> <length> '<sharp>' [ <args> ] ] <apath> ';' <shell cmd> [' ' <params>]
+}
+#}}}
+
+#: BSTR crappy experiment with absolute paths
+function format_action_item_absolute(action, params, internal,   # {{{ return formatted item action
+	p,cmd,x) {
+	# action ::= <apath> ';' <shell cmd>
 	split(action, action_ary, ";")
 	pwd = action_ary[1]
 	cmd = action_ary[2]
@@ -989,6 +1004,7 @@ function format_action_item(action, params, internal,   # {{{ return formatted i
 		cmd = pwd "/" cmd
 		# And replace the command in the full action string
 		action = pwd ";" cmd
+		# NOTE: Kill DOS line endings?
 	}
 	if (x = format_action_internal(internal)) {
 		# piggyback internal kindlet function
@@ -998,6 +1014,7 @@ function format_action_item(action, params, internal,   # {{{ return formatted i
 	# [ '#' <internal id char> <length> '<sharp>' [ <args> ] ] <apath> ';' <shell cmd> [' ' <params>]
 }
 #}}}
+#: ESTR crappy experiment with absolute paths
 
 function format_action_submenu(level, items_path) { # {{{ return formatted sub-menu action
 # The action is a regex that selects all direct descendant "name" items of the sub-menu's "items" node
