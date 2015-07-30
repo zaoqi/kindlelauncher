@@ -1,5 +1,8 @@
 CHANGE LOG
 
+20150730
++ Potentially detect the Kindle PaperWhite 3. Most likely innacurate.
+
 **** v2.5 ****
 
 20141123

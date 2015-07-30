@@ -2035,6 +2035,7 @@ function get_model(    file,line,device) {#{{{ >>global MODEL; return MODEL or `
 			: device ~ /^(D4)|(5A)|(D5)|(D6)|(D7)|(D8)|(F2)|(17)|(60)|(F4)|(F9)|(62)|(61)|(5F)$/ ? "KindlePaperWhite2" \
 			: device ~ /^(C6)|(DD)$/ ? "KindleBasic" \
 			: device ~ /^(13)|(54)|(2A)|(4F)|(52)|(53)$/ ? "KindleVoyage" \
+			: device ~ /^(90)$/ ? "KindlePaperWhite3" \
 			: "Unknown"
 	}
 	return MODEL
