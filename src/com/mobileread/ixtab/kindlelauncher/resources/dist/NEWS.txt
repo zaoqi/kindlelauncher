@@ -1,5 +1,8 @@
 CHANGE LOG
 
+20150814
+- Implemented the PW3 detection properly.
+
 20150730
 + Potentially detect the Kindle PaperWhite 3. Most likely innacurate.
 
