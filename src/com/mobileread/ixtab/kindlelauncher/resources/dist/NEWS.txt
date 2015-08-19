@@ -1,5 +1,7 @@
 CHANGE LOG
 
+**** v2.6 ****
+
 20150814
 - Implemented the PW3 detection properly.
 

@@ -6,13 +6,13 @@ As the name implies, this is a Launcher application, in which anybody can plug i
 
 A number of hacks ship with a KUAL extension, which is why you'll often see KUAL listed as a required dependency ;).
 
-Moreover, it's universal! It'll run on (pretty much) anything, as long as it's running FW >= 2.3! [COLOR="DarkGrey"]That said, the situation on the KT2 & KV is currently a bit murky...[/COLOR].
+Moreover, it's universal! It'll run on (pretty much) anything, as long as it's running FW >= 2.3! [COLOR="DarkGrey"]With a particular caveat on the KT2/KV/PW3, where some early firmware versions won't let you run it...[/COLOR].
 [/INDENT]
 
 
-[COLOR="Red"][b]Latest Updates (11/25/2014):[/b][/COLOR]
+[COLOR="Red"][b]Latest Updates (08/19/2015):[/b][/COLOR]
 [INDENT]
-KUAL v2.5. Handle FW >= 5.6.1 (w/ the help of the latest JB).
+KUAL v2.6. PW3 support.
 [/INDENT]
 
 
@@ -25,7 +25,7 @@ As pretty much anything here, your device will need to be jailbroken. Please ref
 In addition, you [i]may[/i] need to install [url=http://www.mobileread.com/forums/showthread.php?t=233932]MKK[/url]: if your device runs on FW 5.x, and you're using the [url=http://www.mobileread.com/forums/showthread.php?t=186645]K5 JB >= 1.11.N[/url], you don't need to do anything, MKK is bundled with your JB. If you're using an older device, you [i]will[/i] need to install MKK yourself ;).
 
 Finally, you need to install KUAL itself, by putting the appropriate [i]azw2[/i] file somewhere in the [i]documents/[/i] directory tree of your device.
-First, unpack the [b]KUAL-v2.5.zip[/b] archive attached to this post. Then, if your device runs on FW 5.x, use the [b]KUAL-KDK-2.0.azw2[/b] file. If your device is older, use the [b]KUAL-KDK-1.0.azw2[/b] file.
+First, unpack the [b]KUAL-v2.6.zip[/b] archive attached to this post. Then, if your device runs on FW 5.x, use the [b]KUAL-KDK-2.0.azw2[/b] file. If your device is older, use the [b]KUAL-KDK-1.0.azw2[/b] file.
 
 And that's it for the basics! You should now have a pretty KUAL button/entry on your Homescreen. Right now, it won't be terribly useful, since KUAL ships without any extension, but now you have the tools to change that :).
 Check the screenshots attached to this post for a quick tutorial on how to actually navigate KUAL's UI ;).
@@ -33,15 +33,15 @@ Check the screenshots attached to this post for a quick tutorial on how to actua
 
 [b]KUAL extensions:[/b]
 [INDENT][SPOILER]
-Let's take the 'Helper' extension attached to this post as an example. Simply unpack the [b]kual-helper-0.4.N.zip[/b] archive attached to this post at the USB root of your device. It'll create an [i]extensions[/i] folder, and a [i]helper[/i] subdirectory in it. That's it! Each extension lives as its own subdirectory inside the [i]extensions[/i] folder. It'll automagically get picked up the next time your start KUAL, and you should see a new 'Helper' menu pop up in the main KUAL screen!
+Let's take the 'Helper' extension attached to this post as an example. Simply unpack the [b]kual-helper-0.5.N.zip[/b] archive attached to this post at the USB root of your device. It'll create an [i]extensions[/i] folder, and a [i]helper[/i] subdirectory in it. That's it! Each extension lives as its own subdirectory inside the [i]extensions[/i] folder. It'll automagically get picked up the next time your start KUAL, and you should see a new 'Helper' menu pop up in the main KUAL screen!
 
 Extensions should always be packaged this way (i.e., simply unpack them at the root of your device), but if they're not, unpack them inside the [i]extensions[/i] directory instead.
 Developers, see [url=http://wiki.mobileread.com/wiki/KUAL_What%27s_New]this wiki page[/url] for all the gory details on what you can do ;).
 
 Here are a few other 'quality-of-life' extensions provided by the KUAL dev-team:
-[url=http://www.mobileread.com/forums/showpost.php?p=2591705&postcount=1014]KUAL+[/url], which extends the KUAL menu with more configuration options for KUAL itself.
-[url=http://www.mobileread.com/forums/showpost.php?p=2636883&postcount=50]GNU Awk Installer[/url], which will provide an install button for gawk in the KUAL menu. gawk will then be used by KUAL, instead of busybox awk. Long story short: it'll make KUAL parse your extensions faster ;).
-[url=http://www.mobileread.com/forums/showthread.php?t=251143]MR Package Installer[/url], which will make installing your favorite set of hacks a breeze ;).
+[url=http://www.mobileread.com/forums/showpost.php?p=2591705&postcount=1014][b]KUAL+[/b][/url], which extends the KUAL menu with more configuration options for KUAL itself.
+[url=http://www.mobileread.com/forums/showpost.php?p=2636883&postcount=50][b]GNU Awk Installer[/b][/url], which will provide an install button for gawk in the KUAL menu. gawk will then be used by KUAL, instead of busybox awk. Long story short: it'll make KUAL parse your extensions faster, which is good ;). It's [b]highly[/b] recommended, especially if you use complex KUAL extensions.
+[url=http://www.mobileread.com/forums/showthread.php?t=251143][b]MR Package Installer[/b][/url], which will make installing your favorite set of hacks a breeze ;).
 
 You will find the full list of available extensions [url=http://www.mobileread.com/forums/showthread.php?t=205064]here[/url].
 [/INDENT][/SPOILER]
@@ -60,7 +60,8 @@ The fix is simple: reinstall MKK.
 
 [LIST]
 [*]Non-Japanese 4GB PW2 models won't run Kindlets at all [you'll get a "The selected application cannot be started. Please try again later" popup], unless updated to 5.4.5 or newer (make sure you're JailBroken [i]before[/i] updating).
-[*]On a cold boot, even with everything in order, KUAL [i]may[/i] sill fail to start on the first try, usually with a "An error occurred while trying to open this item", or a "The selected application cannot be started. Please try again later" or "Kindlet did not shut down properly" popup. This is a known issue, stemming from restrictions of the Kindlet framework, and the way in which KUAL is designed. Simply try again a bit later. (On a sidenote, enabling gawk [i]might[/i] help a bit).
+[*]In the same vein, on the KV, the KT2 & the PW3, some early FW versions won't let you run Kindlets at all [you'll get a "The selected application cannot be started. Please try again later" popup].
+[*]On a cold boot, even with everything in order, KUAL [i]may[/i] sill fail to start on the first try, usually with a "An error occurred while trying to open this item", or a "The selected application cannot be started. Please try again later" or "Kindlet did not shut down properly" popup. This is a known issue, stemming from restrictions of the Kindlet framework, and the way in which KUAL is designed. Simply try again a bit later. (On a sidenote, enabling [url=http://www.mobileread.com/forums/showpost.php?p=2636883&postcount=50][b]gawk[/b][/url] [i]might[/i] help a bit).
 [*]Really old firmware versions on the K2 & DX did not support Kindlets, update the firmware to the latest version available.
 [*]Frankensteined DXG with FW 3.x won't be able to run Kindlets without [url=http://www.mobileread.com/forums/showpost.php?p=1747631&postcount=354]further tinkering[/url]
 [*]You [i]need[/i] an up to date JailBreak (>= 1.13.N) in order for your extensions to behave properly on FW >= 5.6.1. If stuff appears to be half-broken, that's probably the case (the breadcrumb line being prefixed with a [i]%[/i] is a definite sign that your JB is outdated).
@@ -167,7 +168,7 @@ Called "Helper" ([URL="http://www.mobileread.com/forums/attachment.php?attachmen
 Put [B]KUAL-KDK-1.0.azw2[/B] in [B]documents[/B] folder.
 Run it by clicking new kindlet document in your list.
 
-(Touch, PW, PW2)
+(Touch, PW, PW2, KV, KT2, PW3)
 Put [B]KUAL-KDK-2.0.azw2[/B] in [B]documents[/B] folder.
 Run it by clicking icon.
 
@@ -332,7 +333,7 @@ Give it a go... :)
 [COLOR="White"][SPOILER][COLOR="Black"]There are a couple of apps that don't play nicely - [B][I]xterm for example on the PW & PW2 must be replaced by [URL="http://www.fabiszewski.net/kindle-terminal/"]Kterm[/URL]. [/I][/B] Documenting these corner cases would go a long way towards knowing what needs to be fixed. Some efforts to this end are being made in the[B] 3rd Party Support Notes[/B] section below.
 Feel free to add comments about amending that as needed.
 
-This is in the Release phase right now for K2, K2i, DX, K3, K4, Touch, PW and PW2 devices, support is confirmed for these devices and it is safe to use the installers on them.
+This is in the Release phase right now for K2, K2i, DX, K3, K4, Touch, PW, PW2, KV, KT2 & PW3 devices, support is confirmed for these devices and it is safe to use the installers on them.
 
 You can follow the project updates and grab the source here: [URL="https://bitbucket.org/ixtab/kindlelauncher/overview"]Kindle Launcher Git[/URL]
 
