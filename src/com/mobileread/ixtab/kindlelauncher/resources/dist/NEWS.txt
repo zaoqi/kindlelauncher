@@ -1,5 +1,10 @@
 CHANGE LOG
 
+20160708
++ Detect the White Kindle PaperWhite 3.
++ Detect the Kindle Oasis.
++ Detect the Kindle Basic 2. Might be innacurate.
+
 **** v2.6 ****
 
 20150814
