@@ -24,6 +24,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
@@ -32,7 +33,7 @@ import java.util.Map.Entry;
 
 import com.amazon.kindle.booklet.AbstractBooklet;
 import com.amazon.kindle.booklet.BookletContext;
-import com.amazon.kindle.booklet.event.KindleKeyCodes;
+import com.amazon.kindle.kindlet.event.KindleKeyCodes;
 import com.mobileread.ixtab.kindlelauncher.resources.KualEntry;
 import com.mobileread.ixtab.kindlelauncher.resources.KualMenu;
 import com.mobileread.ixtab.kindlelauncher.resources.MailboxCommand;
@@ -201,6 +202,15 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		return new LauncherKindletJailbreak();
 	}
 
+	private void suicide(BookletContext context) {
+		try {
+			// sent BACKWARD lipc event to exit
+			Runtime.getRuntime().exec("lipc-set-prop com.lab126.appmgrd backward 0");
+		} catch (IOException e) {
+			logger.error(e.toString(), e);
+		}
+	}
+
 	public void create(BookletContext context) {
 		logger.info("create("+context+")");
 
@@ -229,7 +239,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		logger.info("start("+contentURI+")");
 
 		if (delegate != null) {
-			delegate.start();
+			delegate.start(contentURI);
 			return;
 		}
 
@@ -802,7 +812,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 						// suicide
 						commandToRunOnExit = ke.action;
 						dirToChangeToOnExit = ke.dir;
-						getUI().suicide(context);
+						suicide(context);
 					} else {
 						// survive
 						execute(ke.action, ke.dir, true);
