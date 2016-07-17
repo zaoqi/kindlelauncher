@@ -1,7 +1,5 @@
 package com.mobileread.ixtab.kindlelauncher;
 
-import ixtab.jailbreak.Jailbreak;
-
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
@@ -47,9 +45,6 @@ import com.amazon.ebook.util.log.Log;
 public class KualBooklet extends AbstractBooklet implements ActionListener {
 
 	private static final Log logger = Log.getInstance("KualBooklet");
-
-	protected final Jailbreak jailbreak = instantiateKindletJailbreak();
-	private final AbstractBooklet delegate;
 
 	public static final String RESOURCE_PARSER_SCRIPT = "parse.awk"; // "parse.sh";
 	private static final String EXEC_PREFIX_PARSE = "klauncher_parse-";
@@ -173,33 +168,6 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 
 	public KualBooklet() {
 		logger.info("KualBooklet");
-
-		boolean replaceClassLoader = true;
-		AbstractBooklet del = null;
-		if (replaceClassLoader && jailbreak.isAvailable()) {
-			ClassLoader cl = jailbreak.getContext().classLoader;
-			if (cl != this.getClass().getClassLoader()) {
-				try {
-					Class better = cl.loadClass(this.getClass().getName());
-					del = (AbstractBooklet) better.newInstance();
-				} catch (Throwable t) {
-					throw new RuntimeException(t);
-				}
-			}
-		}
-		this.delegate = replaceClassLoader ? instantiateDelegate(del) : del;
-	}
-
-	protected AbstractBooklet instantiateDelegate(AbstractBooklet candidate) {
-		return candidate;
-	}
-
-	protected Jailbreak instantiateJailbreak() {
-		return new Jailbreak();
-	}
-
-	protected Jailbreak instantiateKindletJailbreak() {
-		return new LauncherKindletJailbreak();
 	}
 
 	private void suicide(BookletContext context) {
@@ -213,14 +181,6 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 
 	public void create(BookletContext context) {
 		logger.info("create("+context+")");
-
-		if (jailbreak.isAvailable() && jailbreak.getMetadata().autoEnable) {
-			jailbreak.enable();
-		}
-		if (delegate != null) {
-			delegate.create(context);
-			return;
-		}
 
 		super.create(context);
 		this.context = context;
@@ -238,22 +198,11 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		// NOTE: No idea if this also applies to booklets...
 		logger.info("start("+contentURI+")");
 
-		if (delegate != null) {
-			delegate.start(contentURI);
-			return;
-		}
-
 		if (started) {
 			return;
 		}
 		super.start(contentURI);
 		started = true;
-
-		String error = getJailbreakError();
-		if (error != null) {
-			displayErrorMessage(error);
-			return;
-		}
 
 		// postpone longer initialization for quicker return
 		Runnable runnable = new Runnable() {
@@ -510,16 +459,6 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 				}
 			}
 		}
-	}
-
-	private String getJailbreakError() {
-		if (!jailbreak.isAvailable()) {
-			return "Mobileread Kindlet Kit is not installed";
-		}
-		if (!jailbreak.isEnabled()) {
-			return "MKK could not enable Kindlet Jailbreak";
-		}
-		return null;
 	}
 
 	public void actionPerformed(ActionEvent e) {
@@ -899,11 +838,6 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		 */
 		logger.info("stop()");
 
-		if (delegate != null) {
-			delegate.stop();
-			return;
-		}
-
 		if (commandToRunOnExit != null) {
 			try {
 				execute(commandToRunOnExit, dirToChangeToOnExit, true);
@@ -929,13 +863,6 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		}
 
 		super.destroy();
-
-		if (jailbreak.isAvailable() && jailbreak.getMetadata().autoDisable) {
-			jailbreak.disable();
-		}
-		if (delegate != null) {
-			delegate.destroy();
-		}
 	}
 
 	private File createLauncherScript(String cmd, boolean background,
