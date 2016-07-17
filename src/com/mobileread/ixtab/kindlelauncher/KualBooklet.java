@@ -173,7 +173,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 			// sent BACKWARD lipc event to exit
 			Runtime.getRuntime().exec("lipc-set-prop com.lab126.appmgrd backward 0");
 		} catch (IOException e) {
-			new KualLog().append(e.toString(), e);
+			new KualLog().append(e.toString());
 		}
 	}
 
