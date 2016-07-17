@@ -64,6 +64,7 @@
 			<!-- actual program logic files -->
 			<fileset dir="${build.dir}">
 				<include name="**/*.class"/>
+				<exclude name="**/KualBooklet*.class"/>
 			</fileset>
 
 			<!-- jailbreak frontend, required -->
@@ -105,11 +106,13 @@
 			<!-- actual program logic files -->
 			<fileset dir="${build.dir}">
 				<include name="**/*.class"/>
+				<exclude name="**/KualKindlet*.class"/>
 			</fileset>
 
 			<!-- jailbreak frontend, required -->
 			<zipfileset src="lib/jailbreak.jar">
 				<include name="**/*.class"/>
+				<exclude name="**/SuicidalKindlet.class"/>
 			</zipfileset>
 
 			<!-- resources -->
