@@ -329,7 +329,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 	}
 
 	private void initializeUI() {
-		Container root = context.getRootContainer();
+		Container root = context.getUIContainer();
 		int gap = getUI().getGap();
 		root.removeAll();
 
@@ -465,7 +465,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 	}
 
 	private void displayErrorMessage(String error) {
-		Container root = context.getRootContainer();
+		Container root = context.getUIContainer();
 		root.removeAll();
 
 		Component message = getUI().newLabel(error);
@@ -713,8 +713,8 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		// just to be on the safe side
 		entriesPanel.invalidate();
 		entriesPanel.repaint();
-		context.getRootContainer().invalidate();
-		context.getRootContainer().repaint();
+		context.getUIContainer().invalidate();
+		context.getUIContainer().repaint();
 
 		// This is for 5-way controller devices.
 		// It is essential to request focus _after_ the button has been
