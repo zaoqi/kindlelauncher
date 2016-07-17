@@ -33,6 +33,7 @@ import com.amazon.kindle.booklet.AbstractBooklet;
 import com.amazon.kindle.booklet.BookletContext;
 import com.amazon.kindle.kindlet.event.KindleKeyCodes;
 import com.mobileread.ixtab.kindlelauncher.resources.KualEntry;
+import com.mobileread.ixtab.kindlelauncher.resources.KualLog;
 import com.mobileread.ixtab.kindlelauncher.resources.KualMenu;
 import com.mobileread.ixtab.kindlelauncher.resources.MailboxCommand;
 import com.mobileread.ixtab.kindlelauncher.resources.MailboxProcessor;
@@ -40,11 +41,8 @@ import com.mobileread.ixtab.kindlelauncher.resources.ResourceLoader;
 import com.mobileread.ixtab.kindlelauncher.timer.TimerAdapter;
 import com.mobileread.ixtab.kindlelauncher.ui.GapComponent;
 import com.mobileread.ixtab.kindlelauncher.ui.UIAdapter;
-import com.amazon.ebook.util.log.Log;
 
 public class KualBooklet extends AbstractBooklet implements ActionListener {
-
-	private static final Log logger = Log.getInstance("KualBooklet");
 
 	public static final String RESOURCE_PARSER_SCRIPT = "parse.awk"; // "parse.sh";
 	private static final String EXEC_PREFIX_PARSE = "klauncher_parse-";
@@ -167,7 +165,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 	private int depth = 0;
 
 	public KualBooklet() {
-		logger.info("KualBooklet");
+		new KualLog().append("KualBooklet");
 	}
 
 	private void suicide(BookletContext context) {
@@ -175,12 +173,12 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 			// sent BACKWARD lipc event to exit
 			Runtime.getRuntime().exec("lipc-set-prop com.lab126.appmgrd backward 0");
 		} catch (IOException e) {
-			logger.error(e.toString(), e);
+			new KualLog().append(e.toString(), e);
 		}
 	}
 
 	public void create(BookletContext context) {
-		logger.info("create("+context+")");
+		new KualLog().append("create("+context+")");
 
 		super.create(context);
 		this.context = context;
@@ -196,7 +194,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		// Go as quickly as possible through here.
 		// The kindlet is given 5000 ms maximum to start.
 		// NOTE: No idea if this also applies to booklets...
-		logger.info("start("+contentURI+")");
+		new KualLog().append("start("+contentURI+")");
 
 		if (started) {
 			return;
@@ -440,7 +438,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 			rtime.exec("/usr/bin/killall " + offenders, null); // gently
 			rtime.exec("/usr/bin/killall -9 " + offenders, null); // forcefully
 		} catch (Throwable t) {
-			logger.error(t.toString());
+			new KualLog().append(t.toString());
 			setStatus("Exception logged.");
 		}
 	}
@@ -704,7 +702,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 			try {
 				handleLevel(LEVEL_NEXT, false);
 			} catch (Throwable t) {
-				logger.error(t.toString());
+				new KualLog().append(t.toString());
 				setStatus("Exception logged.");
 			}
 		} else {
@@ -761,7 +759,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 						}
 					}
 				} catch (Throwable t) {
-					logger.error(t.toString());
+					new KualLog().append(t.toString());
 					setStatus("Exception logged.");
 				}
 			}
@@ -810,7 +808,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 
 		File workingDir = new File(dir);
 		if (!workingDir.isDirectory()) {
-			logger.info("directory '" + dir + "' not found");
+			new KualLog().append("directory '" + dir + "' not found");
 			return null;
 		}
 		File launcher = createLauncherScript(cmd, background, "");
@@ -836,7 +834,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		 * very specific times, where we'll always exit right after, so we can't really
 		 * fire a random command during an unexpected stop event ;).
 		 */
-		logger.info("stop()");
+		new KualLog().append("stop()");
 
 		if (commandToRunOnExit != null) {
 			try {
@@ -852,7 +850,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 	}
 
 	public void destroy() {
-		logger.info("destroy()");
+		new KualLog().append("destroy()");
 		// Try to cleanup behind us on exit...
 		try {
 			// FIXME: This is apparently sometimes (?) a bit racy with stop(), so sleep for a tiny bit...
@@ -896,7 +894,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 				updateDisplayedLaunchers(depth = 0, true, null);
 				setStatus("New menu loaded. Please go to top.");
 			} catch (Throwable t) {
-				logger.error(t.toString());
+				new KualLog().append(t.toString());
 				setStatus("Exception logged.");
 			}
 		}
@@ -983,7 +981,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 					new MailboxProcessor(kualMenu, '1',
 							new ReloadMenuFromCache(), 0, 250, 20);
 				} catch (Throwable t) {
-					logger.error(t.toString());
+					new KualLog().append(t.toString());
 					setStatus("Exception logged.");
 					throw new RuntimeException(t);
 				}
