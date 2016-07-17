@@ -65,7 +65,6 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 	// . used in getEntriesCount()
 	private final ArrayList viewList = new ArrayList();
 
-	private BookletContext context;
 	private boolean started = false;
 	private String commandToRunOnExit = null;
 	private String dirToChangeToOnExit = null;
@@ -181,7 +180,6 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		new KualLog().append("create("+context+")");
 
 		super.create(context);
-		this.context = context;
 	}
 
 	public void start(URI contentURI) {
@@ -276,7 +274,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 	}
 
 	private void initializeUI() {
-		Container root = context.getUIContainer();
+		Container root = this.getBookletContext().getUIContainer();
 		int gap = getUI().getGap();
 		root.removeAll();
 
@@ -412,7 +410,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 	}
 
 	private void displayErrorMessage(String error) {
-		Container root = context.getUIContainer();
+		Container root = this.getBookletContext().getUIContainer();
 		root.removeAll();
 
 		Component message = getUI().newLabel(error);
@@ -650,8 +648,8 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		// just to be on the safe side
 		entriesPanel.invalidate();
 		entriesPanel.repaint();
-		context.getUIContainer().invalidate();
-		context.getUIContainer().repaint();
+		this.getBookletContext().getUIContainer().invalidate();
+		this.getBookletContext().getUIContainer().repaint();
 
 		// This is for 5-way controller devices.
 		// It is essential to request focus _after_ the button has been
@@ -749,7 +747,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 						// suicide
 						commandToRunOnExit = ke.action;
 						dirToChangeToOnExit = ke.dir;
-						suicide(context);
+						suicide(this.getBookletContext());
 					} else {
 						// survive
 						execute(ke.action, ke.dir, true);
