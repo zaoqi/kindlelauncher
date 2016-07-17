@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.amazon.kindle.booklet.AbstractBooklet;
 import com.amazon.kindle.booklet.BookletContext;
 import com.amazon.kindle.booklet.event.KindleKeyCodes;
 import com.mobileread.ixtab.kindlelauncher.resources.KualEntry;
@@ -45,6 +46,9 @@ import com.amazon.ebook.util.log.Log;
 public class KualBooklet extends AbstractBooklet implements ActionListener {
 
 	private static final Log logger = Log.getInstance("KualBooklet");
+
+	protected final Jailbreak jailbreak = instantiateKindletJailbreak();
+	private final AbstractBooklet delegate;
 
 	public static final String RESOURCE_PARSER_SCRIPT = "parse.awk"; // "parse.sh";
 	private static final String EXEC_PREFIX_PARSE = "klauncher_parse-";
@@ -168,14 +172,46 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 
 	public KualBooklet() {
 		logger.info("KualBooklet");
+
+		boolean replaceClassLoader = true;
+		AbstractBooklet del = null;
+		if (replaceClassLoader && jailbreak.isAvailable()) {
+			ClassLoader cl = jailbreak.getContext().classLoader;
+			if (cl != this.getClass().getClassLoader()) {
+				try {
+					Class better = cl.loadClass(this.getClass().getName());
+					del = (AbstractBooklet) better.newInstance();
+				} catch (Throwable t) {
+					throw new RuntimeException(t);
+				}
+			}
+		}
+		this.delegate = replaceClassLoader ? instantiateDelegate(del) : del;
+	}
+
+	protected AbstractBooklet instantiateDelegate(AbstractBooklet candidate) {
+		return candidate;
 	}
 
 	protected Jailbreak instantiateJailbreak() {
+		return new Jailbreak();
+	}
+
+	protected Jailbreak instantiateKindletJailbreak() {
 		return new LauncherKindletJailbreak();
 	}
 
 	public void create(BookletContext context) {
 		logger.info("create("+context+")");
+
+		if (jailbreak.isAvailable() && jailbreak.getMetadata().autoEnable) {
+			jailbreak.enable();
+		}
+		if (delegate != null) {
+			delegate.create(context);
+			return;
+		}
+
 		super.create(context);
 		this.context = context;
 	}
@@ -191,6 +227,11 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		// The kindlet is given 5000 ms maximum to start.
 		// NOTE: No idea if this also applies to booklets...
 		logger.info("start("+contentURI+")");
+
+		if (delegate != null) {
+			delegate.start();
+			return;
+		}
 
 		if (started) {
 			return;
@@ -848,6 +889,11 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		 */
 		logger.info("stop()");
 
+		if (delegate != null) {
+			delegate.stop();
+			return;
+		}
+
 		if (commandToRunOnExit != null) {
 			try {
 				execute(commandToRunOnExit, dirToChangeToOnExit, true);
@@ -873,6 +919,13 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		}
 
 		super.destroy();
+
+		if (jailbreak.isAvailable() && jailbreak.getMetadata().autoDisable) {
+			jailbreak.disable();
+		}
+		if (delegate != null) {
+			delegate.destroy();
+		}
 	}
 
 	private File createLauncherScript(String cmd, boolean background,
