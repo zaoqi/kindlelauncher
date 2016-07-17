@@ -1,7 +1,6 @@
-package com.mobileread.ixtab.kindlelauncher;
+package com.mobileread.ixtab.kindlelauncherbooklet;
 
 import ixtab.jailbreak.Jailbreak;
-import ixtab.jailbreak.SuicidalKindlet;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -31,10 +30,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.amazon.kindle.kindlet.KindletContext;
-import com.amazon.kindle.kindlet.event.KindleKeyCodes;
+import com.amazon.kindle.booklet.BookletContext;
+import com.amazon.kindle.booklet.event.KindleKeyCodes;
 import com.mobileread.ixtab.kindlelauncher.resources.KualEntry;
-import com.mobileread.ixtab.kindlelauncher.resources.KualLog;
 import com.mobileread.ixtab.kindlelauncher.resources.KualMenu;
 import com.mobileread.ixtab.kindlelauncher.resources.MailboxCommand;
 import com.mobileread.ixtab.kindlelauncher.resources.MailboxProcessor;
@@ -42,8 +40,11 @@ import com.mobileread.ixtab.kindlelauncher.resources.ResourceLoader;
 import com.mobileread.ixtab.kindlelauncher.timer.TimerAdapter;
 import com.mobileread.ixtab.kindlelauncher.ui.GapComponent;
 import com.mobileread.ixtab.kindlelauncher.ui.UIAdapter;
+import com.amazon.ebook.util.log.Log;
 
-public class KualKindlet extends SuicidalKindlet implements ActionListener {
+public class KualBooklet extends AbstractBooklet implements ActionListener {
+
+	private static final Log logger = Log.getInstance("KualBooklet");
 
 	public static final String RESOURCE_PARSER_SCRIPT = "parse.awk"; // "parse.sh";
 	private static final String EXEC_PREFIX_PARSE = "klauncher_parse-";
@@ -66,7 +67,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 	// . used in getEntriesCount()
 	private final ArrayList viewList = new ArrayList();
 
-	private KindletContext context;
+	private BookletContext context;
 	private boolean started = false;
 	private String commandToRunOnExit = null;
 	private String dirToChangeToOnExit = null;
@@ -165,16 +166,21 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 			null, null, null }; // 10
 	private int depth = 0;
 
+	public KualBooklet() {
+		logger.info("KualBooklet");
+	}
+
 	protected Jailbreak instantiateJailbreak() {
 		return new LauncherKindletJailbreak();
 	}
 
-	public void onCreate(KindletContext context) {
-		super.onCreate(context);
+	public void create(BookletContext context) {
+		logger.info("create("+context+")");
+		super.create(context);
 		this.context = context;
 	}
 
-	public void onStart() {
+	public void start(URI contentURI) {
 		/*
 		 * This method might be called multiple times, but we only need to
 		 * initialize once. See Kindlet lifecycle diagram:
@@ -183,11 +189,13 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 
 		// Go as quickly as possible through here.
 		// The kindlet is given 5000 ms maximum to start.
+		// NOTE: No idea if this also applies to booklets...
+		logger.info("start("+contentURI+")");
 
 		if (started) {
 			return;
 		}
-		super.onStart();
+		super.start(contentURI);
 		started = true;
 
 		String error = getJailbreakError();
@@ -199,7 +207,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 		// postpone longer initialization for quicker return
 		Runnable runnable = new Runnable() {
 			public void run() {
-				KualKindlet.this.longStart();
+				KualBooklet.this.longStart();
 			}
 		};
 		EventQueue.invokeLater(runnable);
@@ -432,7 +440,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 			rtime.exec("/usr/bin/killall " + offenders, null); // gently
 			rtime.exec("/usr/bin/killall -9 " + offenders, null); // forcefully
 		} catch (Throwable t) {
-			new KualLog().append(t.toString());
+			logger.error(t.toString());
 			setStatus("Exception logged.");
 		}
 	}
@@ -670,7 +678,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 				.size();
 	}
 
-	private static int onStartPageSize = -1; // tracks onStart() size, so
+	private static int onStartPageSize = -1; // tracks start() size, so
 												// ReloadMenuFromCache can't
 												// interfere
 
@@ -706,7 +714,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 			try {
 				handleLevel(LEVEL_NEXT, false);
 			} catch (Throwable t) {
-				new KualLog().append(t.toString());
+				logger.error(t.toString());
 				setStatus("Exception logged.");
 			}
 		} else {
@@ -763,7 +771,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 						}
 					}
 				} catch (Throwable t) {
-					new KualLog().append(t.toString());
+					logger.error(t.toString());
 					setStatus("Exception logged.");
 				}
 			}
@@ -812,7 +820,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 
 		File workingDir = new File(dir);
 		if (!workingDir.isDirectory()) {
-			new KualLog().append("directory '" + dir + "' not found");
+			logger.info("directory '" + dir + "' not found");
 			return null;
 		}
 		File launcher = createLauncherScript(cmd, background, "");
@@ -828,40 +836,43 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 		}
 	}
 
-	protected void onStop() {
+	public void stop() {
 		/*
-		 * This should really be run on the onDestroy() method, because onStop()
-		 * might be invoked multiple times. But in the onDestroy() method, it
+		 * This should really be run on the destroy() method, because stop()
+		 * might be invoked multiple times. But in the destroy() method, it
 		 * just won't work. Might be related with what the life cycle
 		 * documentation says about not holding files open etc. after stop() was
 		 * called. Anyway: seems to work, since we only set commandToRunOnExit at
 		 * very specific times, where we'll always exit right after, so we can't really
 		 * fire a random command during an unexpected stop event ;).
 		 */
+		logger.info("stop()");
+
 		if (commandToRunOnExit != null) {
 			try {
 				execute(commandToRunOnExit, dirToChangeToOnExit, true);
-				// FIXME: This is apparently sometimes (?) a bit racy with onDestroy(), so sleep for a teeny tiny bit...
+				// FIXME: This is apparently sometimes (?) a bit racy with destroy(), so sleep for a teeny tiny bit...
 				Thread.sleep(175);
 			} catch (Exception ignored) {
 				// can't do much, really. Too late for that :-)
 			}
 			commandToRunOnExit = dirToChangeToOnExit = null;
 		}
-		super.onStop();
+		super.stop();
 	}
 
-	public void onDestroy() {
+	public void destroy() {
+		logger.info("destroy()");
 		// Try to cleanup behind us on exit...
 		try {
-			// FIXME: This is apparently sometimes (?) a bit racy with onStop(), so sleep for a tiny bit...
+			// FIXME: This is apparently sometimes (?) a bit racy with stop(), so sleep for a tiny bit...
 			Thread.sleep(175);
 			cleanupTemporaryDirectory();
 		} catch (Exception ignored) {
 			// Avoid the framework shouting at us...
 		}
 
-		super.onDestroy();
+		super.destroy();
 	}
 
 	private File createLauncherScript(String cmd, boolean background,
@@ -895,7 +906,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 				updateDisplayedLaunchers(depth = 0, true, null);
 				setStatus("New menu loaded. Please go to top.");
 			} catch (Throwable t) {
-				new KualLog().append(t.toString());
+				logger.error(t.toString());
 				setStatus("Exception logged.");
 			}
 		}
@@ -982,7 +993,7 @@ public class KualKindlet extends SuicidalKindlet implements ActionListener {
 					new MailboxProcessor(kualMenu, '1',
 							new ReloadMenuFromCache(), 0, 250, 20);
 				} catch (Throwable t) {
-					new KualLog().append(t.toString());
+					logger.error(t.toString());
 					setStatus("Exception logged.");
 					throw new RuntimeException(t);
 				}
