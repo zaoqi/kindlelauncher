@@ -39,6 +39,7 @@
 		<antcall target="build-kdk">
 			<param name="kdk-version" value="2.0"/>
 		</antcall>
+		<antcall target="build-booklet"/>
 	</target>
 
 	<target name="build-kdk" depends="compile, git.changelog">
@@ -89,6 +90,40 @@
 		<signjar jar="${file}" keystore="${sign.keystore.file}" storepass="${sign.keystore.password}" alias="dk${sign.aliases}" sigalg="SHA1withDSA" digestalg="SHA1"/>
 		<signjar jar="${file}" keystore="${sign.keystore.file}" storepass="${sign.keystore.password}" alias="di${sign.aliases}" sigalg="SHA1withDSA" digestalg="SHA1"/>
 		<signjar jar="${file}" keystore="${sign.keystore.file}" storepass="${sign.keystore.password}" alias="dn${sign.aliases}" sigalg="SHA1withDSA" digestalg="SHA1"/>
+
+		<antcall target="restore-parser"/>
+	</target>
+
+	<target name="build-booklet" depends="compile, git.changelog">
+		<property name="file" value="${product.filename}Booklet.jar"/>
+		<delete file="${file}"/>
+		<jar destfile="${file}">
+			<manifest>
+				<attribute name="Main-Class" value="${product.bookletmainclass}"/>
+			</manifest>
+
+			<!-- actual program logic files -->
+			<fileset dir="${build.dir}">
+				<include name="**/*.class"/>
+			</fileset>
+
+			<!-- jailbreak frontend, required -->
+			<zipfileset src="lib/jailbreak.jar">
+				<include name="**/*.class"/>
+			</zipfileset>
+
+			<!-- resources -->
+			<fileset dir="src/">
+				<include name="**/resources/*"/>
+				<exclude name="**/resources/*.java"/>
+				<exclude name="**/resources/old"/>
+				<exclude name="**/resources/aloop"/>
+				<exclude name="**/resources/tool"/>
+				<exclude name="**/resources/dist"/>
+				<exclude name="**/resources/parse-commented.awk"/>
+				<exclude name="**/resources/parse-commented.awk.tpl"/>
+			</fileset>
+		</jar>
 
 		<antcall target="restore-parser"/>
 	</target>

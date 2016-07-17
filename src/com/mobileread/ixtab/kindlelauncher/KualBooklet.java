@@ -1,4 +1,4 @@
-package com.mobileread.ixtab.kindlelauncherbooklet;
+package com.mobileread.ixtab.kindlelauncher;
 
 import ixtab.jailbreak.Jailbreak;
 
