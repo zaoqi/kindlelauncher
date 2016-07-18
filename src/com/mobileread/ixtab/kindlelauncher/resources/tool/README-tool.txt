@@ -16,5 +16,9 @@ NB: This is now automatically done during the build :).
 stripit.sh
 	Used by the buildsystem to strip the commented parser.
 
+build-updates.sh:
+	Used by the buildsystem to package the Booklet for release.
+
 shipit.sh
 	Used by the buildsystem to package the project for release.
+

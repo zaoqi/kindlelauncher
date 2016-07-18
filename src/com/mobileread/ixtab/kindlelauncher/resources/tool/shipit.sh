@@ -22,6 +22,9 @@ cd "${WD}"
 # Clean dist directory...
 rm -f ../../../../../../../dist/*.tar.xz
 
+# Build the Booklet update package
+./build-updates.sh "${KUAL_VERSION}"
+
 # Make Windows users happy...
 unix2dos -k ../dist/*.txt ../../../../../../../*.txt
 

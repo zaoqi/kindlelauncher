@@ -78,6 +78,7 @@
 				<exclude name="**/resources/*.java"/>
 				<exclude name="**/resources/old"/>
 				<exclude name="**/resources/aloop"/>
+				<exclude name="**/resources/booklet"/>
 				<exclude name="**/resources/tool"/>
 				<exclude name="**/resources/dist"/>
 				<exclude name="**/resources/parse-commented.awk"/>
@@ -117,6 +118,7 @@
 				<exclude name="**/resources/*.java"/>
 				<exclude name="**/resources/old"/>
 				<exclude name="**/resources/aloop"/>
+				<exclude name="**/resources/booklet"/>
 				<exclude name="**/resources/tool"/>
 				<exclude name="**/resources/dist"/>
 				<exclude name="**/resources/parse-commented.awk"/>
