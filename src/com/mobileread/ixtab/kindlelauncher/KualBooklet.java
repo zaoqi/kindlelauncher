@@ -141,8 +141,10 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 	private void suicide(BookletContext context) {
 		try {
 			// Send a BACKWARD lipc event to background the app (-> stop())
+			// NOTE: This has a few side-effects, since we effectively skip create & longStart
+			//	 on subsequent start-ups, and we (mostly) never go to destroy().
 			//Runtime.getRuntime().exec("lipc-set-prop com.lab126.appmgrd backward 0");
-			// Send a STOP lipc event to exit the app (-> stop() -> destroy())
+			// Send a STOP lipc event to exit the app (-> stop() -> destroy()). More closely mirrors the Kindlet lifecycle.
 			Runtime.getRuntime().exec("lipc-set-prop com.lab126.appmgrd stop app://com.mobileread.ixtab.kindlelauncher");
 		} catch (IOException e) {
 			new KualLog().append(e.toString());
@@ -164,7 +166,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 
 		// Go as quickly as possible through here.
 		// The kindlet is given 5000 ms maximum to start.
-		// NOTE: No idea if this also applies to booklets...
+		// NOTE: We're actually granted more leniency as a Booklet, but this is still good practice ;).
 		new KualLog().append("start(" + contentURI + ")");
 
 		if (started) {
@@ -186,17 +188,23 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		/*
 		 * High-level description of KUAL flow
 		 *
-		 * 1. kindlet: spawn the parser then block waiting for input from the
-		 * parser. 2. parser: send the kindlet cached data so the kindlet can
-		 * quickly move on to initialize the UI. 3. kindlet: initialize UI and
-		 * display the menu. 4. kindlet: schedule a 20-time-repeat 500ms
-		 * timer task which checks for messages from the parser. 5. parser:
-		 * (while the kindlet is initializing the UI) parse menu files and
-		 * refresh the cache. 6: parser: if the fresh cache differs from the
-		 * cache sent in step 2 then post the kindlet a message 7: parser: exit
-		 * 8: kindlet: if the timer found a message in the mailbox update the
-		 * menu from the fresh cache and re-display UI. 9: kindlet: loop: wait
-		 * for user interaction; handle interaction.
+		 * 1. booklet: spawn the parser then block waiting for input from the
+		 *    parser.
+		 * 2. parser: send the booklet cached data so the booklet can
+		 *    quickly move on to initialize the UI.
+		 * 3. booklet: initialize UI and display the menu.
+		 * 4. booklet: schedule a 20-time-repeat 500ms
+		 *    timer task which checks for messages from the parser.
+		 * 5. parser:
+		 *    (while the booklet is initializing the UI) parse menu files and
+		 *    refresh the cache.
+		 * 6: parser: if the fresh cache differs from the
+		 *    cache sent in step 2 then post the booklet a message.
+		 * 7: parser: exit.
+		 * 8: booklet: if the timer found a message in the mailbox update the
+		 *    menu from the fresh cache and re-display UI.
+		 * 9: booklet: loop: wait
+		 *    for user interaction; handle interaction.
 		 */
 		try {
 			initializeState(); // step 1
