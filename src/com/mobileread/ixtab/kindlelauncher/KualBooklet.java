@@ -810,6 +810,9 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		if (commandToRunOnExit != null) {
 			try {
 				execute(commandToRunOnExit, dirToChangeToOnExit, true);
+				// NOTE: This can be a bit racey with destroy(),
+				//	 so sleep for a teeny tiny bit so that our execute() call actually goes through...
+				Thread.sleep(175);
 			} catch (Exception ignored) {
 				// can't do much, really. Too late for that :-)
 			}
@@ -823,6 +826,9 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		new KualLog().append("destroy()");
 		// Try to cleanup behind us on exit...
 		try {
+			// NOTE: This can be a bit racey with stop(),
+			//	 so sleep for a tiny bit so our commandToRunOnExit actually has a chance to run...
+			Thread.sleep(175);
 			cleanupTemporaryDirectory();
 		} catch (Exception ignored) {
 			// Avoid the framework shouting at us...
