@@ -1,5 +1,10 @@
 CHANGE LOG
 
+20160719
++ Added a Booklet port, for those devices where we can't use Kindlets
+  (i.e., the Oasis and the Basic 2).
+- Updated the documentation accordingly. Do read it.
+
 20160708
 + Detect the White Kindle PaperWhite 3.
 + Detect the Kindle Oasis.

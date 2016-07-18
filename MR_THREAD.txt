@@ -6,13 +6,13 @@ As the name implies, this is a Launcher application, in which anybody can plug i
 
 A number of hacks ship with a KUAL extension, which is why you'll often see KUAL listed as a required dependency ;).
 
-Moreover, it's universal! It'll run on (pretty much) anything, as long as it's running FW >= 2.3! [COLOR="DarkGrey"]With a particular caveat on the KT2/KV/PW3, where some early firmware versions won't let you run it...[/COLOR].
+Moreover, it's universal! It'll run on (pretty much) anything, as long as it's running FW >= 2.3! [COLOR="DarkGrey"]With a particular caveat on the KT2/KV/PW3, where some early firmware versions won't let you run it...[/COLOR] And a fun twist on the KOA/KT3, more on that later...
 [/INDENT]
 
 
-[COLOR="Red"][b]Latest Updates (08/19/2015):[/b][/COLOR]
+[COLOR="Red"][b]Latest Updates (07/19/2016):[/b][/COLOR]
 [INDENT]
-KUAL v2.6. PW3 support.
+KUAL v2.7. Oasis & KT3 support, via a Booklet port. Do read the relevant part of the documentation.
 [/INDENT]
 
 
@@ -22,13 +22,27 @@ KUAL v2.6. PW3 support.
 [INDENT][SPOILER]
 As pretty much anything here, your device will need to be jailbroken. Please refer to the wiki and/or the [url=http://www.mobileread.com/forums/showthread.php?t=180113]stickies[/url] & index for the appropriate method for your specific Kindle model ;).
 
-In addition, you [i]may[/i] need to install [url=http://www.mobileread.com/forums/showthread.php?t=233932]MKK[/url]: if your device runs on FW 5.x, and you're using the [url=http://www.mobileread.com/forums/showthread.php?t=186645]K5 JB >= 1.11.N[/url], you don't need to do anything, MKK is bundled with your JB. If you're using an older device, you [i]will[/i] need to install MKK yourself ;).
+In addition, you [i]may[/i] need to install [url=http://www.mobileread.com/forums/showthread.php?t=233932]MKK[/url]: if your device runs on FW 5.x, and you're using the [url=http://www.mobileread.com/forums/showthread.php?t=186645]K5 JB >= 1.11.N[/url] (or the associated "hotfix"), you don't need to do anything, MKK is bundled with your JB. If you're using an older device, you [i]will[/i] need to install MKK yourself ;).
 
 Finally, you need to install KUAL itself, by putting the appropriate [i]azw2[/i] file somewhere in the [i]documents/[/i] directory tree of your device.
-First, unpack the [b]KUAL-v2.6.zip[/b] archive attached to this post. Then, if your device runs on FW 5.x, use the [b]KUAL-KDK-2.0.azw2[/b] file. If your device is older, use the [b]KUAL-KDK-1.0.azw2[/b] file.
+First, unpack the [b]KUAL-v2.7.zip[/b] archive attached to this post. Then, if your device runs on FW 5.x, use the [b]KUAL-KDK-2.0.azw2[/b] file. If your device is older, use the [b]KUAL-KDK-1.0.azw2[/b] file.
 
-And that's it for the basics! You should now have a pretty KUAL button/entry on your Homescreen. Right now, it won't be terribly useful, since KUAL ships without any extension, but now you have the tools to change that :).
+And that's it for the basics! You should now have a pretty KUAL button/entry on your Library (on recent FW, make sure you switch to the [i]local[/i] Library view. In the same vein, on FW using a dedicated Homescreen page, you will [i]never[/i] see KUAL in it). Right now, it won't be terribly useful, since KUAL ships without any extension, but now you have the tools to change that :).
 Check the screenshots attached to this post for a quick tutorial on how to actually navigate KUAL's UI ;).
+[/INDENT][/SPOILER]
+
+[COLOR="Red"][b]Important notice for KOA/KT3 owners:[/b][/COLOR]
+[INDENT][SPOILER]
+As of right now, and for reasons outside of our control, Kindlets will fail to run on these devices, so you can disregard the earlier bit about the [i]azw2[/i] file.
+
+Instead, on these devices, we will have to use the Booklet version of KUAL.
+
+First, the prerequisites: your device of course still needs to be jailbroken, and needs to be running a recent "[url=http://www.mobileread.com/forums/showpost.php?p=3004892&postcount=1597]hotfix[/url]" version [COLOR="DarkGrey"](the vast majority of you should be covered, only the early adopters might need to update their hotfix)[/COLOR]. Then, you will have to install [url=http://www.mobileread.com/forums/showthread.php?t=251143][b]MR Package Installer[/b][/url] (MRPI). Never mind that it's technically a KUAL extension and that we're in effect doing things in reverse ;).
+
+Once that's done, put the [b]Update_KUALBooklet_v*_install.bin[/b] file (found in the same archive as mentioned earlier) in the [i]mrpackages[/i] folder, which you'll find at the root of your Kindle over USB, then eject & unplug you Kindle.
+
+Finally, enter [b];log mrpi[/b] in the Homescreen's searchbar (in a similar fashion as what you had to do during the Jailbreak), and wait for MRPI to do its thing.
+When the UI finishes restarting, you should end up with a KUAL entry in your Library (showing as a personal document).
 [/INDENT][/SPOILER]
 
 [b]KUAL extensions:[/b]
@@ -54,18 +68,20 @@ You will find the full list of available extensions [url=http://www.mobileread.c
 The content of the popup might range from "This device is not authorized as a test Kindle by the developer of this item", to "Mobileread Kindlet Kit is not installed"
 
 [b]A[/b]. You either fell victim to a silent OTA update, or you unregistered your device since the last time you tried to launch a Kindlet.
-The fix is simple: reinstall MKK.
+The fix is simple: reinstall MKK. (On devices where you installed the "hotfix" at some point in time, a simple reboot might do the trick).
 
 ----
 
 [LIST]
 [*]Non-Japanese 4GB PW2 models won't run Kindlets at all [you'll get a "The selected application cannot be started. Please try again later" popup], unless updated to 5.4.5 or newer (make sure you're JailBroken [i]before[/i] updating).
 [*]In the same vein, on the KV, the KT2 & the PW3, some early FW versions won't let you run Kindlets at all [you'll get a "The selected application cannot be started. Please try again later" popup].
+[*]Still in the same vein, do read the dedicated Oasis & KT3 section if you own one of these devices.
 [*]On a cold boot, even with everything in order, KUAL [i]may[/i] sill fail to start on the first try, usually with a "An error occurred while trying to open this item", or a "The selected application cannot be started. Please try again later" or "Kindlet did not shut down properly" popup. This is a known issue, stemming from restrictions of the Kindlet framework, and the way in which KUAL is designed. Simply try again a bit later. (On a sidenote, enabling [url=http://www.mobileread.com/forums/showpost.php?p=2636883&postcount=50][b]gawk[/b][/url] [i]might[/i] help a bit).
 [*]Really old firmware versions on the K2 & DX did not support Kindlets, update the firmware to the latest version available.
 [*]Frankensteined DXG with FW 3.x won't be able to run Kindlets without [url=http://www.mobileread.com/forums/showpost.php?p=1747631&postcount=354]further tinkering[/url]
 [*]You [i]need[/i] an up to date JailBreak (>= 1.13.N) in order for your extensions to behave properly on FW >= 5.6.1. If stuff appears to be half-broken, that's probably the case (the breadcrumb line being prefixed with a [i]%[/i] is a definite sign that your JB is outdated).
 [*]If some buttons mysteriously fail to run, in an apparently random fashion, make sure your host system and/or your unarchiving tools are not messing with the case and the line-endings of files when unpacking the archives... This is sure to lead to hair-pulling mysteries otherwise ;).
+[*]On newer FW, if you can't seem to find the KUAL button/entry, make sure you switch to a [i]local[/i] Library view. Don't hesitate to filter by "Active Content" if you [i]really[/i] can't seem to find it.
 [/LIST]
 [/INDENT][/SPOILER]
 
