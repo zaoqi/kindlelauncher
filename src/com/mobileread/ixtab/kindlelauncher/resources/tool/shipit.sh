@@ -34,5 +34,8 @@ tar --exclude='MR_THREAD.txt' --transform 's,^.*/,,S' --show-transformed-names -
 # Git handles this properly, but it shouts at us a bit...
 dos2unix -k ../dist/*.txt ../../../../../../../*.txt
 
+# Cleanup behind build-updates
+rm -f ../dist/*.bin
+
 # Go back
 cd - &>/dev/null
