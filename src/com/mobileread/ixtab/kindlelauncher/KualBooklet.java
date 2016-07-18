@@ -28,6 +28,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.lang.reflect.Method;
 
 import com.amazon.kindle.booklet.AbstractBooklet;
 import com.amazon.kindle.booklet.BookletContext;
@@ -76,6 +77,8 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 	final String UARROW = "\u25B2"; // ▲
 	final String BULLET = "\u25AA"; // ▪
 	final String PATH_SEP = "/";
+
+	private Container rootContainer = null;
 
 	private KeyListener keyListener = new KeyAdapter() {
 		public void keyPressed(KeyEvent e) {
@@ -167,6 +170,44 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		new KualLog().append("KualBooklet");
 	}
 
+	// Because this got obfuscated...
+	private Container getUIContainer() {
+		// Check our cached value, first
+		if (rootContainer != null) {
+			return rootContainer;
+		} else {
+			try {
+				Method getUIContainer = null;
+
+				// Should be the only method returning a Container in BookletContext...
+				Method[] methods = BookletContext.class.getDeclaredMethods();
+				for (int i = 0; i < methods.length; i++) {
+					if (methods[i].getReturnType() == Container.class) {
+						// Double check that it takes no arguments, too...
+						Class[] params = methods[i].getParameterTypes();
+						if ( params.length == 0 ) {
+							getUIContainer = methods[i];
+							break;
+						}
+					}
+				}
+
+				if (getUIContainer != null) {
+					Container container = (Container) getUIContainer.invoke(getBookletContext(), null);
+					return container;
+				}
+				else {
+					// Kablooey!
+					new KualLog().append("Failed to find getUIContainer method");
+					suicide(getBookletContext());
+					return null;
+				}
+			} catch (Throwable t) {
+				throw new RuntimeException(t.toString());
+			}
+		}
+	}
+
 	private void suicide(BookletContext context) {
 		try {
 			// sent BACKWARD lipc event to exit
@@ -174,6 +215,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		} catch (IOException e) {
 			new KualLog().append(e.toString());
 		}
+		// FIXME: Should we then call destroy()?
 	}
 
 	public void create(BookletContext context) {
@@ -274,7 +316,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 	}
 
 	private void initializeUI() {
-		Container root = getBookletContext().getUIContainer();
+		Container root = getUIContainer();
 		int gap = getUI().getGap();
 		root.removeAll();
 
@@ -410,7 +452,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 	}
 
 	private void displayErrorMessage(String error) {
-		Container root = getBookletContext().getUIContainer();
+		Container root = getUIContainer();
 		root.removeAll();
 
 		Component message = getUI().newLabel(error);
@@ -648,8 +690,8 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		// just to be on the safe side
 		entriesPanel.invalidate();
 		entriesPanel.repaint();
-		getBookletContext().getUIContainer().invalidate();
-		getBookletContext().getUIContainer().repaint();
+		getUIContainer().invalidate();
+		getUIContainer().repaint();
 
 		// This is for 5-way controller devices.
 		// It is essential to request focus _after_ the button has been
@@ -844,6 +886,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 			}
 			commandToRunOnExit = dirToChangeToOnExit = null;
 		}
+
 		super.stop();
 	}
 
