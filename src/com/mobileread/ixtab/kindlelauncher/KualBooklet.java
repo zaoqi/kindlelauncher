@@ -185,7 +185,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 					if (methods[i].getReturnType() == Container.class) {
 						// Double check that it takes no arguments, too...
 						Class[] params = methods[i].getParameterTypes();
-						if ( params.length == 0 ) {
+						if (params.length == 0) {
 							getUIContainer = methods[i];
 							break;
 						}
@@ -198,7 +198,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 				}
 				else {
 					// Kablooey!
-					new KualLog().append("Failed to find getUIContainer method");
+					new KualLog().append("Failed to find getUIContainer method, abort!");
 					suicide(getBookletContext());
 					return null;
 				}
