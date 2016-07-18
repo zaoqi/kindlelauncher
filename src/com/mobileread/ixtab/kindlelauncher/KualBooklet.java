@@ -193,6 +193,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 				}
 
 				if (getUIContainer != null) {
+					//new KualLog().append("Found getUIContainer method as " + getUIContainer.toString());
 					rootContainer = (Container) getUIContainer.invoke(getBookletContext(), null);
 					return rootContainer;
 				}
@@ -218,7 +219,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 	}
 
 	public void create(BookletContext context) {
-		new KualLog().append("create("+context+")");
+		new KualLog().append("create(" + context + ")");
 
 		super.create(context);
 	}
@@ -233,7 +234,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		// Go as quickly as possible through here.
 		// The kindlet is given 5000 ms maximum to start.
 		// NOTE: No idea if this also applies to booklets...
-		new KualLog().append("start("+contentURI+")");
+		new KualLog().append("start(" + contentURI + ")");
 
 		if (started) {
 			// Clean stale temp files, since we won't be calling initializeState() ...
