@@ -5,7 +5,7 @@
 
 HACKNAME="KUALBooklet"
 PKGNAME="${HACKNAME}"
-PKGVER="${1}"
+PKGVER="${1%%-g*}"
 
 # We need kindletool (https://github.com/NiLuJe/KindleTool) in $PATH
 if (( $(kindletool version | wc -l) == 1 )) ; then
