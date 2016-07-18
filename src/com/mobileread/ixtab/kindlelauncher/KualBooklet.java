@@ -236,6 +236,8 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		new KualLog().append("start("+contentURI+")");
 
 		if (started) {
+			// Clean stale temp files, since we won't be calling initializeState() ...
+			cleanupTemporaryDirectory();
 			return;
 		}
 		super.start(contentURI);
@@ -875,6 +877,14 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		 */
 		new KualLog().append("stop()");
 
+		// Start by cleaning up behind us, since we're being backgrounded...
+		try {
+			// FIXME: Check that there's no possibility of a race with our commandToRunOnExit?
+			cleanupTemporaryDirectory();
+		} catch (Exception ignored) {
+			// Can't have exceptions here, so, ignore them. Not sure it actually helps, though...
+		}
+
 		if (commandToRunOnExit != null) {
 			try {
 				execute(commandToRunOnExit, dirToChangeToOnExit, true);
@@ -888,7 +898,9 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 
 		// FIXME: I have no idea what's supposed to call destroy(), but tapping our Quit button doesn't...
 		//	  Which in turn probably breaks the Kindlet version of KUAL, not that we care terribly...
-		//	  More to the point, this also means we don't clean our temporary files...
+		// NOTE: Calling it manually upsets the framework one time out of two (like clockwork), so, err, don't?
+		//	 Not doing it makes for faster subsequent start-ups anyway (since we skip create and longStart),
+		//	 and also kills the chrome bar (on subsequent start-ups), for some mysterious reason...
 		//destroy();
 	}
 
