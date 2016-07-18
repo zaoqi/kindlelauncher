@@ -50,8 +50,6 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 	// Handle the privilege hint prefix...
 	private static String PRIVILEGE_HINT_PREFIX = "?";
 
-	private static final int VK_KEYBOARD = 17; /* K4: We should be using getKeyboardKeyCode() here, but it's KDK 1.3 only */
-
 	private static final int PAGING_PREVIOUS = -1;
 	private static final int PAGING_NEXT = 1;
 	private static final int LEVEL_PREVIOUS = -1;
@@ -758,11 +756,6 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 			// JSON "refresh":true - refresh and reload the menu
 			// Default value for afterParser, cf. refreshMenu().
 			long afterParser = 750L;
-			// Add 750ms for legacy devices with slower CPU
-			String model = kualMenu.getModel();
-			if ("K2".equals(model) || "DX".equals(model) || "DXG".equals(model) || "K3".equals(model)) {
-				afterParser += 750L;
-			}
 			// If we showed a custom status message, don't overwrite it!
 			if (internalStatus) {
 				refreshMenu(250L, afterParser, null);
