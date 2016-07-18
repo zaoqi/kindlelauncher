@@ -3,6 +3,9 @@ CHANGE LOG
 20160719
 + Added a Booklet port, for those devices where we can't use Kindlets
   (i.e., the Oasis and the Basic 2).
+  Massive thanks to chrox and his KPVBooklet (https://github.com/koreader/kpvbooklet)
+  for support and inspiration,
+  as well as bhaak's HackedUpReaderBooklet (https://github.com/bhaak/HackedUpReaderBooklet/).
 - Updated the documentation accordingly. Do read it.
 
 20160708
