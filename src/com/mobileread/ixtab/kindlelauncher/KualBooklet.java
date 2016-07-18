@@ -10,9 +10,6 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -32,7 +29,6 @@ import java.lang.reflect.Method;
 
 import com.amazon.kindle.booklet.AbstractBooklet;
 import com.amazon.kindle.booklet.BookletContext;
-import com.amazon.kindle.kindlet.event.KindleKeyCodes;
 import com.mobileread.ixtab.kindlelauncher.resources.KualEntry;
 import com.mobileread.ixtab.kindlelauncher.resources.KualLog;
 import com.mobileread.ixtab.kindlelauncher.resources.KualMenu;
@@ -80,80 +76,13 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 
 	private Container rootContainer = null;
 
-	private KeyListener keyListener = new KeyAdapter() {
-		public void keyPressed(KeyEvent e) {
-			switch (e.getKeyCode()) {
-			case KindleKeyCodes.VK_RIGHT_HAND_SIDE_TURN_PAGE:
-			case KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE:
-				handlePaging(PAGING_NEXT, depth, true);
-				break;
-			case KindleKeyCodes.VK_TURN_PAGE_BACK: /* 61450 */
-			case 61452: /* K4: KindleKeyCodes.VK_LEFT_HAND_SIDE_TURN_PAGE_BACK in KDK 1.3. See also *DistinctTurnPageBackKeyCodes*() */
-				handleLevel(LEVEL_PREVIOUS, true);
-				break;
-			case KeyEvent.VK_1:
-			case KeyEvent.VK_Q:
-				handleButtonSelect(1, true);
-				break;
-			case KeyEvent.VK_2:
-			case KeyEvent.VK_W:
-				handleButtonSelect(2, true);
-				break;
-			case KeyEvent.VK_3:
-			case KeyEvent.VK_E:
-				handleButtonSelect(3, true);
-				break;
-			case KeyEvent.VK_4:
-			case KeyEvent.VK_R:
-				handleButtonSelect(4, true);
-				break;
-			case KeyEvent.VK_5:
-			case KeyEvent.VK_T:
-				handleButtonSelect(5, true);
-				break;
-			case KeyEvent.VK_6:
-			case KeyEvent.VK_Y:
-				handleButtonSelect(6, true);
-				break;
-			case KeyEvent.VK_7:
-			case KeyEvent.VK_U:
-				handleButtonSelect(7, true);
-				break;
-			case KeyEvent.VK_8:
-			case KeyEvent.VK_I:
-				handleButtonSelect(8, true);
-				break;
-			case KeyEvent.VK_9:
-			case KeyEvent.VK_O:
-				handleButtonSelect(9, true);
-				break;
-			case KeyEvent.VK_0:
-			case KeyEvent.VK_P:
-				handleButtonSelect(10, true);
-				break;
-			case KeyEvent.VK_ENTER:
-			case KeyEvent.VK_SPACE:
-				handleLauncherButton((Component) e.getSource(), depth);
-				break;
-			case KindleKeyCodes.VK_TEXT:
-			case VK_KEYBOARD:
-				handleButtonSelect(-1, false);
-				break;
-			case KindleKeyCodes.VK_MENU:
-				handleButtonSelect(99, false);
-				break;
-			}
-			// Always check for news, because apparently we bypass actionPerformed...
-			new MailboxProcessor(kualMenu, '1', new ReloadMenuFromCache(), 0, 0, 0);
-		}
-	};
 
 	private Container entriesPanel;
 	private Component status = null;
 	private Component nextPageButton = getUI().newButton("  " + RARROW + "  ",
-			this, keyListener, null);
+			this, null, null);
 	private Component prevPageButton = getUI().newButton("  " + UARROW + "  ",
-			this, keyListener, null);
+			this, null, null);
 	private Component breadcrumb;
 
 	private KualEntry toTopEntry;
@@ -365,9 +294,9 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		breadcrumb = getUI().newLabel(PATH_SEP);
 		// Same deal with those default buttons...
 		toTopEntry = new KualEntry(1, PATH_SEP);
-		toTopButton = getUI().newButton(PATH_SEP, this, keyListener, toTopEntry);
+		toTopButton = getUI().newButton(PATH_SEP, this, null, toTopEntry);
 		quitEntry = new KualEntry(2, CROSS + " Quit");
-		quitButton = getUI().newButton(CROSS + " Quit", this, keyListener, quitEntry);
+		quitButton = getUI().newButton(CROSS + " Quit", this, null, quitEntry);
 
 		root.setLayout(new BorderLayout(gap, gap));
 		Container main = getUI().newPanel(new BorderLayout(gap, gap));
@@ -642,7 +571,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 				if (null == ke) {
 					button = 0 == level ? quitButton : toTopButton;
 				} else {
-					button = getUI().newButton(ke.label, this, keyListener, ke); // then
+					button = getUI().newButton(ke.label, this, null, ke); // then
 																					// getUI().getKualEntry(button)
 																					// =>
 																					// ke
