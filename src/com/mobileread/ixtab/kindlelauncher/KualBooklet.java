@@ -193,8 +193,8 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 				}
 
 				if (getUIContainer != null) {
-					Container container = (Container) getUIContainer.invoke(getBookletContext(), null);
-					return container;
+					rootContainer = (Container) getUIContainer.invoke(getBookletContext(), null);
+					return rootContainer;
 				}
 				else {
 					// Kablooey!
@@ -215,7 +215,6 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		} catch (IOException e) {
 			new KualLog().append(e.toString());
 		}
-		// FIXME: Should we then call destroy()?
 	}
 
 	public void create(BookletContext context) {
@@ -879,8 +878,6 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		if (commandToRunOnExit != null) {
 			try {
 				execute(commandToRunOnExit, dirToChangeToOnExit, true);
-				// FIXME: This is apparently sometimes (?) a bit racy with destroy(), so sleep for a teeny tiny bit...
-				Thread.sleep(175);
 			} catch (Exception ignored) {
 				// can't do much, really. Too late for that :-)
 			}
@@ -888,14 +885,17 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		}
 
 		super.stop();
+
+		// FIXME: I have no idea what's supposed to call destroy(), but tapping our Quit button doesn't...
+		//	  Which in turn probably breaks the Kindlet version of KUAL, not that we care terribly...
+		//	  More to the point, this also means we don't clean our temporary files...
+		//destroy();
 	}
 
 	public void destroy() {
 		new KualLog().append("destroy()");
 		// Try to cleanup behind us on exit...
 		try {
-			// FIXME: This is apparently sometimes (?) a bit racy with stop(), so sleep for a tiny bit...
-			Thread.sleep(175);
 			cleanupTemporaryDirectory();
 		} catch (Exception ignored) {
 			// Avoid the framework shouting at us...
