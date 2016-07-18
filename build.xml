@@ -107,6 +107,9 @@
 			<fileset dir="${build.dir}">
 				<include name="**/*.class"/>
 				<exclude name="**/KualKindlet*.class"/>
+				<exclude name="**/LauncherKindletJailbreak.class"/>
+				<exclude name="**/timer/KTimerAdapter*.class"/>
+				<exclude name="**/ui/v1/Kual*.class"/>
 			</fileset>
 
 			<!-- resources -->
