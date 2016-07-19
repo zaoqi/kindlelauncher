@@ -143,6 +143,8 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 			//	 on subsequent start-ups, and we (mostly) never go to destroy().
 			// NOTE: Incidentally, this is roughly what the [Home] button does on the Touch, so, for the same reason,
 			//	 it's recommended not to tap Home on that device ;).
+			// NOTE: Setting the unloadPolicy to unloadOnPause in the app's appreg properties takes care of that,
+			//	 stop() then *always* leads to destroy() :).
 			//Runtime.getRuntime().exec("lipc-set-prop com.lab126.appmgrd backward 0");
 			// Send a STOP lipc event to exit the app (-> stop() -> destroy()). More closely mirrors the Kindlet lifecycle.
 			Runtime.getRuntime().exec("lipc-set-prop com.lab126.appmgrd stop app://com.mobileread.ixtab.kindlelauncher");

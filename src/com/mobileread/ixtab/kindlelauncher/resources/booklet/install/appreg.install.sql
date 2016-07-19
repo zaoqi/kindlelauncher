@@ -7,6 +7,7 @@ INSERT OR IGNORE INTO "properties" VALUES('com.mobileread.ixtab.kindlelauncher',
 INSERT OR IGNORE INTO "properties" VALUES('com.mobileread.ixtab.kindlelauncher','maxPauseTime','60');
 
 INSERT OR IGNORE INTO "properties" VALUES('com.mobileread.ixtab.kindlelauncher','default-chrome-style','NH');
+INSERT OR IGNORE INTO "properties" VALUES('com.mobileread.ixtab.kindlelauncher','unloadPolicy','unloadOnPause');
 INSERT OR IGNORE INTO "properties" VALUES('com.mobileread.ixtab.kindlelauncher','extend-start','Y');
 INSERT OR IGNORE INTO "properties" VALUES('com.mobileread.ixtab.kindlelauncher','searchbar-mode','transient');
 INSERT OR IGNORE INTO "properties" VALUES('com.mobileread.ixtab.kindlelauncher','supportedOrientation','U');
