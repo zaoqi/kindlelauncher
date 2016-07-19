@@ -94,7 +94,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 	private int depth = 0;
 
 	public KualBooklet() {
-		new KualLog().append("KualBooklet");
+		//new KualLog().append("KualBooklet");
 	}
 
 	// Because this got obfuscated...
@@ -152,7 +152,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 	}
 
 	public void create(BookletContext context) {
-		new KualLog().append("create(" + context + ")");
+		//new KualLog().append("create(" + context + ")");
 
 		super.create(context);
 	}
@@ -167,7 +167,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		// Go as quickly as possible through here.
 		// The kindlet is given 5000 ms maximum to start.
 		// NOTE: We're actually granted more leniency as a Booklet, but this is still good practice ;).
-		new KualLog().append("start(" + contentURI + ")");
+		//new KualLog().append("start(" + contentURI + ")");
 
 		if (started) {
 			return;
@@ -808,7 +808,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 		 * very specific times, where we'll always exit right after, so we can't really
 		 * fire a random command during an unexpected stop event ;).
 		 */
-		new KualLog().append("stop()");
+		//new KualLog().append("stop()");
 
 		if (commandToRunOnExit != null) {
 			try {
@@ -826,7 +826,7 @@ public class KualBooklet extends AbstractBooklet implements ActionListener {
 	}
 
 	public void destroy() {
-		new KualLog().append("destroy()");
+		//new KualLog().append("destroy()");
 		// Try to cleanup behind us on exit...
 		try {
 			// NOTE: This can be a bit racey with stop(),
