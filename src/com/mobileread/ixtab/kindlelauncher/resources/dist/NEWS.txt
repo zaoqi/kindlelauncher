@@ -1,5 +1,7 @@
 CHANGE LOG
 
+**** v2.7 ****
+
 20160719
 + Added a Booklet port, for those devices where we can't use Kindlets
   (i.e., the Oasis and the Basic 2).

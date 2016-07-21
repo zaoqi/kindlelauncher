@@ -10,7 +10,7 @@ Moreover, it's universal! It'll run on (pretty much) anything, as long as it's r
 [/INDENT]
 
 
-[COLOR="Red"][b]Latest Updates (07/19/2016):[/b][/COLOR]
+[COLOR="Red"][b]Latest Updates (07/21/2016):[/b][/COLOR]
 [INDENT]
 KUAL v2.7. Oasis & KT3 support, via a Booklet port. Do read the relevant part of the documentation.
 [/INDENT]
