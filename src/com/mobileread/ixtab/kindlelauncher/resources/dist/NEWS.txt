@@ -1,5 +1,9 @@
 CHANGE LOG
 
+20171124
++ Detect the 32GB 'Manga' PW3
++ Detect the Kindle Oasis 2.
+
 **** v2.7 ****
 
 20160719
